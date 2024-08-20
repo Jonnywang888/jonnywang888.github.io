@@ -4,8 +4,8 @@ self.addEventListener('install', function(event) {
             return cache.addAll([
                 '/',
                 '/manifest.json',
-                '/icons/icon-192x192.png',
-                '/icons/icon-512x512.png',
+                // '/icons/icon-192x192.png',
+                // '/icons/icon-512x512.png',
                 '/styles.css',   // 如果你有额外的CSS文件
                 '/script.js'     // 如果你有额外的JavaScript文件
             ]);
