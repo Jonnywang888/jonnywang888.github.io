@@ -2,7 +2,7 @@ self.addEventListener('install', function(event) {
     event.waitUntil(
         caches.open('my-pwa-cache-v1').then(function(cache) {
             return cache.addAll([
-                '/',
+                '/index.html',
                 '/manifest.json',
                 // '/icons/icon-192x192.png',
                 // '/icons/icon-512x512.png',
