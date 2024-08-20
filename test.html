@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财务管理模板</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            color: #333;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .header img {
+            width: 30px;
+            height: 30px;
+        }
+        .header-time {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 20px;
+        }
+        .budget {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .budget div {
+            text-align: center;
+        }
+        .budget .circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: #333;
+        }
+        .timeline {
+            list-style-type: none;
+            padding: 0;
+        }
+        .timeline li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .timeline-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            margin-right: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .timeline-date {
+            margin-right: 10px;
+            color: #999;
+        }
+        .timeline-amount {
+            font-weight: bold;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            background-color: #fff;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer div {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+        }
+        .footer div img {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-time">15:57</div>
+        <img src="shirt_icon.png" alt="Shirt Icon">
+        <img src="calendar_icon.png" alt="Calendar Icon">
+    </div>
+    <div class="content">
+        <div class="budget">
+            <div>
+                <p>8月收入</p>
+                <p>0.00</p>
+            </div>
+            <div class="circle">
+                <div>月预算<br>693.00</div>
+            </div>
+            <div>
+                <p>8月支出</p>
+                <p>1307.00</p>
+            </div>
+        </div>
+        <ul class="timeline">
+            <li>
+                <div class="timeline-date">昨天</div>
+                <div class="timeline-icon" style="background-color: #e0e0e0;"></div>
+                <div>支出 18.00</div>
+            </li>
+            <li>
+                <div class="timeline-date">16日</div>
+                <div class="timeline-icon" style="background-color: #a3d6a3;"></div>
+                <div>超市 18.00</div>
+            </li>
+            <li>
+                <div class="timeline-date">16日</div>
+                <div class="timeline-icon" style="background-color: #e0e0e0;"></div>
+                <div>支出 143.00</div>
+            </li>
+            <li>
+                <div class="timeline-date">16日</div>
+                <div class="timeline-icon" style="background-color: #a3c5e0;"></div>
+                <div>话费 50.00</div>
+            </li>
+            <li>
+                <div class="timeline-date">15日</div>
+                <div class="timeline-icon" style="background-color: #a3d6a3;"></div>
+                <div>超市 83.00</div>
+            </li>
+            <li>
+                <div class="timeline-date">15日</div>
+                <div class="timeline-icon" style="background-color: #e0c5a3;"></div>
+                <div>医疗药品 10.00</div>
+            </li>
+            <li>
+                <div class="timeline-date">15日</div>
+                <div class="timeline-icon" style="background-color: #e0e0e0;"></div>
+                <div>支出 50.00</div>
+            </li>
+            <li>
+                <div class="timeline-date">15日</div>
+                <div class="timeline-icon" style="background-color: #a3c5e0;"></div>
+                <div>话费 50.00</div>
+            </li>
+        </ul>
+    </div>
+    <div class="footer">
+        <div>
+            <img src="assets_icon.png" alt="Assets Icon">
+            <p>资产</p>
+        </div>
+        <div>
+            <img src="report_icon.png" alt="Report Icon">
+            <p>报表</p>
+        </div>
+        <div>
+            <img src="add_icon.png" alt="Add Icon">
+            <p>+</p>
+        </div>
+        <div>
+            <img src="community_icon.png" alt="Community Icon">
+            <p>社区</p>
+        </div>
+        <div>
+            <img src="more_icon.png" alt="More Icon">
+            <p>更多</p>
+        </div>
+    </div>
+</body>
+</html>
