@@ -4,8 +4,8 @@
   "description": "A simple PWA example",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#f2f2f2",
-  "theme_color": "#f2f2f2",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "/icons/app.png",
