@@ -4,6 +4,8 @@ body, html {
     height: 100%;
     display: flex;
     flex-direction: column;
+    /* 针对ios */
+    -webkit-overflow-scrolling: touch;
 }
 
 header {
@@ -33,4 +35,9 @@ main {
     overflow-y: auto;
     padding: 20px;
     box-sizing: border-box;
+}
+input {
+    width: 100%;
+    padding: 10px;
+    font-size: 1em;
 }
