@@ -21,3 +21,8 @@ document.getElementById('updateButton').addEventListener('click', () => {
         window.location.reload();
     }
 });
+if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('portrait').catch(function(error) {
+        console.error('屏幕方向锁定失败:', error);
+    });
+}
