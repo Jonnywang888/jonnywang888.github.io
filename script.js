@@ -44,6 +44,9 @@ nextMonthButton.addEventListener('click', function() {
     currentDate.setMonth(currentDate.getMonth() + 1);
     updateCalendar();
 });
+document.getElementById('close-addpage').addEventListener('click', function() {
+    closeaddpage()
+})
 
 // 初始化，创建appDB数据库，创建movimento表
 function inizia() {
@@ -512,8 +515,7 @@ function addnewmovimento() {
             "UTENTE": utente
         }]
         addData(data)
-        document.getElementById('mainpage').style.display = 'inline'
-        document.getElementById('addpage').style.display = 'none'
+        closeaddpage()
         updatemovimento(data)
         caricadati()
     } else {
@@ -548,6 +550,7 @@ function newmovimento() {
     document.getElementById('tas-nota').innerText = '';
     document.getElementById('current-value').innerText = '0.00';
 }
+// 上传数据到服务器
 function updatemovimento(data) {
     const sql = data[0].ID + "," + data[0].MOTIVO + "," + data[0].SPESA + ",'" + String(data[0].NOTA).replace(","," ") + "'," + data[0].UPLOAD + ",'" + data[0].UTENTE + "'";
     const url = 'http://trustfollonica.ddns.net/server/app.asp?mi=am9ubnkxOTg2&action=addmovimento&dati=' + sql
@@ -558,4 +561,8 @@ function updatemovimento(data) {
             console.log(data)
         }
     });
+}
+function closeaddpage() {
+    document.getElementById('mainpage').style.display = 'inline'
+    document.getElementById('addpage').style.display = 'none'
 }
