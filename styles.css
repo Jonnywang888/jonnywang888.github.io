@@ -6,48 +6,335 @@ body, html {
     flex-direction: column;
     /* 针对ios */
     -webkit-overflow-scrolling: touch;
+    font-family: Arial, sans-serif;
+}
+#mainpage{
+    display: inline;
+}
+#addpage{
+    display: none;
+}
+#calendar{
+    display: none;
 }
 
-header {
-    background-color: #f2f2f2;
+.head {
+    background-color: #FFFFFF;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    height: 80px;
+}
+.head-title{
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+.head-infotot{
+    display: grid;
+    grid-template-columns: 40% 20% 40%;
+}
+#head-anno{
+    text-align: left;
+    padding-left: 10%;
+    font-size: 1.2em;
+    margin-top: 6px;
+}
+#head-mese{
+    text-align: center;
+    font-size: 1.5em;
+    border-radius: 15px;
+    background-color: #e0e0e0;
+}
+#head-tot {
+    text-align: right;
+    padding-right: 10%;
+    font-size: 1.2em;
+    margin-top: 6px;
+}
+.foot {
+    background-color: #FFFFFF;
+    padding: 5px 0;
+    position: fixed;
+    bottom: 0;
+    display: flex; 
+    justify-content: space-around; 
+    width: 100%;
+    height: 5em;
+    z-index: 1000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.foot-item {
+    padding: 5px;
+    cursor: pointer;
+}
+.foot-item img{
+    margin-top: 10px;
+    width: 40px;
+    height: 40px;
+}
+#tianjia {
+    margin-top: 0;
+    width: 50px;
+    height: 50px;
+}
+.main {
+    flex: 1;
+    margin-top: 65px; /* Match header height */
+    margin-bottom: 100px; /* Match footer height */
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+    list-style-type: none;
+    padding: 0;
+}
+.main li {
+    display: flex;
+    align-items: center;
+    padding:5px 0px;
+}
+.li-nome{
+    width: 10%;
+    color: #0056b3;
+    font-weight: bold;
+}
+.li-date{
+    margin-left: 5%;
+    width: 10%;
+    aspect-ratio: 1 / 1; /* 保持正方形 */
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+.li-icon{
+    width: 100%;
+}
+.li-motivo{
+    width: 45%;
+    margin-left: 5%;
+}
+.li-value{
+    width: 20%;
+    text-align: right;
+}
+.li-tot{
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    margin-top: 20px;
+}
+
+#tastiera {
+    position: fixed;
+    bottom: 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 100%;
+    z-index: 1000;
+}
+.tas-info {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ccc;
+}
+#tas-data, #tas-modi {
+    font-size: 1em;
+}
+#tas-data {
+    margin-left: 10px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    color: #007bff;
+    padding: 1px 10px;
+}
+#tas-data:active {
+    background-color: #007bff;
+    color: white;
+}
+#tas-modi {
+    margin-left: 10px;
+    border: 1px solid #8a949e;
+    border-radius: 5px;
+    color: #8a949e;
+    padding: 1px 10px;
+}
+#tas-modi:active {
+    background-color: #8a949e;
+    color: white;
+}
+.keys {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 1px;
+    background-color: #ccc;
+    margin-bottom: 30px;
+}
+
+.key {
+    background-color: white;
+    border: none;
+    height: 50px;
+    font-size: 24px;
+    text-align: center;
+    cursor: pointer;
+}
+.key:active {
+    background-color: #ddd;
+}
+.conferma {
+    background-color: #007bff;
+    color: white;
+}
+.conferma:active {
+    background-color: #0056b3;
+}
+
+.addhead {
+    background-color: #FFFFFF;
     text-align: center;
     padding: 10px;
     position: fixed;
     top: 0;
     width: 100%;
     z-index: 1000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.header {
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 33.3% 33.3% 33.3%;
+    font-size: 1.2em;
+}
+.close {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    float: right;
+}
+.current-selection {
+    text-align: left;
+    font-size: 18px;
+    margin-bottom: px;
+}
+#current-img{
+    width: 35px;
+    height: 35px;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+#current-motivo{
+    font-size: 1.2em;
+    margin-left: 20px;
+    vertical-align: middle;
+}
+#current-value{
+    vertical-align: middle;
+    text-align: right;
+    font-size: 1.5em;
+    margin-right: 20px;
+    float: right;
+}
+#current-date{
+    display: inline;
+    vertical-align: middle;
+    text-align: right;
+    font-size: 1.2em;
+}
+#tabmotivi{
+    margin-top: 120px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-gap: 10px;
+}
+.motivi-item {
+    text-align: center;
+}
+.motivi-item img {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 5px;
+}
+.motivi-item span {
+    display: block;
+    font-size: 12px;
+}
+.motivi-item:active {
+    background-color: #ddd;
 }
 
-footer {
-    background-color: #4CAF50;
-    text-align: center;
-    padding: 10px;
+#calendar {
     position: fixed;
     bottom: 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     width: 100%;
-    z-index: 1000;
+    z-index: 1001;
+    background-color: #fff;
+    height: 300px;
 }
-
-main {
-    flex: 1;
-    margin-top: 60px; /* Match header height */
-    margin-bottom: 60px; /* Match footer height */
-    overflow-y: auto;
-    padding: 20px;
-    box-sizing: border-box;
+.calendar-header {
+    padding: 5px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content:space-between;
 }
-input {
-    width: 95%;
-    padding: 10px;
-    font-size: 1em;
+.year-controls, .month-controls {
+    display: flex;
+    width: 40%;
 }
-button { 
-    width: 95%;
-    padding: 10px;
-    font-size: 1em;
-    background-color: #4CAF50;
-    color: white;
+.year-display, .month-display {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    flex-grow: 1;
+}
+.year-controls button, .month-controls button {
+    background: none;
     border: none;
-    border-radius: 5px;
+    font-size: 16px;
     cursor: pointer;
+}
+.calendar-body {
+    padding: 10px;
+}
+.calendar-weekdays,
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    grid-column-gap: 25px;
+}
+.calendar-weekdays span {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.calendar-days .day {
+    padding: 0; /* 移除原来的 padding */
+    cursor: pointer;
+    aspect-ratio: 1 / 1; /* 保持正方形 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.calendar-days .disabled {
+    color: #ccc;
+}
+.calendar-days .day.selected {
+    background-color: #3f86f6;
+    color: #fff;
+    border-radius: 50%;
+}
+.moving-image {
+    position: absolute;
+    transition: transform 0.5s ease; /* 平滑过渡 */
+    pointer-events: none; /* 禁止交互 */
+    z-index: 1001; /* 使克隆的图片在最前面 */
 }

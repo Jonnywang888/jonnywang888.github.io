@@ -11,39 +11,121 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        Fixed Header
-    </header>
-    
-    <main>
-        <button id="updateButton">更新内容</button>
-        <input type="text">
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <p>This is the main content area. It can scroll if the content is too long.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
-        <!-- Add more content here to make the main area scrollable -->
-    </main>
-    
-    <footer>
-        Fixed Footer
-    </footer>
+    <div class="page" id="mainpage">
+        <div class="head">
+            <div class="head-title">记账簿</div>
+            <div class="head-infotot">
+                <div id="head-anno"></div>
+                <div id="head-mese"></div>
+                <div id="head-tot"></div>
+            </div>
+        </div>
+        <ul class="main" id="listmovimento">
+            <li class="li-tot">
+                <div class="li-date">昨天</div>
+                <div class="li-motivo">总支出</div>
+                <div class="li-nome"></div>
+                <div class="li-value">-188.00</div>
+            </li>
+            <li>
+                <div class="li-date">
+                    <img class="li-icon" src="icons/canguan.png" alt="话费">
+                </div>
+                <div class="li-motivo">话费</div>
+                <div class="li-nome">Lo</div>
+                <div class="li-value">-18.00</div>
+            </li>
+        </ul>
+        <div class="foot">
+            <div class="foot-item">
+                <img id="baobiao" src="icons/baobiao.png" alt="baobiao">
+            </div>
+            <div class="foot-item">
+                <img id="tianjia" src="icons/tianjia.png" alt="添加">
+            </div>
+            <div class="foot-item">
+                <img id="renwu" src="icons/renwu.png" alt="人物">
+            </div>
+        </div>
+    </div>
+    <div class="page" id="addpage">
+        <div class="addhead">
+            <div class="header">
+                <div class="header-item">
+                </div>
+                <div class="header-item">
+                    <span style="text-align: center">支出</span>
+                </div>
+                <div class="header-item">
+                    <button class="close">&times;</button>
+                </div>
+            </div>
+            <div class="current-selection">
+                <img id="current-img" src="icons/chaoshi.png" alt="超市">
+                <span id="current-motivo">超市</span>
+                <span id="current-value">0.00</span>
+            </div>
+        </div>
+        <div id="tabmotivi">
+            <div class="motivi-item">
+                <img src="icons/chaoshi.png" alt="超市">
+                <span>超市</span>
+            </div>
+        </div>
+        <div id="tastiera">
+            <div id="tas-nota"></div>
+            <div class="tas-info">
+                <span id="tas-data">8月19日</span>
+                <span id="tas-modi">备注</span>
+            </div>
+            <div class="keys">
+                <button class="key">7</button>
+                <button class="key">8</button>
+                <button class="key">9</button>
+                <button class="key"><</button>
+                <button class="key">4</button>
+                <button class="key">5</button>
+                <button class="key">6</button>
+                <button class="key">+</button>
+                <button class="key">1</button>
+                <button class="key">2</button>
+                <button class="key">3</button>
+                <button class="key">-</button>
+                <button class="key">C</button>
+                <button class="key">0</button>
+                <button class="key">.</button>
+                <button class="key conferma" id="conferma">确定</button>
+            </div>
+        </div>
+        <div id="calendar">
+            <div class="calendar-header">
+                <div class="year-controls">
+                    <button class="prev-year">&lt;</button>
+                    <span class="year-display">2024年</span>
+                    <button class="next-year">&gt;</button>
+                </div>
+                <div class="month-controls">
+                    <button class="prev-month">&lt;</button>
+                    <span class="month-display">8月</span>
+                    <button class="next-month">&gt;</button>
+                </div>
+            </div>
+            <div class="calendar-body">
+                <div class="calendar-weekdays">
+                    <span>日</span>
+                    <span>一</span>
+                    <span>二</span>
+                    <span>三</span>
+                    <span>四</span>
+                    <span>五</span>
+                    <span>六</span>
+                </div>
+                <div class="calendar-days">
+                    <!-- 日历天数将由JS动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
