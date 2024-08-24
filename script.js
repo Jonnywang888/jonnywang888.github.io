@@ -64,11 +64,11 @@ function inizia() {
             movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
         }
     };
-    var url = "http://trustfollonica.ddns.net/server/app.asp?mi=am9ubnkxOTg2&action=getmotivi"
+    var url = "//trustfollonica.ddns.net/server/app.asp?mi=am9ubnkxOTg2&action=getmotivi"
     getdati(url,function(response) {
         localStorage.setItem('motivi', response);
     });
-    var url = "http://trustfollonica.ddns.net/server/app.asp?mi=am9ubnkxOTg2&action=getmovimento"
+    var url = "//trustfollonica.ddns.net/server/app.asp?mi=am9ubnkxOTg2&action=getmovimento"
     getdati(url,function(response) {
         let dataArray = JSON.parse(response);
         addData(dataArray);
@@ -553,7 +553,7 @@ function newmovimento() {
 // 上传数据到服务器
 function updatemovimento(data) {
     const sql = data[0].ID + "," + data[0].MOTIVO + "," + data[0].SPESA + ",'" + String(data[0].NOTA).replace(","," ") + "'," + data[0].UPLOAD + ",'" + data[0].UTENTE + "'";
-    const url = 'http://trustfollonica.ddns.net/server/app.asp?mi=am9ubnkxOTg2&action=addmovimento&dati=' + sql
+    const url = '//trustfollonica.ddns.net/server/app.asp?mi=am9ubnkxOTg2&action=addmovimento&dati=' + sql
     getdati(url,function(response) {
         if (response == 'True') {
             data[0].UPLOAD = 1;
