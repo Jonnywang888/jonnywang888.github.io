@@ -65,6 +65,7 @@ function inizia() {
         }
     };
     var url = "//trustfollonica.ddns.net/server/app.asp?mi=am9ubnkxOTg2&action=getmotivi"
+    console.log(url)
     getdati(url,function(response) {
         localStorage.setItem('motivi', response);
     });
