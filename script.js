@@ -1,6 +1,5 @@
 var groupdata = {}
 var groupmese = {}
-var motivi = []
 var utente = 'lolo'
 var floors = document.querySelectorAll('.li-floor')
 var floorHeight = []    // 定义一个存放楼层高度的空数组
@@ -222,7 +221,10 @@ function showmovimento(dataArray) {
 }
 // 加载消费原因列表
 function caricamotivilist() {
-    motivi = JSON.parse(localStorage.getItem('motivi'));
+    const motivi = [];
+    if (localStorage.getItem('motivi') !== null) {
+        motivi = JSON.parse(localStorage.getItem('motivi'));
+    } 
     const tabmotivi = document.getElementById('tabmotivi');
     tabmotivi.innerHTML = '';
     for (let i = 0; i < motivi.length; i++) {
