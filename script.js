@@ -1,5 +1,6 @@
 var groupdata = {}
 var groupmese = {}
+var motivi = []
 var utente = 'lolo'
 var floors = document.querySelectorAll('.li-floor')
 var floorHeight = []    // 定义一个存放楼层高度的空数组
