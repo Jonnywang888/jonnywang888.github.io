@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <!-- 禁用双击缩放 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>记账App</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icons/app.png">
@@ -31,7 +31,9 @@
                 <div class="li-date">
                     <img class="li-icon" src="icons/canguan.png" alt="话费">
                 </div>
-                <div class="li-motivo">话费</div>
+                <div class="li-motivo">话费
+                    <div class="li-nota">水果</div>
+                </div>
                 <div class="li-nome">Lo</div>
                 <div class="li-value">-18.00</div>
             </li>
@@ -73,7 +75,12 @@
             </div>
         </div>
         <div id="tastiera">
-            <div id="tas-nota"></div>
+            <div class="nota">
+                <div>备注：</div>
+                <div>
+                    <input type="text" id="tas-nota" placeholder="请输入备注">
+                </div>
+            </div>
             <div class="tas-info">
                 <span id="tas-data">8月19日</span>
                 <span id="tas-modi">备注</span>
@@ -125,6 +132,36 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="page" id="logpage">
+        <div class="head">
+            <div class="head-title">记账簿</div>
+            <div class="head-title">记录生活每一天</div>
+        </div>
+        <div class="avatar main">
+            <img class="famiglia" src="icons/famiglia.jpg" alt="">
+        </div>
+        <form id="login-form">
+            <input class="loginput" id="username" type="text" placeholder="Username" required>
+            <input class="loginput" id="password" type="password" placeholder="Password" required>
+            <input type="submit" value="登录">
+        </form>
+    </div>
+    <div class="test" id="testpage">
+        <ul class="swipe-list">
+            <li>
+                <div class="item-content">Item 1</div>
+            </li>
+            <li>
+                <div class="item-content">Item 2</div>
+            </li>
+            <li>
+                <div class="item-content">Item 3</div>
+            </li>
+            <!-- 更多的<li>标签 -->
+        </ul>
+        <button id="delete-btn" style="display: none;">Delete</button>
+        
     </div>
     <script src="script.js"></script>
     <script>

@@ -1,7 +1,7 @@
 var groupdata = {}
 var groupmese = {}
-var utente = 'lolo'
-var motivi = []
+var mi = ''
+var utente = ''
 var floors = document.querySelectorAll('.li-floor')
 var floorHeight = []    // 定义一个存放楼层高度的空数组
 
@@ -14,28 +14,20 @@ const prevMonthButton = document.querySelector('.prev-month');
 const nextMonthButton = document.querySelector('.next-month');
 let currentDate = new Date();
 
-
+Configurazione() 
 inizia()
-
 // -----------------------------操作函数-------------------------------------------
-
-// 初始化
-function inizia() {
-    createDB()
-    caricamovimentolist()
-    caricamotivilist()
-    Configurazione()
-    aggiornamento()
-    updateCalendar()
-}
 // 配置文件按键
 function Configurazione() {
-    window.addEventListener('scroll', scrolling)
+    window.addEventListener('scroll', scrolling);
     const keys = document.querySelectorAll('.key');
     keys.forEach(key => key.addEventListener('click', () => tastiera(key)));
     document.getElementById('tianjia').addEventListener('click', key_tianjia);
     document.getElementById('close-addpage').addEventListener('click', key_closeaddpage);
-
+    document.getElementById('login-form').addEventListener('submit', login);
+    document.getElementById('renwu').addEventListener('click', logout);
+    //禁用双击
+    document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });   
     prevYearButton.addEventListener('click', function() {
         currentDate.setFullYear(currentDate.getFullYear() - 1);
         updateCalendar();
@@ -53,23 +45,83 @@ function Configurazione() {
         updateCalendar();
     });
 }
-// 创建appDB数据库，创建movimento表
-function createDB() {
-    // 打开或创建 IndexedDB 数据库
-    let request = indexedDB.open("appDB", 1);
-    request.onupgradeneeded = function(event) {
-        let db = event.target.result;
-        // 创建 movimento 表
-        if (!db.objectStoreNames.contains("movimento")) {
-            let movimentoStore = db.createObjectStore("movimento", { keyPath: "ID", autoIncrement: false });
-            movimentoStore.createIndex("MOTIVO", "MOTIVO", { unique: false });
-            movimentoStore.createIndex("SPESA", "SPESA", { unique: false });
-            movimentoStore.createIndex("NOTA", "NOTA", { unique: false });
-            movimentoStore.createIndex("UPLOAD", "UPLOAD", { unique: false });
-            movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
-            movimentoStore.createIndex("DEL", "DEL", { unique: false });
+// 初始化
+async function inizia() {
+    if (localStorage.getItem('user') !== null) {
+        const user = JSON.parse(localStorage.getItem('user'))
+        const checked = user.checked
+        utente = user.utente
+        mi = user.mi
+        if (checked === true) {
+            await createDB()
+            await createlocalstorage()
+            caricamovimentolist()
+            caricamotivilist()
+            aggiornamento()
+            updateCalendar()
         }
-    };
+    } else {
+        changepage('logpage')
+    }
+}
+// 创建appDB数据库--promise
+function createDB() {
+    return new Promise((resolve, reject) => {
+        // 打开或创建 IndexedDB 数据库
+        let request = indexedDB.open("appDB", 1);
+
+        request.onupgradeneeded = function(event) {
+            let db = event.target.result;
+            // 创建 movimento 表
+            if (!db.objectStoreNames.contains("movimento")) {
+                let movimentoStore = db.createObjectStore("movimento", { keyPath: "ID", autoIncrement: false });
+                movimentoStore.createIndex("MOTIVO", "MOTIVO", { unique: false });
+                movimentoStore.createIndex("SPESA", "SPESA", { unique: false });
+                movimentoStore.createIndex("NOTA", "NOTA", { unique: false });
+                movimentoStore.createIndex("UPLOAD", "UPLOAD", { unique: false });
+                movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
+                movimentoStore.createIndex("DEL", "DEL", { unique: false });
+
+                var url = "mi=" + mi + "&action=getmovimento"
+                getdati(url)
+                    .then((response)=>{
+                        let dataArray = JSON.parse(response);
+                        addData(dataArray).then(() => {
+                            console.log("movimento数据已添加到数据库");
+                        });
+                    });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            // 数据库打开成功
+            resolve(event.target.result);
+        };
+
+        request.onerror = function(event) {
+            // 数据库打开失败
+            reject(event.target.error);
+        };
+    });
+}
+// 加载motivi本地数据 --promise
+function createlocalstorage() {
+    return new Promise((resolve, reject) => {
+        if (localStorage.getItem('motivi') === null) {
+            var url = "mi=" + mi + "&action=getmotivi";
+            getdati(url)
+                .then((response) => {
+                    localStorage.setItem('motivi', response);
+                    resolve(response);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+        } else {
+            // 如果本地已有数据，则直接resolve
+            resolve(localStorage.getItem('motivi'));
+        }
+    });
 }
 // 从数据库获取数据，加载页面
 function caricamovimentolist() {
@@ -82,10 +134,10 @@ function caricamovimentolist() {
 }
 // 更新数据
 function aggiornamento() {
-    var url = "mi=am9ubnkxOTg2&action=getmotivi"
+    var url = "mi=" + mi + "&action=getmotivi"
     getdati(url)
         .then((response)=>{localStorage.setItem('motivi', response)})
-    var url = "mi=am9ubnkxOTg2&action=getmovimento"
+    var url = "mi=" + mi + "&action=getmovimento"
     getdati(url)
         .then((response)=>{
             let dataArray = JSON.parse(response);
@@ -155,9 +207,15 @@ function showmovimento(dataArray) {
         const limotivo = document.createElement("div");
         limotivo.className = "li-motivo";
         limotivo.textContent = getnomemotivo(item.MOTIVO);
+        const linota = document.createElement("div");
+        linota.className = "li-nota";
+        linota.textContent = item.NOTA;
+        limotivo.appendChild(linota);
         const linome = document.createElement("div");
         linome.className = "li-nome";
-        linome.textContent = String(item.UTENTE).slice(0,2);
+        if (item.UTENTE == 'jonny') {
+            linome.textContent = String(item.UTENTE).slice(0,2);
+        }
         const livalue = document.createElement("div");
         livalue.className = "li-value";
         livalue.textContent = item.SPESA.toFixed(2);
@@ -222,9 +280,7 @@ function showmovimento(dataArray) {
 }
 // 加载消费原因列表
 function caricamotivilist() {
-    if (localStorage.getItem('motivi') !== null) {
-        motivi = JSON.parse(localStorage.getItem('motivi'));
-    } 
+    motivi = JSON.parse(localStorage.getItem('motivi'));
     const tabmotivi = document.getElementById('tabmotivi');
     tabmotivi.innerHTML = '';
     for (let i = 0; i < motivi.length; i++) {
@@ -241,7 +297,6 @@ function caricamotivilist() {
         motiviitem.appendChild(span);
         tabmotivi.appendChild(motiviitem);
     }
-    document.getElementById('current-motivo').setAttribute('idmotivo',3);
 }
 // 选择消费原因
 function scegliemotivo(element) {
@@ -291,7 +346,7 @@ function addnewmovimento() {
     if (spesa > 0) {
         const id = Number(get_timeid());
         const idmotivo = document.getElementById('current-motivo').getAttribute('idmotivo');
-        const nota = document.getElementById('tas-nota').innerText;
+        const nota = document.getElementById('tas-nota').value;
         const upload = 0;
         const data = [{
             "ID": id,
@@ -312,20 +367,21 @@ function addnewmovimento() {
         alert('请输入消费金额')
     }
 }
-// 新建消费记录
+// 初始化新建消费记录属性
 function newmovimento() {
     document.getElementById('current-motivo').innerText = '超市';
     document.getElementById('current-motivo').setAttribute('idmotivo',3);
     document.getElementById('current-img').src = 'icons/chaoshi.png';
     document.getElementById('tas-nota').innerText = '';
     document.getElementById('current-value').innerText = '0.00';
+    document.getElementById('current-value').setAttribute('num','')
 }
 // 上传数据到服务器
 async function updatemovimento(data) {
     for (let i = 0; i < data.length; i++) {
         const item = data[i];
-        const sql = item.ID + "," + item.MOTIVO + "," + item.SPESA + ",'" + String(item.NOTA).replace(","," ") + "',1,'" + item.UTENTE + "'," + item.DEL;
-        const url = 'mi=am9ubnkxOTg2&action=addmovimento&dati=' + sql
+        const dati = item.ID + "," + item.MOTIVO + "," + item.SPESA + ",'" + String(item.NOTA).replace(","," ") + "',1,'" + item.UTENTE + "'," + item.DEL;
+        const url = 'mi=' + mi + '&action=addmovimento&dati=' + dati
         const res = await getdati(url);
         if (res == 'True') {
             item.UPLOAD = 1;
@@ -425,7 +481,7 @@ function tastiera(button) {
             addnewmovimento();
             break;
         default:
-            if (check) {
+            if (check && displaynum < 1000000) {
                 displaynum = displaynum + key;
                 display.setAttribute('num',displaynum);
                 display.innerText = Number(displaynum).toFixed(2).toString();
@@ -450,15 +506,52 @@ function scrolling() {
 }
 // 添加按钮
 function key_tianjia() {
-    document.getElementById('mainpage').style.display = 'none'
-    document.getElementById('addpage').style.display = 'inline'
-    document.getElementById('current-value').setAttribute('num','')
+    changepage('addpage')
     newmovimento()
 }
 // 关闭addpage
 function key_closeaddpage() {
-    document.getElementById('mainpage').style.display = 'inline'
-    document.getElementById('addpage').style.display = 'none'
+    changepage('mainpage')
+}
+// 切换页面
+function changepage(page) {
+    const pages = document.querySelectorAll('.page')
+    pages.forEach(p => {
+        if (p.id === page) {
+            p.style.display = 'inline'
+        } else {
+            p.style.display = 'none'
+        }
+    });
+}
+// 登录事件
+function login(event) {
+    event.preventDefault();
+    const username = String(document.getElementById('username').value).toLowerCase();
+    const password = document.getElementById('password').value;
+    mi = btoa(username + password)
+    const url = 'mi=' + mi + '&action=login'
+    getdati(url).then(data => {
+        if (data === 'True') {
+            const user = {'checked': true,'utente': username,'mi': mi}
+            localStorage.setItem('user', JSON.stringify(user));
+            inizia();
+            changepage('mainpage')
+        } else {
+            alert('用户名或密码错误')
+        }
+    })
+}
+// 退出事件
+function logout() {
+    localStorage.removeItem('user');
+    azzeramento()
+    window.location.reload();
+}
+// 清除所有数据
+function azzeramento() {
+    localStorage.clear();
+    indexedDB.deleteDatabase('appDB');
 }
 
 
@@ -642,7 +735,7 @@ function getminmaxid() {
     let now = new Date();
     const mindata = new Date(now);
     const maxdata = new Date(now);
-    mindata.setMonth(now.getMonth() - 24);
+    mindata.setMonth(now.getMonth() - 10);
     maxdata.setMonth(now.getMonth() + 1);
     const minyear = String(mindata.getFullYear()).slice(-2); // 取年份的最后两位
     const minmonth = String(mindata.getMonth() + 1).padStart(2, '0'); // 月份是0-11，所以加1，并格式化为两位
@@ -651,4 +744,20 @@ function getminmaxid() {
     const minid = `${minyear}${minmonth}000000000`
     const maxid = `${maxyear}${maxmonth}000000000`
     return [Number(minid),Number(maxid)]
+}
+// 编码加密
+function btoa(input) {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    var str = input;
+    var output = '';
+    for (var block = 0, charCode, i = 0, map = chars; 
+            str.charAt(i | 0) || (map = '=', i % 1); 
+            output += map.charAt(63 & block >> 8 - i % 1 * 8)) {
+        charCode = str.charCodeAt(i += 3/4);
+        if (charCode > 0xFF) {
+            throw new Error("'btoa' failed: The string to be encoded contains characters outside of the Latin1 range.");
+        }
+        block = block << 8 | charCode;
+    }
+    return output;
 }
