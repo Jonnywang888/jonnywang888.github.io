@@ -25,7 +25,7 @@ function Configurazione() {
     document.getElementById('tianjia').addEventListener('click', key_tianjia);
     document.getElementById('close-addpage').addEventListener('click', key_closeaddpage);
     document.getElementById('login-form').addEventListener('submit', login);
-    document.getElementById('renwu').addEventListener('click', logout);
+    //document.getElementById('renwu').addEventListener('click', logout);
     //禁用双击
     document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });   
     prevYearButton.addEventListener('click', function() {
