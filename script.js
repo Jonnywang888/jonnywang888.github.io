@@ -491,36 +491,38 @@ function key_calendar() {
     }
 }
 // 设置滑动删除事件
-function setdelete(item) {
+function setdelete() {
     var lis = document.querySelectorAll('.movili');
     var startX, currentX,diffX;
     const maxSlide = -90; // 最大滑动距离（负值表示向左滑动）
-    item.addEventListener('touchstart', function(e) {
-        lis.forEach((e) => {
-           if (item !== e) {
-                e.style.transform = `translateX(${0}px)`
-           } 
+    lis.forEach((item) => {
+        item.addEventListener('touchstart', function(e) {
+            lis.forEach((e) => {
+               if (item !== e) {
+                    e.style.transform = `translateX(${0}px)`
+               } 
+            });
+            startX = e.touches[0].clientX;
         });
-        startX = e.touches[0].clientX;
-    });
-    item.addEventListener('touchmove', function(e) {
-        currentX = e.touches[0].clientX;
-        diffX = currentX - startX;
-        if (diffX < 0) { // 只处理左滑动
-            // 限制向左滑动的位移量不超过最大滑动距离
-            if (diffX < maxSlide) {
-                diffX = maxSlide;
+        item.addEventListener('touchmove', function(e) {
+            currentX = e.touches[0].clientX;
+            diffX = currentX - startX;
+            if (diffX < 0) { // 只处理左滑动
+                // 限制向左滑动的位移量不超过最大滑动距离
+                if (diffX < maxSlide) {
+                    diffX = maxSlide;
+                }
+                item.style.transform = `translateX(${diffX}px)`
+            };
+        });
+        item.addEventListener('touchend', function() {
+            if (diffX < -80) {
+                item.style.transform = `translateX(-90px)`
+            } else {
+                item.style.transform = `translateX(${0}px)`
             }
-            item.style.transform = `translateX(${diffX}px)`
-        };
-    });
-    item.addEventListener('touchend', function() {
-        if (diffX < -80) {
-            item.style.transform = `translateX(-85px)`
-        } else {
-            item.style.transform = `translateX(${0}px)`
-        }
-    });
+        });
+    })
 }
 // 添加数据到本地上传数据库(数组数据)
 function addtolocalupload(dataArray) {
@@ -695,7 +697,6 @@ function addnewlist(dataArray) {
                 linota.className = "li-nota";
                 linota.textContent = item.NOTA;
                 limotivo.appendChild(linota);
-                setdelete(divli)
             }
             divli.appendChild(lidate);
             divli.appendChild(limotivo);
@@ -706,6 +707,7 @@ function addnewlist(dataArray) {
             list.appendChild(li)
         }
         setscroll();
+        setdelete();
         scrolling();
     }
     needload = true
