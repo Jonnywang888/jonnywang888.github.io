@@ -494,7 +494,7 @@ function key_calendar() {
 function setdelete(item) {
     var lis = document.querySelectorAll('.movili');
     var startX, currentX,diffX;
-    const maxSlide = -85; // 最大滑动距离（负值表示向左滑动）
+    const maxSlide = -90; // 最大滑动距离（负值表示向左滑动）
     item.addEventListener('touchstart', function(e) {
         lis.forEach((e) => {
            if (item !== e) {
