@@ -1,68 +1,67 @@
-self.addEventListener('install', function(event) {
-    event.waitUntil(
-        caches.open('my-pwa-cache-v1').then(function(cache) {
-            return cache.addAll([
-                '/index.html',
-                '/manifest.json',
-                '/icons/app.png',
-                // '/icons/icon-512x512.png',
-                '/styles.css',   // 如果你有额外的CSS文件
-                '/script.js'     // 如果你有额外的JavaScript文件
-            ]);
-        })
-    );
-});
+const cache_name = 'app_cache_v1';
+const urls = [
+  '/index.html',
+  '/manifest.json',
+  '/icons/app.png',
+  '/styles.css',   // 如果你有额外的CSS文件
+  '/script.js'     // 如果你有额外的JavaScript文件
+]
 
-// 获取事件：实现缓存优先策略
-// self.addEventListener('fetch', function(event) {
-//     event.respondWith(
-//       caches.match(event.request)  // 尝试从缓存中匹配请求
-//         .then(function(response) {
-//           if (response) {
-//             return response;  // 如果缓存中有匹配的请求，则返回缓存
-//           }
-//           return fetch(event.request);  // 如果缓存中没有匹配的请求，再发起网络请求
-//         }
-//       )
-//     );
-//   });
+self.addEventListener('install', async e => {
+  // 配置缓存
+  const cache = await caches.open(cache_name);
+  await cache.addAll(urls);
+  await self.skipWaiting();
+})
+
+self.addEventListener('activate', async e => {
+  const keys = await caches.keys();
+  keys.forEach(key => {
+    // 如果缓存名不是当前缓存名，则删除
+    if (key !== cache_name) {
+      caches.delete(key);
+    }
+  });
+  await self.clients.claim();
+})
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  const url = new URL(req.url);
+  if (url.origin !== self.origin) {
+    return;
+  }
+  if (req.url.includes('icons/')) {
+    e.respondWith(cachefirst(req));
+  } else {
+    e.respondWith(networkfirst(req));
+  }
+})
 
 
-// 缓存与网络竞争
-// self.addEventListener('fetch', event => {
-//   event.respondWith(
-//     // 从缓存中读取资源
-//     caches.match(event.request).then(cachedResponse => {
-//       // 发起网络请求
-//       const networkFetch = fetch(event.request).then(networkResponse => {
-//         // 如果网络请求成功，将响应存入缓存
-//         return caches.open('my-cache').then(cache => {
-//           cache.put(event.request, networkResponse.clone());
-//           return networkResponse; // 返回网络响应
-//         });
-//       });
 
-//       // 返回缓存中的内容，或者等待网络响应
-//       return cachedResponse || networkFetch;
-//     })
-//   );
-// });
-
-// 网络优先
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    // 尝试通过网络获取请求的资源
-    fetch(event.request)
-      .then(response => {
-        // 如果网络请求成功，将其克隆并存入缓存
-        return caches.open('my-cache').then(cache => {
-          cache.put(event.request, response.clone());
-          return response; // 返回网络请求的响应
-        });
-      })
-      .catch(() => {
-        // 如果网络请求失败，从缓存中返回资源
-        return caches.match(event.request);
-      })
-  );
-});
+// 缓存优先策略
+async function cachefirst(req) {
+  const cache = await caches.open(cache_name);
+  const cached = await cache.match(req);
+  // 如果有缓存，则返回缓存
+  if (cached) {
+    return cached;
+  } else {
+    const fresh = await fetch(req);
+    return fresh;
+  }
+};
+// 网络优先策略
+async function networkfirst(req) {
+  const cache = await caches.open(cache_name);
+  try{
+    const fresh = await fetch(req);
+    // 克隆内容到缓存内
+    cache.put(req, fresh.clone());
+    return fresh;
+  } catch(e) {
+    const cached = await cache.match(req);
+    return cached;
+  }
+}

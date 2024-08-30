@@ -21,28 +21,12 @@
             </div>
         </div>
         <ul class="main" id="listmovimento">
-            <li class="li-tot">
-                <div class="li-date">昨天</div>
-                <div class="li-motivo">总支出</div>
-                <div class="li-nome"></div>
-                <div class="li-value">-188.00</div>
-            </li>
-            <li>
-                <div class="li-date">
-                    <img class="li-icon" src="icons/canguan.png" alt="话费">
-                </div>
-                <div class="li-motivo">话费
-                    <div class="li-nota">水果</div>
-                </div>
-                <div class="li-nome">Lo</div>
-                <div class="li-value">-18.00</div>
-            </li>
         </ul>
         <div class="foot">
             <div class="foot-item">
                 <img id="baobiao" src="icons/baobiao.png" alt="baobiao">
             </div>
-            <div class="foot-item">
+            <div class="foot-item foot-mid">
                 <img id="tianjia" src="icons/tianjia.png" alt="添加">
             </div>
             <div class="foot-item">
@@ -83,7 +67,7 @@
             </div>
             <div class="tas-info">
                 <span id="tas-data">8月19日</span>
-                <span id="tas-modi">备注</span>
+                <button id="tas-butnota">备注</button>
             </div>
             <div class="keys">
                 <button class="key">7</button>
@@ -131,13 +115,14 @@
                     <!-- 日历天数将由JS动态生成 -->
                 </div>
             </div>
+            <div>
+                <button class="calendar-ok">确认</button>
+            </div>
         </div>
     </div>
-    <div class="page" id="logpage">
-        <div class="head">
-            <div class="head-title">记账簿</div>
-            <div class="head-title">记录生活每一天</div>
-        </div>
+    <div class="page center" id="logpage">
+        <div class="head-title">记账簿</div>
+        <div class="head-title">记录生活每一天</div>
         <div class="avatar main">
             <img class="famiglia" src="icons/famiglia.jpg" alt="">
         </div>
@@ -147,18 +132,41 @@
             <input type="submit" value="登录">
         </form>
     </div>
-    <div class="test" id="testpage">
+    <div class="page" id="setpage">
+        <div class="head">
+            <div class="head-title">记账簿</div>
+            <div class="head-title">设置界面</div>
+        </div>
+        <div class="main center">
+            <div class="avatar main">
+                <img class="famiglia logo-utente" src="icons/famiglia.jpg" alt="">
+            </div>
+            <div class="set-utente">Lolo</div>
+            <div>
+                <div class="set-unload">未上传数据：1条</div>
+            </div>
+            <div class="item-flex set-buts">
+                <button class="set-but" id="reload">重新加载</button>
+                <button class="set-but" id="logout">退出登录</button>
+            </div>
+        </div>
+        <div class="foot">
+            <div class="foot-item">
+                <img id="baobiao" src="icons/baobiao.png" alt="baobiao">
+            </div>
+            <div class="foot-item foot-mid">
+                <img id="home" src="icons/home.png" alt="主页">
+            </div>
+            <div class="foot-item">
+                <img id="renwu" src="icons/renwu.png" alt="人物">
+            </div>
+        </div>
+    </div>
+    <div class="page" id="biaopage">
+        <div id="biao-lie"></div>
+        <div id="biao-di"></div>
+        <div id="biao-display"></div>
     </div>
     <script src="script.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
-            .then(function(registration) {
-                console.log('Service Worker registered with scope:', registration.scope);
-            }).catch(function(error) {
-                console.log('Service Worker registration failed:', error);
-            });
-        }
-    </script>
 </body>
 </html>

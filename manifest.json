@@ -7,6 +7,20 @@
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "orientation": "portrait",
+  "form_factor": "wide",
+  "screenshots": [
+    {
+        "src": "/icons/screenshot.jpg",
+        "sizes": "1170x2532",
+        "type": "image/png"
+    },
+    {
+      "src": "/icons/screenshot.jpg",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "wide"
+  }
+],
   "icons": [
     {
       "src": "/icons/app.png",

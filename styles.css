@@ -8,17 +8,9 @@ body, html {
     -webkit-overflow-scrolling: touch;
     font-family: Arial, sans-serif;
 }
-#mainpage{
-    display: inline;
-}
-#addpage{
-    display: none;
-}
-#logpage{
-    display: none;
-}
 #calendar{
     display: none;
+    z-index: 1001;
 }
 
 .head {
@@ -78,7 +70,7 @@ body, html {
     width: 40px;
     height: 40px;
 }
-#tianjia {
+.foot-mid {
     margin-top: 0;
     width: 50px;
     height: 50px;
@@ -94,13 +86,21 @@ body, html {
     padding: 0;
 }
 .main li {
+    position: relative;
+}
+.li{
+    position: relative;
+    background-color: #fff;
     display: flex;
     align-items: center;
-    padding:5px 0px;
+    padding:2px 0px;
+    height: 40px;
+    z-index: 1;
+    transform: translateX(0);
 }
 .li-nome{
     width: 10%;
-    color: #0056b3;
+    color: rgb(61, 109, 220);
     font-weight: bold;
     text-transform: capitalize;
 }
@@ -135,6 +135,25 @@ body, html {
     font-size: 12px;
     color: #8a949e;
 }
+.li-but{
+    font-size: 14px;
+    background-color: #fff;
+    color: red;
+    margin-left: 5px;
+    width: 70px;
+    height: 30px;
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 5px;
+    border: 1px solid red;
+    position: absolute;
+    top: 6px; /* 定位到 movili 的底部 */
+    left: 78%; /* 按钮左对齐 */
+    box-sizing: border-box;
+}
+.movili{
+    transition: transform 0.5s ease;
+}
 #tastiera {
     position: fixed;
     bottom: 0;
@@ -142,8 +161,6 @@ body, html {
     overflow: hidden;
     width: 100%;
     z-index: 1000;
-    transform: translateY(0);
-    transition: transform 0.3s ease;
 }
 .tas-info {
     display: flex;
@@ -156,22 +173,25 @@ body, html {
     font-size: 1em;
 }
 #tas-data {
-    margin-left: 10px;
-    border: 1px solid #007bff;
+    margin-left: 5px;
+    border: 1px solid rgb(61, 109, 220);
     border-radius: 5px;
-    color: #007bff;
+    color: rgb(61, 109, 220);
     padding: 1px 10px;
+    background-color: #fff;
 }
 #tas-data:active {
-    background-color: #007bff;
+    background-color: rgb(61, 109, 220);
     color: white;
 }
-#tas-modi {
+#tas-butnota {
     margin-left: 10px;
-    border: 1px solid #8a949e;
+    background-color: #fff;
+    border: 1px solid rgb(61, 109, 220);
     border-radius: 5px;
-    color: #8a949e;
-    padding: 1px 10px;
+    color: rgb(61, 109, 220);
+    font-size: 14px;
+    padding: 0px 10px;
 }
 #tas-modi:active {
     background-color: #8a949e;
@@ -183,6 +203,7 @@ body, html {
     width: 100%;
     height: 60px;
     font-size: 1em;
+    display: none;
 }
 #tas-nota{
     height: 30px;
@@ -214,11 +235,11 @@ body, html {
     background-color: #ddd;
 }
 .conferma {
-    background-color: #007bff;
+    background-color: rgb(61, 109, 220);
     color: white;
 }
 .conferma:active {
-    background-color: #0056b3;
+    background-color: rgb(61, 109, 220);
 }
 
 .addhead {
@@ -278,6 +299,7 @@ body, html {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-gap: 10px;
+    margin-bottom: 300px;
 }
 .motivi-item {
     text-align: center;
@@ -353,10 +375,28 @@ body, html {
     color: #ccc;
 }
 .calendar-days .day.selected {
-    background-color: #3f86f6;
+    background-color: rgb(61, 109, 220);
     color: #fff;
     border-radius: 50%;
 }
+.calendar-ok {
+    position: fixed;
+    bottom: 30px;
+    right: 20px;
+    width: 80px;
+    border: 1px solid rgb(61, 109, 220);
+    color: #fff;
+    background-color: rgb(61, 109, 220);
+    font-size: 16px;
+    padding: 5px 15px;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+}
+.calendar-ok:active {
+    background-color: rgb(61, 109, 220);
+}
+
 .moving-image {
     position: absolute;
     transition: transform 0.5s ease; /* 平滑过渡 */
@@ -364,17 +404,17 @@ body, html {
     z-index: 1001; /* 使克隆的图片在最前面 */
 }
 
-#logpage {
+.center {
     width: 100%;
     text-align: center;
 }
 .avatar {
-    margin-top: 120px;
+    margin-top: 80px;
     width: 150px;
     height: 150px;
     border-radius: 50%;
     background-color:  rgb(115, 204, 50);
-    margin-bottom: 50px;
+    margin-bottom: 20px;
     display: inline-block;
     overflow: hidden;
 }
@@ -393,7 +433,7 @@ input[type="submit"] {
     width: 90%;
     height: 50px;
     padding: 10px;
-    background-color: rgb(115, 204, 50);
+    background-color: rgb(61, 109, 220);
     border: none;
     border-radius: 5px;
     color: white;
@@ -401,10 +441,82 @@ input[type="submit"] {
     cursor: pointer;
 }
 input[type="submit"]:hover {
-    background-color: rgb(104, 196, 38);
+    background-color: rgb(61, 109, 220);
 }
 .famiglia{
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+.set-utente {
+    font-size: 25px;
+    margin: 0 30% 20px 30%;
+    padding: 10px;
+    border-radius: 0px;
+    border-bottom: 2px solid #ccc;
+    text-transform: capitalize;
+}
+.set-unload{
+    margin-top: 30px;
+    font-size: 20px;
+}
+.item-flex{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.set-buts {
+    position: fixed;
+    bottom: 120px;
+    width: 100%;
+}
+.set-but {
+    margin: 0 20px;
+    font-size: 20px;
+    border-radius: 10px;
+    height: 45px;
+    width: 130px;
+    background-color: #fff;
+    border: 3px solid  rgb(61, 109, 220);
+    color:   rgb(61, 109, 220);
+}
+
+#biao-lie {
+    margin-left:3%;
+    padding-left: 1%;
+    width: 92%;
+    height: 200px;
+    display:flex;
+    align-items: flex-end; 
+    border-bottom: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+}
+#biao-di {
+    margin-left:3%;
+    padding-left: 1%;
+    width: 92%;
+    display:flex;
+    align-items: flex-end; 
+}
+.lie {
+    display: inline-block;
+    margin: 0.5%;
+    background-color:orangered;
+}
+.di {
+    display: inline-block;
+    margin: 0.5%;
+    font-size: 10px;
+    text-align: center;
+}
+#biao-display {
+    width: 50px;
+    border-radius: 3px;
+    background-color: #e6e6e6;
+    position: absolute;
+    display: none; /* 默认隐藏 */
+    z-index: 10; /* 确保显示在前面 */
+    font-size: 10px;
+    text-align: center;
+    padding: 5px;
 }
