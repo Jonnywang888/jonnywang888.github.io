@@ -61,8 +61,8 @@ async function inizia() {
         utente = user.utente
         mi = user.mi
         if (checked === true) {
-            await createDB()
-            await createlocalstorage()
+            // await createDB()
+            // await createlocalstorage()
             changepage('mainpage')
             caricamovimentolist()
             caricamotivilist()
