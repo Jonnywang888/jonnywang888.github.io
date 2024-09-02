@@ -8,7 +8,6 @@ var groupmese = {};
 var numlist = 1;
 Configurazione() 
 inizia()
-console.log(mi)
 
 // 配置文件
 function Configurazione() {
