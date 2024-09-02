@@ -60,10 +60,9 @@ async function inizia() {
         const checked = user.checked
         utente = user.utente
         mi = user.mi
-        alert(checked);
         if (checked === true) {
-            // await createDB()
-            // await createlocalstorage()
+            await createDB()
+            await createlocalstorage()
             changepage('mainpage')
             caricamovimentolist()
             caricamotivilist()

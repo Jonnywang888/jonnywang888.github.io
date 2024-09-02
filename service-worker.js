@@ -34,7 +34,7 @@ self.addEventListener('fetch', e => {
   if (req.url.includes('icons/')) {
     e.respondWith(cachefirst(req));
   } else {
-    e.respondWith(networkfirst(req));
+    e.respondWith(cachefirst(req));
   }
 })
 
