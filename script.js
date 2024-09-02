@@ -130,12 +130,6 @@ function createlocalstorage() {
 async function caricamovimentolist() {
     await loadnewlist(0)
     showlist()
-    // const numid = getminmaxid()
-    // getDbData(numid[0], numid[1])
-    //     .then((response) => {
-    //         showmovimento(response); // 在控制台打印获取到的数据数组
-    //         scrolling()
-    //     });
 }
 // 注册serviceWorker事件
 function registraserviceWorker() {
@@ -449,6 +443,8 @@ async function reload() {
     await res;
     const keys = await caches.keys();
     keys.forEach(key => caches.delete(key));
+    localStorage.removeItem('user');
+    localStorage.removeItem('motivi');
     window.location.reload();
 }
 // 清除所有数据
