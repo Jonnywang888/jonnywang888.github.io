@@ -60,6 +60,7 @@ async function inizia() {
         const checked = user.checked
         utente = user.utente
         mi = user.mi
+        alert(mi)
         if (checked === true) {
             // await createDB()
             // await createlocalstorage()
