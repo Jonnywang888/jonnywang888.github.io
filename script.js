@@ -142,14 +142,27 @@ function registraserviceWorker() {
 function aggiornamento() {
     uploadmovimento()
     var url = baseurl + mi + "&action=getmotivi"
-    fetch(url).then(response => response.text())
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.text();
+        })
         .then((response)=>localStorage.setItem('motivi', response))
+        .catch(error => console.error('There was a problem with the fetch operation:', error));
 
     var url = baseurl + mi + "&action=getmovimento"
     fetch(url)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
         .then(response => {return addData(response)})
         .then(() => caricamovimentolist())
+        .catch(error => console.error('There was a problem with the fetch operation:', error));
 }
 // 加载消费原因列表
 function caricamotivilist() {
