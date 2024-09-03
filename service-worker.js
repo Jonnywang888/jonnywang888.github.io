@@ -49,6 +49,8 @@ async function cachefirst(req) {
     return cached;
   } else {
     const fresh = await fetch(req);
+    // 克隆内容到缓存内
+    cache.put(req, fresh.clone());
     return fresh;
   }
 };
