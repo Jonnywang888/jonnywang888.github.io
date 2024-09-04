@@ -1,5 +1,5 @@
-var mi,utente,floors,floorHeight;
-var baseurl = 'https://trustfollonica.ddns.net/server/app.asp?mi=';
+var mi,utente,floors,floorHeight,databiao;
+var baseurl = 'https://trustfollonica.ddns.net/server/new.asp?mi=';
 var currentDate = new Date();
 var needload = true;
 var listmovimento = [];
@@ -7,31 +7,32 @@ var groupdata = {};
 var groupmese = {};
 var numlist = 1;
 Configurazione() 
-inizia()
+init()
 
 // 配置文件
 function Configurazione() {
     registraserviceWorker();
+    //禁用双击
+    document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });
+    // 设置默认按钮界面
+    document.getElementById('but-tianjia').addEventListener('click', key_tianjia);
+    click_footbut(document.getElementById('but-tianjia'));
+    document.querySelectorAll('.foot-item').forEach(x => x.addEventListener('click', () => click_footbut(x))); 
     window.addEventListener('scroll', scrolling);
-    const keys = document.querySelectorAll('.key');
-    keys.forEach(key => key.addEventListener('click', () => tastiera(key)));
-    document.getElementById('tianjia').addEventListener('click', key_tianjia);
+    document.querySelectorAll('.key').forEach(k => k.addEventListener('click', () => tastiera(k)));
     document.getElementById('close-addpage').addEventListener('click', key_closeaddpage);
     document.getElementById('login-form').addEventListener('submit', login);
-    document.getElementById('renwu').addEventListener('click', () => {
-        showunload();
-        changepage('setpage');
-    });
+    document.getElementById('but-renwu').addEventListener('click', showunload);
+    document.getElementById('but-baobiao').addEventListener('click', key_biao);
     document.getElementById('tas-butnota').addEventListener('click', key_nota);
     document.getElementById('tas-data').addEventListener('click', key_calendar);
     document.querySelector('.calendar-ok').addEventListener('click', setdatacalendar);
     document.querySelector('.calendar-ok').addEventListener('click', key_calendar);
-    document.getElementById('home').addEventListener('click', () => changepage('mainpage'));
     document.getElementById('logout').addEventListener('click', logout);
     document.getElementById('reload').addEventListener('click', reload);
-    //禁用双击
-    document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });   
-    
+    document.querySelector('.biao-month').addEventListener('click',init_biao_month);
+    document.querySelector('.biao-year').addEventListener('click',init_biao_year);
+    document.querySelector('.biao-head-year').addEventListener('change',changeselectyear)
     const prevYearButton = document.querySelector('.prev-year');
     const nextYearButton = document.querySelector('.next-year');
     const prevMonthButton = document.querySelector('.prev-month');
@@ -54,7 +55,7 @@ function Configurazione() {
     });
 }
 // 初始化
-async function inizia() {
+async function init() {
     if (localStorage.getItem('user') !== null) {
         const user = JSON.parse(localStorage.getItem('user'))
         const checked = user.checked
@@ -93,7 +94,10 @@ function createDB() {
                 var url = baseurl + mi + "&action=getmovimento"
                 fetch(url).then(response => response.json())
                     .then(dataArray => addData(dataArray))
-            }
+                    resolve(true);
+            } else {
+                resolve(true);
+            };
         };
 
         request.onsuccess = function(event) {
@@ -116,7 +120,7 @@ function createlocalstorage() {
         if (localStorage.getItem('motivi') === null) {
             var url =baseurl + mi + "&action=getmotivi";
             fetch(url).then(response => response.text())
-                .then((response) => {
+                .then(response => {
                     localStorage.setItem('motivi', response);
                     resolve(true);
                 })
@@ -130,13 +134,12 @@ function createlocalstorage() {
 async function caricamovimentolist() {
     await loadnewlist(0)
     showlist()
-}
-// 注册serviceWorker事件
-function registraserviceWorker() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js')
-        .then(function(registration) {return})
-    }
+    // const numid = getminmaxid()
+    // getDbData(numid[0], numid[1])
+    //     .then((response) => {
+    //         showmovimento(response); // 在控制台打印获取到的数据数组
+    //         scrolling()
+    //     });
 }
 // 更新数据
 function aggiornamento() {
@@ -164,9 +167,28 @@ function aggiornamento() {
         .then(() => caricamovimentolist())
         .catch(error => console.error('There was a problem with the fetch operation:', error));
 }
+// 底部按钮效果
+function click_footbut(element) {
+    const items = document.querySelectorAll('.foot-item');
+    items.forEach(item => {
+        const firstchild = item.children[0];
+        const secondchild = item.children[1];
+        firstchild.src = firstchild.src.replace('-active', '');
+        secondchild.style.color = '#86888B'
+        if (item === element) {
+            firstchild.src = firstchild.src.replace('.png', '-active.png');
+            secondchild.style.color = '#0A84FF'
+        }
+        if (firstchild.src.includes('tianjia-active')) {
+            secondchild.textContent = '添加'
+        } else if (firstchild.src.includes('tianjia')) {
+            secondchild.textContent = '主页'
+        }
+    })
+}
 // 加载消费原因列表
 function caricamotivilist() {
-    motivi = JSON.parse(localStorage.getItem('motivi'));
+    const motivi = JSON.parse(localStorage.getItem('motivi'));
     const tabmotivi = document.getElementById('tabmotivi');
     tabmotivi.innerHTML = '';
     for (let i = 0; i < motivi.length; i++) {
@@ -376,36 +398,51 @@ function tastiera(button) {
 }
 // 定义滚动函数
 async function scrolling() {
-    // 定义变量保存页面当前滚动距离
-    const floorH = document.documentElement.scrollTop
-    for (let i = 0; i < floors.length; i++) {
-        if (floorH >= floorHeight[i] && (floorH < floorHeight[i + 1]||i == floors.length - 1)) {
-            const headanno = document.querySelector('#head-anno')
-            const headmese = document.querySelector('#head-mese')
-            const headtot = document.querySelector('#head-tot')
-            const strmese = floors[i].getAttribute('data-floor').toString()
-            headtot.innerHTML = groupmese[strmese].toFixed(2)
-            headanno.innerHTML = '20' + strmese.slice(0, 2) + '年'
-            headmese.innerHTML = parseInt(strmese.slice(2, 4)) + '月'
-            if (i == floors.length - 1) {
-                const num = listmovimento.length
-                if (num == numlist) {
-                    await loadnewlist(num)
-                    const dataArray = listmovimento[num]
-                    addnewlist(dataArray)
+    const main = document.getElementById('mainpage').style.display;
+    if (main !== 'none') {
+        // 定义变量保存页面当前滚动距离
+        const floorH = document.documentElement.scrollTop
+        for (let i = 0; i < floors.length; i++) {
+            if (floorH >= floorHeight[i] && (floorH < floorHeight[i + 1]||i == floors.length - 1)) {
+                const headanno = document.querySelector('#head-anno')
+                const headmese = document.querySelector('#head-mese')
+                const headtot = document.querySelector('#head-tot')
+                const strmese = floors[i].getAttribute('data-floor').toString()
+                headtot.innerHTML = groupmese[strmese].toFixed(2)
+                headanno.innerHTML = '20' + strmese.slice(0, 2) + '年'
+                headmese.innerHTML = parseInt(strmese.slice(2, 4)) + '月'
+                if (i == floors.length - 1) {
+                    const num = listmovimento.length
+                    if (num == numlist) {
+                        await loadnewlist(num)
+                        const dataArray = listmovimento[num]
+                        addnewlist(dataArray)
+                    }
                 }
             }
-        }
-    }   
+        }   
+    }
+
 }
 // 添加按钮
 function key_tianjia() {
-    document.getElementById('calendar').style.display = 'none';
-    currentDate = new Date();
-    updateCalendar();
-    changepage('addpage');
-    newmovimento();
-    setdatacalendar();
+    const tianjia = document.getElementById('but-tianjia')
+    const img = tianjia.children[0].src;
+    if (img.includes('active')) {
+        document.getElementById('calendar').style.display = 'none';
+        currentDate = new Date();
+        updateCalendar();
+        changepage('addpage');
+        newmovimento();
+        setdatacalendar();
+    } else {
+        changepage('mainpage');
+    };
+}
+// 切换报表页面
+async function key_biao() {
+    init_biao();
+    changepage('biaopage');
 }
 // 关闭addpage
 function key_closeaddpage() {
@@ -434,7 +471,7 @@ function login(event) {
             if (data === 'True') {
                 const user = {'checked': true,'utente': username,'mi': mi}
                 localStorage.setItem('user', JSON.stringify(user));
-                inizia();
+                init();
                 changepage('mainpage')
             } else {
                 alert('用户名或密码错误')
@@ -446,6 +483,7 @@ function logout() {
     localStorage.removeItem('user');
     window.location.reload();
 }
+// 重新载入
 async function reload() {
     const res = new Promise((resolve, reject) => {
         let request = indexedDB.deleteDatabase('appDB');
@@ -454,10 +492,8 @@ async function reload() {
         request.onblocked = () => resolve();
     });
     await res;
-    const keys = await caches.keys();
-    keys.forEach(key => caches.delete(key));
-    localStorage.removeItem('user');
-    localStorage.removeItem('motivi');
+    // const keys = await caches.keys();
+    // keys.forEach(key => caches.delete(key));
     window.location.reload();
 }
 // 清除所有数据
@@ -497,38 +533,36 @@ function key_calendar() {
     }
 }
 // 设置滑动删除事件
-function setdelete() {
+function setdelete(item) {
     var lis = document.querySelectorAll('.movili');
     var startX, currentX,diffX;
-    const maxSlide = -90; // 最大滑动距离（负值表示向左滑动）
-    lis.forEach((item) => {
-        item.addEventListener('touchstart', function(e) {
-            lis.forEach((e) => {
-               if (item !== e) {
-                    e.style.transform = `translateX(${0}px)`
-               } 
-            });
-            startX = e.touches[0].clientX;
+    const maxSlide = -85; // 最大滑动距离（负值表示向左滑动）
+    item.addEventListener('touchstart', function(e) {
+        lis.forEach((e) => {
+           if (item !== e) {
+                e.style.transform = `translateX(${0}px)`
+           } 
         });
-        item.addEventListener('touchmove', function(e) {
-            currentX = e.touches[0].clientX;
-            diffX = currentX - startX;
-            if (diffX < 0) { // 只处理左滑动
-                // 限制向左滑动的位移量不超过最大滑动距离
-                if (diffX < maxSlide) {
-                    diffX = maxSlide;
-                }
-                item.style.transform = `translateX(${diffX}px)`
-            };
-        });
-        item.addEventListener('touchend', function() {
-            if (diffX < -80) {
-                item.style.transform = `translateX(-90px)`
-            } else {
-                item.style.transform = `translateX(${0}px)`
+        startX = e.touches[0].clientX;
+    });
+    item.addEventListener('touchmove', function(e) {
+        currentX = e.touches[0].clientX;
+        diffX = currentX - startX;
+        if (diffX < 0) { // 只处理左滑动
+            // 限制向左滑动的位移量不超过最大滑动距离
+            if (diffX < maxSlide) {
+                diffX = maxSlide;
             }
-        });
-    })
+            item.style.transform = `translateX(${diffX}px)`
+        };
+    });
+    item.addEventListener('touchend', function() {
+        if (diffX < -80) {
+            item.style.transform = `translateX(-85px)`
+        } else {
+            item.style.transform = `translateX(${0}px)`
+        }
+    });
 }
 // 添加数据到本地上传数据库(数组数据)
 function addtolocalupload(dataArray) {
@@ -703,6 +737,7 @@ function addnewlist(dataArray) {
                 linota.className = "li-nota";
                 linota.textContent = item.NOTA;
                 limotivo.appendChild(linota);
+                setdelete(divli)
             }
             divli.appendChild(lidate);
             divli.appendChild(limotivo);
@@ -713,7 +748,6 @@ function addnewlist(dataArray) {
             list.appendChild(li)
         }
         setscroll();
-        setdelete();
         scrolling();
     }
     needload = true
@@ -739,17 +773,21 @@ function showunload() {
     const datiunload = JSON.parse(localStorage.getItem('upload'));
     const numunload = datiunload.length;
     unload.innerText = `未上传数据：${numunload}条`
+    changepage('setpage');
 }
 // 创建视图表-列
 function create_biaolie(dataArray) {
     const num = dataArray.length;
     const biao = document.getElementById("biao-lie");
+    biao.innerHTML = '';
     const di = document.getElementById("biao-di");
+    di.innerHTML = '';
     const w = 100 - num * 1 -2;
     const maxValue = dataArray.reduce((max, current) => {
         return current[1] > max ? current[1] : max;
     }, dataArray[0][1]);
     const maxh = 150;
+    let sum = 0;
     for (let i = 0; i < num; i++) {
         const item = dataArray[i];
         const lie = document.createElement("div");
@@ -771,6 +809,7 @@ function create_biaolie(dataArray) {
         if (item[1] == maxValue) {
             setevent(lie);
         }
+        sum -= item[1];
     }
     function setevent(event) {
         const lies = document.querySelectorAll('.lie');
@@ -792,358 +831,194 @@ function create_biaolie(dataArray) {
         biaoDisplay.style.display = 'block';
         biaoDisplay.innerText = Number(event.getAttribute('data-value')).toFixed(2)
     }
+    const tot = document.querySelector('.biao-tot-num')
+    tot.textContent = sum.toFixed(2)
 }
-
-
-
-// -------------------------------功能函数--------------------------------------------
-// 添加数据到appDB数据库内（数据）-promise
-function addData(dataArray) {
-    return new Promise((resolve, reject) => {
-        // 打开数据库
-        const request = indexedDB.open("appDB", 1);
-        const storeName = "movimento"; // 表名
-        request.onsuccess = function(event) {
-            const db = event.target.result;
-            // 开启一个事务
-            const transaction = db.transaction([storeName], "readwrite");
-            const objectStore = transaction.objectStore(storeName);
-            let pendingRequests = dataArray.length;
-            let hasError = false;
-            
-            // 处理数据数组中的每个数据对象
-            dataArray.forEach(data => {
-                // 确保 data 对象中包含主键字段 ID
-                if (!data.ID) {
-                    console.error("Data object must contain an 'ID' field");
-                    hasError = true;
-                    return;
-                }
-                // 使用 put 方法插入数据，并显式提供主键
-                const addRequest = objectStore.put(data); // 使用 put 以插入或更新数据
-                
-                addRequest.onsuccess = function() {
-                    pendingRequests--;
-                    if (pendingRequests === 0 && !hasError) {
-                        resolve(true); // 所有操作成功
-                    }
-                };
-                
-                addRequest.onerror = function(event) {
-                    hasError = true;
-                    console.error("Error inserting data: ", event.target.errorCode);
-                    reject(new Error("Error inserting data: " + event.target.errorCode));
-                };
-            });
-            
-            // 事务完成时
-            transaction.oncomplete = function() {
-                if (!hasError && pendingRequests === 0) {
-                    resolve(true); // 所有操作成功
-                }
-            };
-            
-            // 事务出错时
-            transaction.onerror = function(event) {
-                reject(new Error("Transaction error: " + event.target.errorCode));
-            };
-        };
-        
-        // 数据库打开失败
-        request.onerror = function(event) {
-            reject(new Error("Database error: " + event.target.errorCode));
-        };
-    });
-}
-// 获取appDB内的数据(最小，最大)-promise
-function getDbData(minId, maxId) {
-    return new Promise((resolve, reject) => {
-        // 打开数据库连接
-        let request = indexedDB.open("appDB");
-        let storeName = "movimento"; 
-
-        request.onsuccess = function(event) {
-            let db = event.target.result;
-            
-            // 开启一个事务
-            let transaction = db.transaction(storeName, "readonly");
-            
-            // 获取对象存储
-            let store = transaction.objectStore(storeName);
-            
-            // 创建一个 ID 范围
-            let keyRange = IDBKeyRange.bound(minId, maxId, true, true);
-            
-            // 获取数据
-            let query = store.openCursor(keyRange);
-            let results = [];
-            
-            query.onsuccess = function(event) {
-                let cursor = event.target.result;
-                if (cursor) {
-                    let value = cursor.value;
-                    // 检查 DEL 和 UPLOAD 的条件
-                    if (value.DEL === 0) {
-                        results.push(value);
-                    }
-                    cursor.continue(); // 继续下一个数据
-                } else {
-                    resolve(results); // 查询结束，返回结果数组
-                }
-            };
-            query.onerror = function(event) {
-                reject("查询失败: " + event.target.errorCode);
-            };
-        };
-    });
-}
-// 获取内容名称
-function getnomemotivo(num) {
-    for (let i = 0; i < motivi.length; i++) {
-        const element = motivi[i];
-        if (element.ID == num) {
-            return element.MOTIVONAME;
-        } 
+// 创建视图表-行
+function create_biaohang(dataArray) {
+    const num = dataArray.length;
+    const biao = document.getElementById("biao-hang");
+    biao.innerHTML = '';
+    dataArray.sort((a, b) => b[1] - a[1]);
+    const sum = dataArray.reduce((sum, current) => sum + current[1], 0);
+    for (let i = 0; i < num; i++) {
+        const item = dataArray[i];
+        const hang = document.createElement("div");
+        hang.className = 'hang'
+        const imgbox = document.createElement("div");
+        imgbox.className = 'hang-imgbox'
+        const img = document.createElement("img");
+        imgsrc = getimgmotivo(item[0]);
+        img.src = 'icons/' + imgsrc + '.png';
+        img.className = 'hang-img'
+        imgbox.appendChild(img);
+        hang.appendChild(imgbox);
+        const info = document.createElement("div");
+        info.className = 'hang-info'
+        const box = document.createElement("div");
+        box.className = 'hang-box'
+        const des = document.createElement("div");
+        des.className = 'hang-des'
+        des.innerText = getnomemotivo(item[0]) + ' ' + (item[1]/sum*100).toFixed(2) + '%';
+        const tot = document.createElement("div");
+        tot.className = 'hang-tot'
+        tot.innerText = item[1].toFixed(2);
+        const tu = document.createElement("div");
+        tu.className = 'hang-tu'
+        tu.style.width = item[1]/sum*100 + '%'
+        box.appendChild(des);
+        box.appendChild(tot);
+        info.appendChild(box);
+        info.appendChild(tu);
+        hang.appendChild(info);
+        biao.appendChild(hang);
     }
-    return "返回错误";
-}
-// 获取内容名称
-function getimgmotivo(num) {
-    for (let i = 0; i < motivi.length; i++) {
-        const element = motivi[i];
-        if (element.ID == num) {
-            return element.IMG;
-        } 
-    }
-    return "qita";
-}
-// yymmdd转化为星期
-function getDayOfWeek(dateStr) {
-    dateStr = dateStr.toString();
-    // 将字符串拆分为日、月、年
-    let day = parseInt(dateStr.slice(4, 6));
-    let month = parseInt(dateStr.slice(2, 4)) - 1; // JS的月份从0开始计数，所以要减1
-    let year = parseInt("20" + dateStr.slice(0, 2)); // 假设年份为20xx
-    // 创建一个Date对象
-    let date = new Date(year, month, day);
-    // 获取星期几
-    let daysOfWeek = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-    let dayOfWeek = daysOfWeek[date.getDay()];
-    return dayOfWeek;
-}
-// 获取时间id
-function get_timeid() {
-    // 获取当前时间
-    let now = new Date();
-    const element = document.getElementById("tas-data");
-    const iddata = element.getAttribute("id-data");
-    // 提取年、月、日、时、分、秒
-    let hours = String(now.getHours()).padStart(2, '0'); // 格式化为两位
-    let minutes = String(now.getMinutes()).padStart(2, '0'); // 格式化为两位
-    let seconds = String(now.getSeconds()).padStart(2, '0'); // 格式化为两位
-    let milliseconds = String(now.getMilliseconds()).padStart(3, '0'); // 毫秒并格式化为三位
-
-    // 获取秒后的那一位（千分之一秒的第一位）
-    let fractionalSecond = milliseconds[0]; // 取毫秒数的第一个数字
-    const numid = `${iddata}${hours}${minutes}${seconds}${fractionalSecond}`;
-    // 拼接成所需的格式
-    return Number(numid);
-}
-// 编码加密
-function btoa(input) {
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-    var str = input;
-    var output = '';
-    for (var block = 0, charCode, i = 0, map = chars; 
-            str.charAt(i | 0) || (map = '=', i % 1); 
-            output += map.charAt(63 & block >> 8 - i % 1 * 8)) {
-        charCode = str.charCodeAt(i += 3/4);
-        if (charCode > 0xFF) {
-            throw new Error("'btoa' failed: The string to be encoded contains characters outside of the Latin1 range.");
+}   
+// 获取表数据(分类，dataArray)
+function ord_biaodata(order,dataArray) {
+    const result = {}
+    if (order === 'day') {
+        for (let i = 1; i < 32; i++) {
+            result[i] = 0;
         }
-        block = block << 8 | charCode;
+    } else if ( order === 'month') {
+        for (let i = 1; i < 13; i++) {
+            result[i] = 0;
+        }
+    };
+    for (let i = 0; i < dataArray.length; i++) {
+        const item = dataArray[i];
+        let key = ''
+        if (order === 'day') {
+            key = Number(String(item.ID).slice(4,6));
+        } else if (order === 'month') {
+            key = Number(String(item.ID).slice(2,4));
+        } else if (order === 'motivo') {
+            key = item.MOTIVO;
+            if (!result[key]) {
+                result[key] = 0;
+            }
+        }
+        result[key] -= item.SPESA;
     }
-    return output;
+    
+    const res =  Object.entries(result)
+    return res;
 }
-// 判断是否是今天
-function istoday(sixid) {
-    const inputDate = new Date(`20${sixid.slice(0, 2)}-${sixid.slice(2, 4)}-${sixid.slice(4, 6)}`);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-
-    // 将日期部分清零，只比较日期
-    today.setHours(0, 0, 0, 0);
-    yesterday.setHours(0, 0, 0, 0);
-    inputDate.setHours(0, 0, 0, 0);
-
-    if (inputDate.getTime() === today.getTime()) {
-        return "今天";
-    } else if (inputDate.getTime() === yesterday.getTime()) {
-        return "昨天";
-    } else {
-        return `${inputDate.getDate()}日`;
+// 表页配置
+function init_biao() {
+    const items = document.querySelectorAll('.biao-tongji div');
+    items.forEach(item => {
+        item.addEventListener('click', function() {
+            items.forEach(item => item.classList.remove('dixian'));
+            item.classList.add('dixian');
+            const page = item.getAttribute('page')
+            changebiaopage(page);
+        })
+    })
+    init_biao_month();
+    changebiaopage('biao-month');
+}
+// 表，切换年份事件
+function changeselectyear() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const n = document.querySelector('.biao-head-year').value;
+    const months = document.querySelector('.biao-head-month');
+    months.innerHTML = '';
+    let m = 12
+    if (n == year) {
+        m = now.getMonth() + 1;
     }
+    for (let i = m; i > 0; i--) {
+        const month = document.createElement('div');
+        month.textContent = i + '月';
+        if (m === i) {
+            month.classList.add('dixian');
+        }
+        months.appendChild(month);
+    }
+    const items = document.querySelectorAll('.biao-head-month div');
+    items.forEach(month => {
+        month.addEventListener('click', function() {
+            items.forEach(month => month.classList.remove('dixian'));
+            month.classList.add('dixian');
+            key_month(event);
+        })
+    })
+    months.children[0].click();
 }
-
-
-// ----------------------------------删除--------------------------------------
-// function showmovimento(dataArray) {
-//     groupdata = {}
-//     groupmese = {}
-//     // 按ID降序排序
-//     dataArray.sort((a, b) => a.ID - b.ID);
-//     let list = document.getElementById("listmovimento");
-//     list.innerHTML = "";
-//     // 变量用于跟踪当前前6位数字
-//     let current6DigitPrefix = null;
-//     let current6DigitSum = 0;
-//     let current4DigitPrefix = null;
-//     for (let i = 0; i < dataArray.length; i++) {
-//         const item = dataArray[i];
-//         const idStr = String(item.ID);
-//         const prefix6 = idStr.slice(0, 6);
-//         const prefix4 = idStr.slice(0, 4);
-        
-//         // 检查前6位是否变化
-//         if (current6DigitPrefix !== null && prefix6 !== current6DigitPrefix) {
-//             const li = document.createElement("li");
-//             if (prefix4 !== current4DigitPrefix) {
-//                 li.className = "li-tot li-floor";
-//                 li.setAttribute("data-floor", current4DigitPrefix);
-//             } else {
-//                 li.className = "li-tot";
-//             }
-//             const divli = document.createElement("div");
-//             divli.className = "li";
-//             const lidate = document.createElement("div");
-//             lidate.className = "li-date";
-//             lidate.textContent = istoday(current6DigitPrefix);
-//             const limotivo = document.createElement("div");
-//             limotivo.className = "li-motivo";
-//             limotivo.textContent = getDayOfWeek(current6DigitPrefix);
-//             const linome = document.createElement("div");
-//             linome.className = "li-nome";
-//             const livalue = document.createElement("div");
-//             livalue.className = "li-value";
-//             livalue.textContent = current6DigitSum.toFixed(2);
-    
-//             divli.appendChild(lidate);
-//             divli.appendChild(limotivo);
-//             divli.appendChild(linome);
-//             divli.appendChild(livalue);
-//             li.appendChild(divli);
-//             list.insertBefore(li, list.firstChild);
-//             // 重置当前前6位的总和
-//             current6DigitSum = 0;
-//         }
-
-//         const li = document.createElement("li");
-//         const divli = document.createElement("div");
-//         divli.className = "li movili";
-//         const lidate = document.createElement("div");
-//         lidate.className = "li-date";
-//         const liicon = document.createElement("img");
-//         liicon.className = "li-icon";
-//         liicon.src = "icons/" + getimgmotivo(item.MOTIVO) + ".png";
-//         lidate.appendChild(liicon);
-//         const limotivo = document.createElement("div");
-//         limotivo.className = "li-motivo";
-//         limotivo.textContent = getnomemotivo(item.MOTIVO);
-//         const linota = document.createElement("div");
-//         linota.className = "li-nota";
-//         linota.textContent = item.NOTA;
-//         limotivo.appendChild(linota);
-//         const linome = document.createElement("div");
-//         linome.className = "li-nome";
-//         if (item.UTENTE == utente) {
-//             linome.textContent = String(item.UTENTE).slice(0,2);
-//         }
-//         const livalue = document.createElement("div");
-//         livalue.className = "li-value";
-//         livalue.textContent = item.SPESA.toFixed(2);
-//         const libut = document.createElement("button");
-//         libut.className = "li-but";
-//         libut.setAttribute("data-id", item.ID);
-//         libut.textContent = "删除";
-
-//         divli.appendChild(lidate);
-//         divli.appendChild(limotivo);
-//         divli.appendChild(linome);
-//         divli.appendChild(livalue);
-//         li.appendChild(divli);
-//         li.appendChild(libut);
-//         list.insertBefore(li, list.firstChild);
-
-//         // 更新当前前6位的前缀和总和
-//         current6DigitPrefix = prefix6;
-//         current6DigitSum += item.SPESA;
-//         current4DigitPrefix = prefix4;
-
-//         // 按前6位更新 groupdata
-//         if (!groupdata[prefix6]) {
-//             groupdata[prefix6] = 0;
-//         }
-//         groupdata[prefix6] += item.SPESA;
-
-//         // 按前4位更新 groupmese
-//         if (!groupmese[prefix4]) {
-//             groupmese[prefix4] = 0;
-//         }
-//         groupmese[prefix4] += item.SPESA;
-//         // 检查是否位最后一个
-//         if (i === dataArray.length - 1) {
-//             const li = document.createElement("li");
-//             li.className = "li-tot li-floor";
-//             li.setAttribute("data-floor", current4DigitPrefix);
-//             const divli = document.createElement("div");
-//             divli.className = "li";
-//             const lidate = document.createElement("div");
-//             lidate.className = "li-date";
-//             lidate.textContent = istoday(current6DigitPrefix);
-//             const limotivo = document.createElement("div");
-//             limotivo.className = "li-motivo";
-//             limotivo.textContent = getDayOfWeek(current6DigitPrefix);
-//             const linome = document.createElement("div");
-//             linome.className = "li-nome";
-//             const livalue = document.createElement("div");
-//             livalue.className = "li-value";
-//             livalue.textContent = current6DigitSum.toFixed(2);
-    
-//             divli.appendChild(lidate);
-//             divli.appendChild(limotivo);
-//             divli.appendChild(linome);
-//             divli.appendChild(livalue);
-//             li.appendChild(divli);
-//             list.insertBefore(li, list.firstChild);
-//             // 重置当前前6位的总和
-//             current6DigitSum = 0;
-//         }
-//     }
-//     floors = document.querySelectorAll('.li-floor')
-//     // 定义一个存放楼层高度的空数组
-//     floorHeight = []
-//     // 遍历所有楼层
-//     for (let i = 0; i < floors.length; i++) {
-//         // 将所有楼层在页面中距离顶部的高度存到floorHeight中
-//         floorHeight[i] = floors[i].offsetTop - 90;
-//     }
-//     setdelete()
-// }
-
-// 获取minmaxid
-// function getminmaxid() {
-//     // 获取当前时间
-//     let now = new Date();
-//     const mindata = new Date(now);
-//     const maxdata = new Date(now);
-//     mindata.setMonth(now.getMonth() - 10);
-//     maxdata.setMonth(now.getMonth() + 1);
-//     const minyear = String(mindata.getFullYear()).slice(-2); // 取年份的最后两位
-//     const minmonth = String(mindata.getMonth() + 1).padStart(2, '0'); // 月份是0-11，所以加1，并格式化为两位
-//     const maxyear = String(maxdata.getFullYear()).slice(-2); // 取年份的最后两位
-//     const maxmonth = String(maxdata.getMonth() + 1).padStart(2, '0'); // 月份是0-11，所以加1，并格式化为两位
-//     const minid = `${minyear}${minmonth}000000000`
-//     const maxid = `${maxyear}${maxmonth}000000000`
-//     return [Number(minid),Number(maxid)]
-// }
+// 表-月份点击事件
+async function key_month(event) {
+    const year = document.querySelector('.biao-head-year').value.toString().slice(2, 4);
+    const month = event.target.textContent.replace('月', '').padStart(2, '0');
+    const minid = Number(year + month + '000000000');
+    const maxid = Number(year + month + '999999999');
+    databiao = await getDbData(minid, maxid);
+    const dataday = ord_biaodata('day',databiao)
+    const datamotivi = ord_biaodata('motivo',databiao)
+    create_biaolie(dataday);
+    create_biaohang(datamotivi);
+}
+// 切换表页事件
+function changebiaopage(name) {
+    const pages = document.querySelectorAll('.biao-page');
+    pages.forEach(page => {
+        page.style.display = 'none';
+        if (page.id == name) {
+            page.style.display = 'flex';
+        }
+    })
+}
+// 表-月份初始化
+function init_biao_month() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const element = document.querySelector('.biao-head-year');
+    element.innerHTML = '';
+    for (let i = year; i >= 2019; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.innerText = i + '年';
+        if (i === year) {
+            option.selected = true;
+        }
+        element.appendChild(option);
+    }
+    changeselectyear();
+}
+// 表-年份初始化
+function init_biao_year() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const element = document.getElementById('biao-year');
+    element.innerHTML = '';
+    for (let i = year; i >= 2019; i--) {
+        const div = document.createElement('div');
+        div.innerText = i + '年';
+        if (i === year) {
+            div.classList.add('dixian');
+        }
+        element.appendChild(div);
+    }
+    const items = document.querySelectorAll('#biao-year div');
+    items.forEach(item => {
+        item.addEventListener('click', function() {
+            items.forEach(item => item.classList.remove('dixian'));
+            item.classList.add('dixian');
+            key_year(event);
+        })
+    });
+    items[0].click();
+}
+// 表-年报表选择年份事件
+async function key_year(event) {
+    const year = event.target.textContent.replace('年', '').slice(2, 4);
+    const minid = Number(year + '00000000000');
+    const maxid = Number(year + '99999999999');
+    databiao = await getDbData(minid, maxid);
+    const datamonth = ord_biaodata('month',databiao)
+    const datamotivi = ord_biaodata('motivo',databiao)
+    create_biaolie(datamonth);
+    create_biaohang(datamotivi);
+}

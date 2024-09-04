@@ -22,17 +22,6 @@
         </div>
         <ul class="main" id="listmovimento">
         </ul>
-        <div class="foot">
-            <div class="foot-item">
-                <img id="baobiao" src="icons/baobiao.png" alt="baobiao">
-            </div>
-            <div class="foot-item foot-mid">
-                <img id="tianjia" src="icons/tianjia.png" alt="添加">
-            </div>
-            <div class="foot-item">
-                <img id="renwu" src="icons/renwu.png" alt="人物">
-            </div>
-        </div>
     </div>
     <div class="page" id="addpage">
         <div class="addhead">
@@ -141,32 +130,58 @@
             <div class="avatar main">
                 <img class="famiglia logo-utente" src="icons/famiglia.jpg" alt="">
             </div>
-            <div class="set-utente">Lolo</div>
+            <div class="set-utente"></div>
             <div>
-                <div class="set-unload">未上传数据：1条</div>
+                <div class="set-unload"></div>
             </div>
             <div class="item-flex set-buts">
                 <button class="set-but" id="reload">重新加载</button>
                 <button class="set-but" id="logout">退出登录</button>
             </div>
         </div>
-        <div class="foot">
-            <div class="foot-item">
-                <img id="baobiao" src="icons/baobiao.png" alt="baobiao">
-            </div>
-            <div class="foot-item foot-mid">
-                <img id="home" src="icons/home.png" alt="主页">
-            </div>
-            <div class="foot-item">
-                <img id="renwu" src="icons/renwu.png" alt="人物">
-            </div>
-        </div>
     </div>
     <div class="page" id="biaopage">
-        <div id="biao-lie"></div>
-        <div id="biao-di"></div>
-        <div id="biao-display"></div>
+        <div class="head">
+            <div class="biao-tongji">
+                <div class="dixian biao-month" page = 'biao-month'>月统计</div>
+                <div class="biao-year" page = 'biao-year'>年统计</div>
+                <div class="biao-diy" page = 'biao-diy'>自定义</div>
+            </div>
+            <div class="biao-head-display">
+                <div class="biao-page" id="biao-month">
+                    <select class="biao-head-year" name="" id="biao-head-year"></select>
+                    <div class="biao-head-month"></div>
+                </div>
+                <div class="biao-page" id="biao-year"></div>
+                <div class="biao-page" id="biao-diy"></div>
+            </div>
+        </div>
+        <div class="main">
+            <div class="biao-tot">
+                <div>总支出：</div>
+                <div class="biao-tot-num"></div>
+            </div>
+            <div id="biao-lie"></div>
+            <div id="biao-di"></div>
+            <div id="biao-display"></div>
+            <div id="biao-hang"></div>
+        </div>
     </div>
+    <div class="foot">
+        <div class="foot-item" id="but-baobiao">
+            <img src="icons/baobiao.png" alt="报表">
+            <div>报表</div>
+        </div>
+        <div class="foot-item" id="but-tianjia">
+            <img src="icons/tianjia.png" alt="添加">
+            <div>主页</div>
+        </div>
+        <div class="foot-item" id="but-renwu">
+            <img src="icons/renwu.png" alt="人物">
+            <div>设置</div>
+        </div>
+    </div>
+    <script src="fun.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

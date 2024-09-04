@@ -1,4 +1,8 @@
 body, html {
+    --hui:#86888B;
+    --lan:#0A84FF;
+    --qianlan:#49c2ef;
+    --huihei:#262c4e;
     margin: 0;
     padding: 0;
     height: 100%;
@@ -12,7 +16,6 @@ body, html {
     display: none;
     z-index: 1001;
 }
-
 .head {
     background-color: #FFFFFF;
     text-align: center;
@@ -40,8 +43,9 @@ body, html {
 #head-mese{
     text-align: center;
     font-size: 1.5em;
-    border-radius: 15px;
-    background-color: #e0e0e0;
+    border-radius: 10px;
+    color: #fff;
+    background-color: var(--qianlan);
 }
 #head-tot {
     text-align: right;
@@ -50,30 +54,34 @@ body, html {
     margin-top: 6px;
 }
 .foot {
-    background-color: #FFFFFF;
+    background-color: #fff;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    box-sizing: border-box;
     padding: 5px 0;
     position: fixed;
     bottom: 0;
-    display: flex; 
-    justify-content: space-around; 
     width: 100%;
-    height: 5em;
-    z-index: 1000;
+    height: 80px;
+    z-index: 100;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 .foot-item {
-    padding: 5px;
-    cursor: pointer;
+    width: 30%;
+    text-align: center;
+    /* 去除点击阴影 */
+    -webkit-tap-highlight-color: transparent; 
 }
 .foot-item img{
-    margin-top: 10px;
-    width: 40px;
-    height: 40px;
+    margin-top: 5px;
+    width: 25px;
+    height: 25px;
 }
-.foot-mid {
-    margin-top: 0;
-    width: 50px;
-    height: 50px;
+.foot-item div{
+    font-size: 10px;
+    text-align: center;
+    color: #86888B;
 }
 .main {
     flex: 1;
@@ -100,7 +108,7 @@ body, html {
 }
 .li-nome{
     width: 10%;
-    color: rgb(61, 109, 220);
+    color: var(--lan);
     font-weight: bold;
     text-transform: capitalize;
 }
@@ -155,6 +163,7 @@ body, html {
     transition: transform 0.5s ease;
 }
 #tastiera {
+    background-color: #fff;
     position: fixed;
     bottom: 0;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -174,22 +183,22 @@ body, html {
 }
 #tas-data {
     margin-left: 5px;
-    border: 1px solid rgb(61, 109, 220);
+    border: 1px solid rgb(0, 122, 255);
     border-radius: 5px;
-    color: rgb(61, 109, 220);
+    color: rgb(0, 122, 255);
     padding: 1px 10px;
     background-color: #fff;
 }
 #tas-data:active {
-    background-color: rgb(61, 109, 220);
+    background-color: rgb(0, 122, 255);
     color: white;
 }
 #tas-butnota {
     margin-left: 10px;
     background-color: #fff;
-    border: 1px solid rgb(61, 109, 220);
+    border: 1px solid rgb(0, 122, 255);
     border-radius: 5px;
-    color: rgb(61, 109, 220);
+    color: rgb(0, 122, 255);
     font-size: 14px;
     padding: 0px 10px;
 }
@@ -222,7 +231,6 @@ body, html {
     background-color: #ccc;
     margin-bottom: 30px;
 }
-
 .key {
     background-color: white;
     border: none;
@@ -235,11 +243,11 @@ body, html {
     background-color: #ddd;
 }
 .conferma {
-    background-color: rgb(61, 109, 220);
+    background-color: rgb(0, 122, 255);
     color: white;
 }
 .conferma:active {
-    background-color: rgb(61, 109, 220);
+    background-color: rgb(0, 122, 255);
 }
 
 .addhead {
@@ -375,7 +383,7 @@ body, html {
     color: #ccc;
 }
 .calendar-days .day.selected {
-    background-color: rgb(61, 109, 220);
+    background-color: rgb(0, 122, 255);
     color: #fff;
     border-radius: 50%;
 }
@@ -384,9 +392,9 @@ body, html {
     bottom: 30px;
     right: 20px;
     width: 80px;
-    border: 1px solid rgb(61, 109, 220);
+    border: 1px solid rgb(0, 122, 255);
     color: #fff;
-    background-color: rgb(61, 109, 220);
+    background-color: rgb(0, 122, 255);
     font-size: 16px;
     padding: 5px 15px;
     border-radius: 5px;
@@ -394,16 +402,14 @@ body, html {
     cursor: pointer;
 }
 .calendar-ok:active {
-    background-color: rgb(61, 109, 220);
+    background-color: rgb(0, 122, 255);
 }
-
 .moving-image {
     position: absolute;
     transition: transform 0.5s ease; /* 平滑过渡 */
     pointer-events: none; /* 禁止交互 */
     z-index: 1001; /* 使克隆的图片在最前面 */
 }
-
 .center {
     width: 100%;
     text-align: center;
@@ -433,7 +439,7 @@ input[type="submit"] {
     width: 90%;
     height: 50px;
     padding: 10px;
-    background-color: rgb(61, 109, 220);
+    background-color: var(--qianlan);
     border: none;
     border-radius: 5px;
     color: white;
@@ -441,7 +447,7 @@ input[type="submit"] {
     cursor: pointer;
 }
 input[type="submit"]:hover {
-    background-color: rgb(61, 109, 220);
+    background-color: rgb(0, 122, 255);
 }
 .famiglia{
     width: 100%;
@@ -476,16 +482,15 @@ input[type="submit"]:hover {
     border-radius: 10px;
     height: 45px;
     width: 130px;
-    background-color: #fff;
-    border: 3px solid  rgb(61, 109, 220);
-    color:   rgb(61, 109, 220);
+    background-color: var(--qianlan);
+    color:   #fff;
 }
 
 #biao-lie {
     margin-left:3%;
     padding-left: 1%;
     width: 92%;
-    height: 200px;
+    height: 180px;
     display:flex;
     align-items: flex-end; 
     border-bottom: 1px solid #ccc;
@@ -519,4 +524,146 @@ input[type="submit"]:hover {
     font-size: 10px;
     text-align: center;
     padding: 5px;
+}
+.hang {
+    margin: 3%;
+    display: flex;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 3px;
+}
+.hang-imgbox{
+    width: 10%;
+}
+.hang-img {
+    width: 100%;       /* 设置图片宽度 */
+    aspect-ratio: 1/1; /* 宽高比例设置为1:1 */
+}
+.hang-info {
+    width: 90%;
+    margin-left: 3%;
+}
+.hang-box {
+    display: flex;
+}
+.hang-des{
+    height: 20px;
+    width: 65%;
+    font-size: 16px;
+    line-height: 1.5;
+}
+.hang-tot{
+    height: 20px;
+    width: 35%;
+    text-align: right;
+    font-size: 16px;
+    line-height: 1.5;
+}
+.hang-tu {
+    display: inline-block;
+    height: 6px;
+    background-color: orangered;
+    width: 100%;
+}
+.biao-tongji{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 3%;
+}
+.biao-tongji div{
+    width: 22%;
+    height: 30px;
+    font-size: 16px;
+    color: #000;
+    box-sizing: border-box;
+    /* 去除点击阴影 */
+    -webkit-tap-highlight-color: transparent; 
+}
+.dixian {
+    border-bottom: 2px solid rgb(0, 122, 255);
+}
+.biao-head-display{
+    margin: 0 3%;
+}
+.biao-page {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.biao-head-year {
+    color: #333;
+    width: 20%;
+    text-align: center;
+    height: 30px;
+    border-radius: 5px;
+    border: none;
+    background-color: #fff;
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
+    appearance: none;         /* 隐藏select下来箭头 对于其他支持 appearance 的浏览器 */
+}
+.biao-head-month{
+    display: flexbox;
+    width: 75%;
+    overflow: auto;
+    white-space: nowrap; 
+    -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+    -webkit-tap-highlight-color: transparent; /* 去除点击阴影 */
+    align-items: center;
+    
+}
+.biao-head-month::-webkit-scrollbar {
+    display: none; /* 隐藏滚动条，适用于Chrome、Safari和Edge */
+}
+.biao-head-month div{
+    display: inline-block;
+    width: 20%;
+    height: 30px;
+    margin: 2%;
+    box-sizing: border-box;
+    font-size: 16px;
+    line-height: 2;
+}
+.biao-main {
+    margin-top: 100px;
+}
+.biao-tot {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 3%;
+    margin-top: 30px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    background-color: var(--qianlan);
+    border-radius: 5px;
+    align-items: center;
+    padding: 15px;
+    height: 30px;
+}
+.biao-tot div{
+    color: #fff;
+}
+.biao-tot-num {
+    text-align: right;
+}
+#biao-year{
+    display: flex;
+    width: 100%;
+    overflow: auto;
+    white-space: nowrap; 
+    -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+    -webkit-tap-highlight-color: transparent; /* 去除点击阴影 */
+    align-items: center;
+    
+}
+#biao-year::-webkit-scrollbar {
+    display: none; /* 隐藏滚动条，适用于Chrome、Safari和Edge */
+}
+#biao-year div{
+    height: 30px;
+    margin: 2%;
+    margin-right: 5%;
+    box-sizing: border-box;
+    font-size: 16px;
+    line-height: 2;
 }
