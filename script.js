@@ -12,6 +12,8 @@ init()
 // 配置文件
 function Configurazione() {
     registraserviceWorker();
+    // 禁止logpage页面触摸滚动
+    document.getElementById('logpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
     //禁用双击
     document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });
     // 设置默认按钮界面
@@ -471,7 +473,6 @@ function login(event) {
             if (data === 'True') {
                 const user = {'checked': true,'utente': username,'mi': mi}
                 localStorage.setItem('user', JSON.stringify(user));
-                document.querySelector('.foot').style.display = 'flex';
                 init();
                 changepage('mainpage')
             } else {
@@ -482,7 +483,6 @@ function login(event) {
 // 退出事件
 function logout() {
     localStorage.removeItem('user');
-    document.querySelector('.foot').style.display = 'none';
     window.location.reload();
 }
 // 重新载入
