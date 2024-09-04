@@ -98,7 +98,8 @@ body, html {
 }
 #logpage{
     z-index: 1000;
-    height:100%;
+    height: 100%;
+    background-color: #fff;
 }
 .li{
     position: relative;
