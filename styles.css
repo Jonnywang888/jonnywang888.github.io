@@ -87,7 +87,7 @@ body, html {
 }
 #logpage{
     height: 100%;
-    background-color: #fff;
+    background-color: var(--beijinghui);
     z-index: 1000;
 }
 #mainpage{
@@ -332,8 +332,6 @@ body, html {
 .motivi-item:active {
     background-color: #ddd;
 }
-
-
 #calendar {
     position: fixed;
     bottom: 0;
@@ -434,6 +432,7 @@ body, html {
     overflow: hidden;
 }
 .loginput {
+    background-color: var(--beijinghui);
     width: 90%;
     font-size: 1.2em;
     padding: 10px;
@@ -738,11 +737,9 @@ input[type="submit"]:hover {
     color: #fff;
 }
 #info-list{
-    flex: 1;
     margin-top: 110px; /* Match header height */
     margin-bottom: 80px; /* Match footer height */
     overflow-y: auto;
-    box-sizing: border-box;
     list-style-type: none;
     padding: 0;
 }
