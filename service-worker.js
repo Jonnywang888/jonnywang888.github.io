@@ -1,10 +1,11 @@
-const cache_name = 'app_cache_v1.1';
+const cache_name = 'app_cache_v1';
 const urls = [
   '/index.html',
   '/manifest.json',
   '/icons/app.png',
   '/styles.css',   // 如果你有额外的CSS文件
-  '/script.js'     // 如果你有额外的JavaScript文件
+  '/script.js',
+  '/fun.js'     // 如果你有额外的JavaScript文件
 ]
 
 self.addEventListener('install', async e => {

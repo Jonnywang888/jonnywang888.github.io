@@ -3,6 +3,7 @@ body, html {
     --lan:#0A84FF;
     --qianlan:#49c2ef;
     --huihei:#262c4e;
+    --beijinghui:#F7F7F7;
     margin: 0;
     padding: 0;
     height: 100%;
@@ -11,13 +12,14 @@ body, html {
     /* 针对ios */
     -webkit-overflow-scrolling: touch;
     font-family: Arial, sans-serif;
+    background-color: var(--beijinghui);
 }
 #calendar{
     display: none;
     z-index: 1001;
 }
 .head {
-    background-color: #FFFFFF;
+    background-color: var(--beijinghui);
     text-align: center;
     position: fixed;
     top: 0;
@@ -88,12 +90,14 @@ body, html {
     background-color: #fff;
     z-index: 1000;
 }
+#mainpage{
+    background-color: var(--beijinghui);
+}
 .main {
     flex: 1;
-    margin-top: 65px; /* Match header height */
+    margin-top: 80px; /* Match header height */
     margin-bottom: 100px; /* Match footer height */
     overflow-y: auto;
-    padding: 20px;
     box-sizing: border-box;
     list-style-type: none;
     padding: 0;
@@ -103,11 +107,9 @@ body, html {
 }
 .li{
     position: relative;
-    background-color: #fff;
     display: flex;
     align-items: center;
     padding:2px 0px;
-    height: 40px;
     z-index: 1;
     transform: translateX(0);
 }
@@ -118,31 +120,35 @@ body, html {
     text-transform: capitalize;
 }
 .li-date{
-    margin-left: 5%;
-    width: 10%;
-    aspect-ratio: 1 / 1; /* 保持正方形 */
-    border-radius: 50%;
-    background-color: #e0e0e0;
-    display: flex;
+    margin-left: 1%;
+    width: 15%;
+    height: 35px;
+    display: flex; 
     justify-content: center;
     align-items: center;
     color: #333;
 }
 .li-icon{
-    width: 100%;
+    width: 30px;
+    height: 30px;
 }
 .li-motivo{
     width: 45%;
-    margin-left: 5%;
+    margin-left: 3%;
 }
 .li-value{
-    width: 20%;
+    width: 23%;
     text-align: right;
 }
 .li-tot{
-    font-weight: bold;
-    border-bottom: 1px solid #ccc;
-    margin-top: 20px;
+    background-color: var(--beijinghui);
+    border-bottom: 0.5px solid #ccc;
+    border-top: 0.5px solid #ccc;
+    font-size: 12px;
+    height: 33px;
+}
+.li-movi{
+    background-color: #fff;
 }
 .li-nota{
     font-size: 12px;
@@ -165,6 +171,7 @@ body, html {
     box-sizing: border-box;
 }
 .movili{
+    background-color: #fff;
     transition: transform 0.5s ease;
 }
 #tastiera {
@@ -325,6 +332,7 @@ body, html {
 .motivi-item:active {
     background-color: #ddd;
 }
+
 
 #calendar {
     position: fixed;
@@ -598,7 +606,7 @@ input[type="submit"]:hover {
     height: 30px;
     border-radius: 5px;
     border: none;
-    background-color: #fff;
+    background-color: var(--beijinghui);
     font-size: 16px;
     -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
     appearance: none;         /* 隐藏select下来箭头 对于其他支持 appearance 的浏览器 */
@@ -632,7 +640,7 @@ input[type="submit"]:hover {
     display: flex;
     justify-content: space-between;
     margin: 0 3%;
-    margin-top: 30px;
+    margin-top: 10px;
     margin-bottom: 10px;
     font-size: 20px;
     background-color: var(--qianlan);
@@ -667,4 +675,116 @@ input[type="submit"]:hover {
     box-sizing: border-box;
     font-size: 16px;
     line-height: 2;
+}
+#infopage{
+    background-color: var(--beijinghui);
+}
+.info-head{
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: var(--qianlan);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.info-title {
+    padding-top: 10px;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    vertical-align: middle;
+    box-sizing: border-box;
+    border-bottom: 0.5px solid #ccc;
+}
+.backup{
+    display: flex;
+    width: 20%;
+    vertical-align: middle;
+}
+.backup span{
+    font-size: 14px;
+    vertical-align: middle;
+    color: #fff;
+}
+.backup img{
+    margin-top: 1px;
+    width: 14px;
+    height: 14px;
+}
+.info-motivo{
+    display: inline-block;
+    width: 37%;
+    text-align: center;
+    color: #fff;
+}
+.info-title div{
+    font-size: 20px;
+    align-items: center;
+    vertical-align: middle;
+    padding: 5px;
+    margin-left: 15px;
+}
+.info-tot {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 3%;
+    padding: 15px 0;
+    font-size: 20px;
+    align-items: center;
+}
+.info-tot div{
+    font-size: 20px;
+    color: #fff;
+}
+.info-list{
+    margin-top: 115px;
+    box-sizing: border-box;
+    display: flexbox;
+}
+.info-data{
+    display: flex;
+    width: 100%;
+    padding: 5px 3%;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    border-top: 0.5px solid #ccc;
+    border-bottom: 0.5px solid #ccc;
+}
+.info-list-tot div{
+    margin-right: 15px;
+    font-size: 14px;
+}
+.info-list-tot{
+    display: flex;
+}
+.info-spesa-tot{
+    font-size: 14px;
+    text-align: right;
+}
+.info-movimento {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    padding: 5px 3%;
+}
+.info-movimento img{
+    width: 30px;
+    height: 30px;
+}
+.info-motivo-des{
+    margin-left: 5%;
+    width: 60%;
+}
+.info-spesa{
+    text-align: right;
+    width: 30%;
+    font-size: 16px;
+}
+.info-motivo-nome{
+    font-size: 16px;
+}
+.info-motivo-nota{
+    font-size: 12px;
 }

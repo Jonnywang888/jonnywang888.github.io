@@ -182,6 +182,7 @@ function istoday(sixid) {
     const today = new Date();
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
+    const month = inputDate.getMonth() + 1;
 
     // 将日期部分清零，只比较日期
     today.setHours(0, 0, 0, 0);
@@ -193,6 +194,6 @@ function istoday(sixid) {
     } else if (inputDate.getTime() === yesterday.getTime()) {
         return "昨天";
     } else {
-        return `${inputDate.getDate()}日`;
+        return `${Number(month)}月${inputDate.getDate()}日`;
     }
 }

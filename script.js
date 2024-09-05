@@ -1,4 +1,4 @@
-var mi,utente,floors,floorHeight,databiao;
+var mi,utente,floors,floorHeight,databiao,lis;
 var baseurl = 'https://trustfollonica.ddns.net/server/app.asp?mi=';
 var currentDate = new Date();
 var needload = true;
@@ -8,7 +8,7 @@ var groupmese = {};
 var numlist = 1;
 Configurazione() 
 init()
-
+// changepage('infopage')
 // 配置文件
 function Configurazione() {
     registraserviceWorker();
@@ -136,12 +136,6 @@ function createlocalstorage() {
 async function caricamovimentolist() {
     await loadnewlist(0)
     showlist()
-    // const numid = getminmaxid()
-    // getDbData(numid[0], numid[1])
-    //     .then((response) => {
-    //         showmovimento(response); // 在控制台打印获取到的数据数组
-    //         scrolling()
-    //     });
 }
 // 更新数据
 function aggiornamento() {
@@ -367,6 +361,7 @@ function tastiera(button) {
     const check = displaystr.slice(-1) == '0';
     let displaynum = display.getAttribute('num');
     const key = button.innerText;
+    console.log(key);
     switch (key) {
         case '.':
             if (!displaynum.includes('.')) {
@@ -374,7 +369,7 @@ function tastiera(button) {
                 display.setAttribute('num',displaynum);
             }
             break;
-        case '<':
+        case '⌫':
             displaynum = displaynum.slice(0, -1);
             display.setAttribute('num',displaynum);
             display.innerText = Number(displaynum).toFixed(2).toString();
@@ -536,7 +531,6 @@ function key_calendar() {
 }
 // 设置滑动删除事件
 function setdelete(item) {
-    var lis = document.querySelectorAll('.movili');
     var startX, currentX,diffX;
     const maxSlide = -85; // 最大滑动距离（负值表示向左滑动）
     item.addEventListener('touchstart', function(e) {
@@ -564,6 +558,9 @@ function setdelete(item) {
         } else {
             item.style.transform = `translateX(${0}px)`
         }
+        startX = 0;
+        currentX = 0;
+        diffX = 0;
     });
 }
 // 添加数据到本地上传数据库(数组数据)
@@ -723,6 +720,7 @@ function addnewlist(dataArray) {
                 lidate.textContent = item.DATE;
                 libut.style.display = "none";
             } else {
+                li.className = "li-movi";
                 divli.classList.add("movili");
                 const liicon = document.createElement("img");
                 liicon.className = "li-icon";
@@ -739,7 +737,7 @@ function addnewlist(dataArray) {
                 linota.className = "li-nota";
                 linota.textContent = item.NOTA;
                 limotivo.appendChild(linota);
-                setdelete(divli)
+                setdelete(divli);
             }
             divli.appendChild(lidate);
             divli.appendChild(limotivo);
@@ -752,6 +750,7 @@ function addnewlist(dataArray) {
         setscroll();
         scrolling();
     }
+    lis = document.querySelectorAll('.movili');
     needload = true
 }
 // 设置滚动监听楼层
@@ -846,6 +845,7 @@ function create_biaohang(dataArray) {
     for (let i = 0; i < num; i++) {
         const item = dataArray[i];
         const hang = document.createElement("div");
+        hang.setAttribute('idmotivo',item[0])
         hang.className = 'hang'
         const imgbox = document.createElement("div");
         imgbox.className = 'hang-imgbox'
@@ -1024,3 +1024,9 @@ async function key_year(event) {
     create_biaolie(datamonth);
     create_biaohang(datamotivi);
 }
+// // 查找 <meta name="theme-color"> 元素
+// const themeColorMetaTag = document.querySelector('meta[name="theme-color"]');
+// // 如果找到该元素，修改其 content 属性
+// if (themeColorMetaTag) {
+//     themeColorMetaTag.setAttribute('content', '#49c2ef');
+// }
