@@ -8,7 +8,12 @@ var groupmese = {};
 var numlist = 1;
 Configurazione() 
 init()
-// changepage('infopage')
+// setTimeout(() => {
+//     console.log(1)
+//     changepage('infopage')
+//     showinfolist(3)
+// }, 3000);
+
 // 配置文件
 function Configurazione() {
     registraserviceWorker();
@@ -35,6 +40,8 @@ function Configurazione() {
     document.querySelector('.biao-month').addEventListener('click',init_biao_month);
     document.querySelector('.biao-year').addEventListener('click',init_biao_year);
     document.querySelector('.biao-head-year').addEventListener('change',changeselectyear)
+    document.querySelector('.backup').addEventListener('click',() => changepage('biaopage'))
+
     const prevYearButton = document.querySelector('.prev-year');
     const nextYearButton = document.querySelector('.next-year');
     const prevMonthButton = document.querySelector('.prev-month');
@@ -448,11 +455,18 @@ function key_closeaddpage() {
 // 切换页面
 function changepage(page) {
     const pages = document.querySelectorAll('.page')
+    // 查找 <meta name="theme-color"> 元素
+    const themeColorMetaTag = document.querySelector('meta[name="theme-color"]');
     pages.forEach(p => {
         if (p.id === page) {
             p.style.display = 'inline'
         } else {
             p.style.display = 'none'
+        }
+        if (page === 'infopage') {
+            themeColorMetaTag.setAttribute('content', '#49c2ef');
+        } else {
+            themeColorMetaTag.setAttribute('content', '#f7f7f7');
         }
     });
 }
@@ -845,7 +859,7 @@ function create_biaohang(dataArray) {
     for (let i = 0; i < num; i++) {
         const item = dataArray[i];
         const hang = document.createElement("div");
-        hang.setAttribute('idmotivo',item[0])
+        hang.addEventListener('click',()=>showinfolist(Number(item[0])))
         hang.className = 'hang'
         const imgbox = document.createElement("div");
         imgbox.className = 'hang-imgbox'
@@ -1024,9 +1038,65 @@ async function key_year(event) {
     create_biaolie(datamonth);
     create_biaohang(datamotivi);
 }
-// // 查找 <meta name="theme-color"> 元素
-// const themeColorMetaTag = document.querySelector('meta[name="theme-color"]');
-// // 如果找到该元素，修改其 content 属性
-// if (themeColorMetaTag) {
-//     themeColorMetaTag.setAttribute('content', '#49c2ef');
-// }
+// 显示详细统计信息
+function showinfolist(idmotivo) {
+    changepage('infopage');
+    document.querySelector('.info-motivo').textContent = getnomemotivo(idmotivo);
+    let sumspesa = 0;
+    let dataArray = []
+    for (let i = 0; i < databiao.length; i++) {
+        const element = databiao[i];
+        if (element.MOTIVO === idmotivo) {
+            dataArray.push(JSON.parse(JSON.stringify(element)));
+        }
+    }
+    const ndata = ord_data(dataArray);
+    if (ndata !== undefined) {
+        let list = document.getElementById("info-list");
+        list.innerHTML = '';
+        for (let j = ndata.length - 1; j >= 0; j--) {
+            const item = ndata[j];
+            const li = document.createElement("li");
+            const divli = document.createElement("div");
+            const lidate = document.createElement("div");
+            const limotivo = document.createElement("div");
+            const linome = document.createElement("div");
+            const livalue = document.createElement("div");
+    
+            divli.className = "li";
+            lidate.className = "li-date";
+            limotivo.className = "li-motivo";
+            limotivo.textContent = item.MOTIVO;
+            linome.className = "li-nome";
+            livalue.className = "li-value";
+            livalue.textContent = item.SPESA;
+    
+            if (item.ID < 10000) {
+                li.className = "li-tot";
+                lidate.textContent = item.DATE;
+            } else {
+                li.className = "li-movi";
+                divli.classList.add("movili");
+                const liicon = document.createElement("img");
+                liicon.className = "li-icon";
+                liicon.src = item.IMG;
+                lidate.appendChild(liicon);
+                if (item.UTENTE.slice(0,1) == 'j') {
+                    linome.textContent = item.UTENTE.slice(0,2);
+                }
+                const linota = document.createElement("div");
+                linota.className = "li-nota";
+                linota.textContent = item.NOTA;
+                limotivo.appendChild(linota);
+                sumspesa += Number(item.SPESA);
+            }
+            divli.appendChild(lidate);
+            divli.appendChild(limotivo);
+            divli.appendChild(linome);
+            divli.appendChild(livalue);
+            li.appendChild(divli);
+            list.appendChild(li)
+        };
+    }
+    document.querySelector('.info-tot-spesa').textContent = sumspesa.toFixed(2);
+}

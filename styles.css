@@ -700,6 +700,7 @@ input[type="submit"]:hover {
     display: flex;
     width: 20%;
     vertical-align: middle;
+    -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
 }
 .backup span{
     font-size: 14px;
@@ -736,55 +737,12 @@ input[type="submit"]:hover {
     font-size: 20px;
     color: #fff;
 }
-.info-list{
-    margin-top: 115px;
+#info-list{
+    flex: 1;
+    margin-top: 110px; /* Match header height */
+    margin-bottom: 80px; /* Match footer height */
+    overflow-y: auto;
     box-sizing: border-box;
-    display: flexbox;
-}
-.info-data{
-    display: flex;
-    width: 100%;
-    padding: 5px 3%;
-    justify-content: space-between;
-    align-items: center;
-    box-sizing: border-box;
-    border-top: 0.5px solid #ccc;
-    border-bottom: 0.5px solid #ccc;
-}
-.info-list-tot div{
-    margin-right: 15px;
-    font-size: 14px;
-}
-.info-list-tot{
-    display: flex;
-}
-.info-spesa-tot{
-    font-size: 14px;
-    text-align: right;
-}
-.info-movimento {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #fff;
-    padding: 5px 3%;
-}
-.info-movimento img{
-    width: 30px;
-    height: 30px;
-}
-.info-motivo-des{
-    margin-left: 5%;
-    width: 60%;
-}
-.info-spesa{
-    text-align: right;
-    width: 30%;
-    font-size: 16px;
-}
-.info-motivo-nome{
-    font-size: 16px;
-}
-.info-motivo-nota{
-    font-size: 12px;
+    list-style-type: none;
+    padding: 0;
 }
