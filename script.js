@@ -19,6 +19,7 @@ function Configurazione() {
     registraserviceWorker();
     // 禁止logpage页面触摸滚动
     document.getElementById('logpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
+    document.getElementById('setpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
     //禁用双击
     document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });
     // 设置默认按钮界面
@@ -444,8 +445,10 @@ function key_tianjia() {
     };
 }
 // 切换报表页面
-async function key_biao() {
-    init_biao();
+function key_biao() {
+    if (databiao === undefined) {
+        init_biao();
+    }
     changepage('biaopage');
 }
 // 关闭addpage
@@ -457,16 +460,16 @@ function changepage(page) {
     const pages = document.querySelectorAll('.page')
     // 查找 <meta name="theme-color"> 元素
     const themeColorMetaTag = document.querySelector('meta[name="theme-color"]');
+    if (page === 'infopage') {
+        themeColorMetaTag.setAttribute('content', '#49c2ef');
+    } else {
+        themeColorMetaTag.setAttribute('content', '#f7f7f7');
+    }
     pages.forEach(p => {
         if (p.id === page) {
             p.style.display = 'inline'
         } else {
             p.style.display = 'none'
-        }
-        if (page === 'infopage') {
-            themeColorMetaTag.setAttribute('content', '#49c2ef');
-        } else {
-            themeColorMetaTag.setAttribute('content', '#f7f7f7');
         }
     });
 }
