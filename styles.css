@@ -94,6 +94,9 @@ body, html {
 #mainpage{
     background-color: var(--beijinghui);
 }
+#setpage{
+    height: 100%;
+}
 .main {
     flex: 1;
     margin-top: 80px; /* Match header height */
