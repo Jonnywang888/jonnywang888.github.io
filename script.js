@@ -571,7 +571,7 @@ function setdelete(item) {
     });
     item.addEventListener('touchend', function() {
         if (diffX < -80) {
-            item.style.transform = `translateX(-85px)`
+            item.style.transform = `translateX(-90px)`
         } else {
             item.style.transform = `translateX(${0}px)`
         }
