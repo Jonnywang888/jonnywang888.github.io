@@ -28,7 +28,7 @@ function Configurazione() {
     document.querySelectorAll('.foot-item').forEach(x => x.addEventListener('click', () => click_footbut(x))); 
     window.addEventListener('scroll', scrolling);
     document.querySelectorAll('.key').forEach(k => k.addEventListener('click', () => tastiera(k)));
-    document.getElementById('close-addpage').addEventListener('click', key_closeaddpage);
+    document.getElementById('backtomain').addEventListener('click', key_closeaddpage);
     document.getElementById('login-form').addEventListener('submit', login);
     document.getElementById('but-renwu').addEventListener('click', showunload);
     document.getElementById('but-baobiao').addEventListener('click', key_biao);
@@ -41,7 +41,7 @@ function Configurazione() {
     document.querySelector('.biao-month').addEventListener('click',init_biao_month);
     document.querySelector('.biao-year').addEventListener('click',init_biao_year);
     document.querySelector('.biao-head-year').addEventListener('change',changeselectyear)
-    document.querySelector('.backup').addEventListener('click',() => changepage('biaopage'))
+    document.querySelector('#backtobiao').addEventListener('click',() => changepage('biaopage'))
 
     const prevYearButton = document.querySelector('.prev-year');
     const nextYearButton = document.querySelector('.next-year');
@@ -394,7 +394,7 @@ function tastiera(button) {
             addnewmovimento();
             break;
         default:
-            if (check && displaynum < 1000000) {
+            if (check && displaynum < 100000) {
                 displaynum = displaynum + key;
                 display.setAttribute('num',displaynum);
                 display.innerText = Number(displaynum).toFixed(2).toString();
@@ -570,8 +570,10 @@ function setdelete(item) {
         };
     });
     item.addEventListener('touchend', function() {
+        const viewportWidth = window.innerWidth;
+        const moviwidth = viewportWidth * 0.03 + 75;
         if (diffX < -80) {
-            item.style.transform = `translateX(-90px)`
+            item.style.transform = `translateX(-${moviwidth}px)`
         } else {
             item.style.transform = `translateX(${0}px)`
         }

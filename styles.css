@@ -34,16 +34,19 @@ body, html {
     margin-bottom: 10px;
 }
 .head-infotot{
-    display: grid;
-    grid-template-columns: 40% 20% 40%;
+    display: flex;
+    justify-content: space-between;
+    box-sizing: border-box;
 }
 #head-anno{
     text-align: left;
-    padding-left: 10%;
+    padding-left: 3%;
+    width: 40%;
     font-size: 1.2em;
     margin-top: 6px;
 }
 #head-mese{
+    width: 20%;
     text-align: center;
     font-size: 1.5em;
     border-radius: 10px;
@@ -51,8 +54,9 @@ body, html {
     background-color: var(--qianlan);
 }
 #head-tot {
+    width: 40%;
     text-align: right;
-    padding-right: 10%;
+    padding-right: 3%;
     font-size: 1.2em;
     margin-top: 6px;
 }
@@ -124,7 +128,6 @@ body, html {
     text-transform: capitalize;
 }
 .li-date{
-    margin-left: 1%;
     width: 15%;
     height: 35px;
     display: flex; 
@@ -138,10 +141,9 @@ body, html {
 }
 .li-motivo{
     width: 45%;
-    margin-left: 3%;
 }
 .li-value{
-    width: 23%;
+    width: 27%;
     text-align: right;
 }
 .li-tot{
@@ -171,7 +173,7 @@ body, html {
     border: 1px solid red;
     position: absolute;
     top: 6px; /* 定位到 movili 的底部 */
-    right: 2%; /* 按钮左对齐 */
+    right: 3%; /* 按钮左对齐 */
     box-sizing: border-box;
 }
 .movili{
@@ -247,58 +249,68 @@ body, html {
     text-align: center;
     cursor: pointer;
 }
-.key:active {
-    background-color: #ddd;
-}
 .conferma {
-    background-color: rgb(0, 122, 255);
+    background-color: var(--lan);
     color: white;
 }
 .addhead {
     background-color: var(--beijinghui);
-    text-align: center;
-    padding: 10px;
     position: fixed;
     top: 0;
     width: 100%;
     z-index: 1000;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
-.header {
+.addhead-title {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    vertical-align: middle;
+    box-sizing: border-box;
     margin-bottom: 10px;
-    display: grid;
-    grid-template-columns: 33.3% 33.3% 33.3%;
-    font-size: 1.2em;
 }
-.close {
-    background: none;
-    border: none;
-    font-size: 1.2em;
-    cursor: pointer;
-    float: right;
+.addhead-title div{
+    font-size: 20px;
+    align-items: center;
+    vertical-align: middle;
+    padding: 5px;
+}
+.addhead-zhichu{
+    text-align: center;
+    width: 53%;
 }
 .current-selection {
-    text-align: left;
+    width: 100%;
     font-size: 18px;
-    margin-bottom: px;
+    display: flex;
+    justify-content: space-between;
+    box-sizing: border-box;
+    height: 30px;
+    margin: 15px 0;
+}
+.current-selection div{
+    align-items: center;
+    vertical-align: middle;
+}
+.current-img{
+    width: 15%;
+    padding-left: 4%;
+    display: flex;
 }
 #current-img{
     width: 40px;
     height: 40px;
-    margin-left: 5px;
-    vertical-align: middle;
 }
 #current-motivo{
+    width: 40%;
     font-size: 1.2em;
     margin-left: 20px;
-    vertical-align: middle;
 }
 #current-value{
-    vertical-align: middle;
+    width: 45%;
     text-align: right;
     font-size: 1.5em;
-    margin-right: 20px;
-    float: right;
+    padding-right: 4%;
 }
 #current-date{
     display: inline;
@@ -684,23 +696,33 @@ input[type="submit"] {
 }
 .backup{
     display: flex;
+    height: 30px;
     width: 20%;
     vertical-align: middle;
     -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
+    box-sizing: border-box;
+    margin-left: 3%;
 }
-.backup span{
+#backtobiao span{
+    display: inline-block;
     font-size: 14px;
     vertical-align: middle;
     color: #fff;
 }
+#backtomain span{
+    display: inline-block;
+    font-size: 14px;
+    vertical-align: middle;
+}
 .backup img{
-    margin-top: 1px;
+    display: inline-block;
     width: 14px;
     height: 14px;
 }
 .info-motivo{
     display: inline-block;
-    width: 37%;
+    width: 54%;
+    box-sizing: border-box;
     text-align: center;
     color: #fff;
 }
@@ -709,7 +731,6 @@ input[type="submit"] {
     align-items: center;
     vertical-align: middle;
     padding: 5px;
-    margin-left: 15px;
 }
 .info-tot {
     display: flex;
