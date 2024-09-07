@@ -1,6 +1,7 @@
 // -------------------------------功能函数--------------------------------------------
 // 注册serviceWorker事件
 function registraserviceWorker() {
+    alert('serviceWorker' in navigator);
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
         .then(function(registration) {return})
