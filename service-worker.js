@@ -1,4 +1,4 @@
-const cache_name = 'app_cache_v1.2';
+const cache_name = 'app_cache_v1';
 const urls = [
   '/index.html',
   '/manifest.json',
@@ -7,14 +7,14 @@ const urls = [
   '/script.js',
   '/fun.js'     // 如果你有额外的JavaScript文件
 ]
-
+// 安装事件
 self.addEventListener('install', async e => {
   // 配置缓存
   const cache = await caches.open(cache_name);
   await cache.addAll(urls);
   await self.skipWaiting();
 })
-
+// 监听激活事件
 self.addEventListener('activate', async e => {
   const keys = await caches.keys();
   keys.forEach(key => {
@@ -25,7 +25,7 @@ self.addEventListener('activate', async e => {
   });
   await self.clients.claim();
 })
-
+// 监听fetch事件
 self.addEventListener('fetch', e => {
   const req = e.request;
   const url = new URL(req.url);
@@ -38,8 +38,12 @@ self.addEventListener('fetch', e => {
     e.respondWith(networkfirst(req));
   }
 })
-
-
+// 监听message事件
+self.addEventListener('message', event => {
+  if (event.data === 'clear-cache') {
+    clearOldCaches();
+  }
+});
 
 // 缓存优先策略
 async function cachefirst(req) {
@@ -67,4 +71,15 @@ async function networkfirst(req) {
     const cached = await cache.match(req);
     return cached;
   }
+}
+
+// 清理旧缓存
+async function clearOldCaches() {
+  alert('清理旧缓存')
+  const keys = await caches.keys();
+  keys.forEach(key => caches.delete(key));
+  const cache = await caches.open(cache_name);
+  await cache.addAll(urls);
+  await self.skipWaiting();
+  await self.clients.claim();  // 立即接管页面
 }

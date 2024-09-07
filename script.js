@@ -506,8 +506,7 @@ async function reload() {
         request.onblocked = () => resolve();
     });
     await res;
-    // const keys = await caches.keys();
-    // keys.forEach(key => caches.delete(key));
+    navigator.serviceWorker.controller.postMessage('clear-cache');
     window.location.reload();
 }
 // 清除所有数据
