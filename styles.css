@@ -94,7 +94,7 @@ body, html {
 #mainpage{
     background-color: var(--beijinghui);
 }
-#setpage{
+.page{
     height: 100%;
 }
 .main {
@@ -171,7 +171,7 @@ body, html {
     border: 1px solid red;
     position: absolute;
     top: 6px; /* 定位到 movili 的底部 */
-    left: 78%; /* 按钮左对齐 */
+    right: 2%; /* 按钮左对齐 */
     box-sizing: border-box;
 }
 .movili{
