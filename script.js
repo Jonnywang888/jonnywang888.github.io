@@ -1,5 +1,5 @@
 var mi,utente,floors,floorHeight,databiao,lis;
-var baseurl = 'https://trustfollonica.ddns.net/server/app.asp?mi=';
+var baseurl = 'https://trustmarket.duckdns.org/server/app.asp?mi=';
 var currentDate = new Date();
 var needload = true;
 var listmovimento = [];
