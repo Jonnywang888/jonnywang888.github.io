@@ -11,7 +11,7 @@
     <script>
         document.getElementById('testButton').addEventListener('click', function() {
             const ur = 'https://www.duckdns.org/'
-            console.log(ur);
+            console.log(ur, { mode: 'no-cors' });
             fetch(ur)
                 .then(response => response.text())
                 .then(data => {
