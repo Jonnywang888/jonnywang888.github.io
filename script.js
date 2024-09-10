@@ -20,6 +20,7 @@ function Configurazione() {
     // 禁止logpage页面触摸滚动
     document.getElementById('logpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
     document.getElementById('setpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
+    document.querySelector('.foot').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
     //禁用双击
     document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });
     // 设置默认按钮界面
