@@ -747,7 +747,8 @@ input[type="submit"] {
 }
 #info-list{
     margin-top: 110px; /* Match header height */
-    padding-bottom: 80px; /* Match footer height */
+    margin-bottom: 80px; /* Match footer height */
     overflow-y: auto;
     list-style-type: none;
+    padding: 0;
 }
