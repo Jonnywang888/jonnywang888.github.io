@@ -365,7 +365,6 @@ function tastiera(button) {
     const check = displaystr.slice(-1) == '0';
     let displaynum = display.getAttribute('num');
     const key = button.innerText;
-    console.log(key);
     switch (key) {
         case '.':
             if (!displaynum.includes('.')) {
