@@ -215,6 +215,7 @@ body, html {
     color: var(--lan);
     font-size: 14px;
     padding: 0px 10px;
+    -webkit-tap-highlight-color: transparent;
 }
 .nota{
     background-color: #fff;

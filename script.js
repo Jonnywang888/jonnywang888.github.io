@@ -1,5 +1,5 @@
 var mi,utente,floors,floorHeight,databiao,lis;
-var baseurl = 'https://trustmarket.ddnsfree.com/server/app.asp?mi=';
+var baseurl = 'http://trustmarket.duckdns.org/server/new.asp?mi=';
 var currentDate = new Date();
 var needload = true;
 var listmovimento = [];
@@ -8,11 +8,6 @@ var groupmese = {};
 var numlist = 1;
 Configurazione() 
 init()
-// setTimeout(() => {
-//     console.log(1)
-//     changepage('infopage')
-//     showinfolist(3)
-// }, 3000);
 
 // 配置文件
 function Configurazione() {
@@ -20,7 +15,6 @@ function Configurazione() {
     // 禁止logpage页面触摸滚动
     document.getElementById('logpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
     document.getElementById('setpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
-    document.querySelector('.foot').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
     //禁用双击
     document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });
     // 设置默认按钮界面
@@ -282,13 +276,14 @@ function addnewmovimento() {
     }
 }
 // 初始化新建消费记录属性
-function newmovimento() {
+function init_newmovimento() {
     document.getElementById('current-motivo').innerText = '超市';
     document.getElementById('current-motivo').setAttribute('idmotivo',3);
     document.getElementById('current-img').src = 'icons/chaoshi.png';
     document.getElementById('tas-nota').value = '';
     document.getElementById('current-value').innerText = '0.00';
     document.getElementById('current-value').setAttribute('num','')
+    document.querySelector('.nota').style.display = 'none';
 }
 // 更新数据到服务器
 async function uploadmovimento() {
@@ -439,7 +434,7 @@ function key_tianjia() {
         currentDate = new Date();
         updateCalendar();
         changepage('addpage');
-        newmovimento();
+        init_newmovimento();
         setdatacalendar();
     } else {
         changepage('mainpage');
@@ -507,7 +502,9 @@ async function reload() {
         request.onblocked = () => resolve();
     });
     await res;
-    navigator.serviceWorker.controller.postMessage('clear-cache');
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.controller.postMessage('clear-cache');
+    }
     window.location.reload();
 }
 // 清除所有数据
