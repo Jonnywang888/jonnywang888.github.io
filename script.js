@@ -1,5 +1,5 @@
 var mi,utente,floors,floorHeight,databiao,lis;
-var baseurl = 'http://trustmarket.duckdns.org/server/new.asp?mi=';
+var baseurl = 'http://trustmarket.ddnsfree.com/server/app.asp?mi=';
 var currentDate = new Date();
 var needload = true;
 var listmovimento = [];
