@@ -749,5 +749,4 @@ input[type="submit"] {
     padding-bottom: 80px; /* Match footer height */
     overflow-y: auto;
     list-style-type: none;
-    padding: 0;
 }
