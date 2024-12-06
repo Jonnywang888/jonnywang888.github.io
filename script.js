@@ -67,12 +67,13 @@ async function init() {
         utente = user.utente
         mi = user.mi
         if (checked === true) {
-            await createDB()
-            await createlocalstorage()
-            changepage('mainpage')
-            caricamovimentolist()
-            caricamotivilist()
-            updateCalendar()
+            await createDB();
+            await createlocalstorage();
+            changepage('mainpage');
+            caricamovimentolist();
+            caricamotivilist();
+            updateCalendar();
+            fetch(baseurl);
             setTimeout(aggiornamento,2000)
         }
     } else {
