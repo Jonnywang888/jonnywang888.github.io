@@ -72,8 +72,8 @@ async function init() {
             changepage('mainpage')
             caricamovimentolist()
             caricamotivilist()
-            aggiornamento()
             updateCalendar()
+            setTimeout(aggiornamento,1000)
         }
     } else {
         changepage('logpage')
