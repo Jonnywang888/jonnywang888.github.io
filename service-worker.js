@@ -75,7 +75,6 @@ async function networkfirst(req) {
 
 // 清理旧缓存
 async function clearOldCaches() {
-  alert('清理旧缓存')
   const keys = await caches.keys();
   keys.forEach(key => caches.delete(key));
   const cache = await caches.open(cache_name);
