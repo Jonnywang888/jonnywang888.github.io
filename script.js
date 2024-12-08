@@ -37,9 +37,7 @@ function Configurazione() {
     document.querySelector('.biao-year').addEventListener('click',init_biao_year);
     document.querySelector('.biao-head-year').addEventListener('change',changeselectyear)
     document.querySelector('#backtobiao').addEventListener('click',() => changepage('biaopage'))
-    document.getElementById('addpage').addEventListener('keypress',(e) => {
-        console.log(e.keycode)
-    })
+    document.addEventListener('keydown',(e) => tastiera_key(e));
 
     const prevYearButton = document.querySelector('.prev-year');
     const nextYearButton = document.querySelector('.next-year');
@@ -399,6 +397,35 @@ function tastiera(button) {
                 display.innerText = Number(displaynum).toFixed(2).toString();
             }
     }
+}
+// 按键函数
+function tastiera_key(event) {
+    const page = document.getElementById('addpage')
+    if (page.style.display === 'none') return;
+    const key = event.key;
+    const display = document.getElementById('current-value');
+    const displaystr = display.innerText;
+    const check = displaystr.slice(-1) == '0';
+    let displaynum = display.getAttribute('num');
+    switch (key) {
+        case '.':
+            if (!displaynum.includes('.')) {
+                displaynum = displaynum + key;
+                display.setAttribute('num',displaynum);
+            }
+            break;
+        case 'Backspace':
+            displaynum = displaynum.slice(0, -1);
+            display.setAttribute('num',displaynum);
+            break;
+        default:
+            if (key >= '0' && key <= '9' && displaynum < 100000 && check) {
+                displaynum = displaynum + key;
+                display.setAttribute('num',displaynum);
+                
+            }
+    }
+    display.innerText = Number(displaynum).toFixed(2).toString();
 }
 // 定义滚动函数
 async function scrolling() {
