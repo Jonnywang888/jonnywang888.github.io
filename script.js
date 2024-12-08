@@ -37,6 +37,9 @@ function Configurazione() {
     document.querySelector('.biao-year').addEventListener('click',init_biao_year);
     document.querySelector('.biao-head-year').addEventListener('change',changeselectyear)
     document.querySelector('#backtobiao').addEventListener('click',() => changepage('biaopage'))
+    document.getElementById('addpage').addEventListener('keypress',(e) => {
+        console.log(e.keycode)
+    })
 
     const prevYearButton = document.querySelector('.prev-year');
     const nextYearButton = document.querySelector('.next-year');
