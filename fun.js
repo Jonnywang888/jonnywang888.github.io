@@ -183,7 +183,7 @@ function istoday(sixid) {
     const yesterday = new Date();
     const diy = document.getElementById("biao-diy");
     let showyear = false;
-    if (diy.style.display !== "none") showyear = true;
+    if (diy.style.display === "flex") showyear = true;
     yesterday.setDate(today.getDate() - 1);
     const month = inputDate.getMonth() + 1;
     const year = sixid.slice(0, 2);

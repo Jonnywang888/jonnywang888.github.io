@@ -7,10 +7,6 @@ var groupdata = {};
 var groupmese = {};
 Configurazione() 
 init()
-// setTimeout(() => {
-//     document.getElementById('but-baobiao').click()
-//     document.querySelector('.biao-diy').click()
-// }, 100);
 
 // 配置文件
 function Configurazione() {
