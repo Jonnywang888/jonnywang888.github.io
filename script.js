@@ -1,13 +1,16 @@
-var mi,utente,floors,floorHeight,databiao,lis;
+var mi,utente,databiao;
 var baseurl = 'https://trustmarket.ddnsfree.com/server/app.asp?mi=';
 var currentDate = new Date();
 var needload = true;
 var listmovimento = [];
 var groupdata = {};
 var groupmese = {};
-var numlist = 1;
 Configurazione() 
 init()
+// setTimeout(() => {
+//     document.getElementById('but-baobiao').click()
+//     document.querySelector('.biao-diy').click()
+// }, 100);
 
 // 配置文件
 function Configurazione() {
@@ -35,9 +38,14 @@ function Configurazione() {
     document.getElementById('reload').addEventListener('click', reload);
     document.querySelector('.biao-month').addEventListener('click',init_biao_month);
     document.querySelector('.biao-year').addEventListener('click',init_biao_year);
+    document.querySelector('.biao-diy').addEventListener('click',init_biao_diy);
     document.querySelector('.biao-head-year').addEventListener('change',changeselectyear)
     document.querySelector('#backtobiao').addEventListener('click',() => changepage('biaopage'))
     document.addEventListener('keydown',(e) => tastiera_key(e));
+    document.querySelector('#biao-diy-year-dal').addEventListener('change',key_diy)
+    document.querySelector('#biao-diy-year-al').addEventListener('change',key_diy)
+    document.querySelector('#biao-diy-month-dal').addEventListener('change',key_diy)
+    document.querySelector('#biao-diy-month-al').addEventListener('change',key_diy)
 
     const prevYearButton = document.querySelector('.prev-year');
     const nextYearButton = document.querySelector('.next-year');
@@ -75,7 +83,8 @@ async function init() {
             caricamotivilist();
             updateCalendar();
             fetch(baseurl);
-            setTimeout(aggiornamento,2000)
+            setTimeout(loading,100);
+            setTimeout(aggiornamento,200)
         }
     } else {
         changepage('logpage')
@@ -86,7 +95,6 @@ function createDB() {
     return new Promise((resolve, reject) => {
         // 打开或创建 IndexedDB 数据库
         let request = indexedDB.open("appDB", 1);
-
         request.onupgradeneeded = function(event) {
             let db = event.target.result;
             // 创建 movimento 表
@@ -134,17 +142,16 @@ function createlocalstorage() {
         } else {
             resolve(true);
         }
-
     });
 }
 // 从数据库获取数据，加载页面
 async function caricamovimentolist() {
-    await loadnewlist(0)
+    await loadnewlist();
     showlist()
 }
 // 更新数据
-function aggiornamento() {
-    uploadmovimento()
+async function aggiornamento() {
+    await uploadmovimento()
     var url = baseurl + mi + "&action=getmotivi"
     fetch(url)
         .then(response => {
@@ -155,7 +162,6 @@ function aggiornamento() {
         })
         .then((response)=>localStorage.setItem('motivi', response))
         .catch(error => console.error('There was a problem with the fetch operation:', error));
-
     var url = baseurl + mi + "&action=getmovimento"
     fetch(url)
         .then(response => {
@@ -164,8 +170,19 @@ function aggiornamento() {
             }
             return response.json();
         })
-        .then(response => {return addData(response)})
-        .then(() => caricamovimentolist())
+        .then(response => {
+            addData(response);
+            return response})
+        .then((response) => {
+            getDbData(0,999999999999999,true).then(res => {
+                const check = JSON.stringify(response) === JSON.stringify(res)
+                if (!check) {
+                    console.log('已更新不同数据！')
+                    listmovimento = []
+                    caricamovimentolist()
+                }
+            })
+        })
         .catch(error => console.error('There was a problem with the fetch operation:', error));
 }
 // 底部按钮效果
@@ -214,9 +231,11 @@ function scegliemotivo(element) {
     const text = element.querySelector('span').innerText;
     const motivo = document.getElementById('current-motivo');
     const currentimg = document.getElementById('current-img');
-    motivo.innerText = text;
-    motivo.setAttribute('idmotivo',element.getAttribute('idmotivo'));
-    currentimg.src = imgSrc;
+    setTimeout(() => {
+        motivo.innerText = text;
+        motivo.setAttribute('idmotivo',element.getAttribute('idmotivo'));
+        currentimg.src = imgSrc;
+    }, 400);
     const clonedImg = img.cloneNode(true);
     clonedImg.classList.add('moving-image'); 
 
@@ -266,11 +285,13 @@ function addnewmovimento() {
         }];
         addtolocalupload(data);
         addData(data).then(() => {
+            listmovimento = []
             caricamovimentolist()
         })
-        .catch(
+        .catch(() => {
+            listmovimento = []
             caricamovimentolist()
-        );
+        });
         key_closeaddpage()
         uploadmovimento()
     } else {
@@ -422,38 +443,9 @@ function tastiera_key(event) {
             if (key >= '0' && key <= '9' && displaynum < 100000 && check) {
                 displaynum = displaynum + key;
                 display.setAttribute('num',displaynum);
-                
             }
     }
     display.innerText = Number(displaynum).toFixed(2).toString();
-}
-// 定义滚动函数
-async function scrolling() {
-    const main = document.getElementById('mainpage').style.display;
-    if (main !== 'none') {
-        // 定义变量保存页面当前滚动距离
-        const floorH = document.documentElement.scrollTop
-        for (let i = 0; i < floors.length; i++) {
-            if (floorH >= floorHeight[i] && (floorH < floorHeight[i + 1]||i == floors.length - 1)) {
-                const headanno = document.querySelector('#head-anno')
-                const headmese = document.querySelector('#head-mese')
-                const headtot = document.querySelector('#head-tot')
-                const strmese = floors[i].getAttribute('data-floor').toString()
-                headtot.innerHTML = groupmese[strmese].toFixed(2)
-                headanno.innerHTML = '20' + strmese.slice(0, 2) + '年'
-                headmese.innerHTML = parseInt(strmese.slice(2, 4)) + '月'
-                if (i == floors.length - 1) {
-                    const num = listmovimento.length
-                    if (num == numlist) {
-                        await loadnewlist(num)
-                        const dataArray = listmovimento[num]
-                        addnewlist(dataArray)
-                    }
-                }
-            }
-        }   
-    }
-
 }
 // 添加按钮
 function key_tianjia() {
@@ -558,7 +550,10 @@ function key_del(item) {
         const id = Number(item.getAttribute('data-id'))
         getDbData(id-1,id+1).then(data => {
             data[0].DEL = 1
-            addData(data).then(() => caricamovimentolist())
+            addData(data).then(() => {
+                listmovimento = []
+                caricamovimentolist()
+            })
             addtolocalupload(data);
             uploadmovimento()
         });
@@ -577,6 +572,7 @@ function key_calendar() {
 function setdelete(item) {
     var startX, currentX,diffX;
     const maxSlide = -85; // 最大滑动距离（负值表示向左滑动）
+    const lis = document.querySelectorAll('.movili');
     item.addEventListener('touchstart', function(e) {
         lis.forEach((e) => {
            if (item !== e) {
@@ -690,45 +686,12 @@ function ord_data(dataArray) {
             current6DigitSum = 0;
         }
     }
+    showyear = false
     return result
-}
-// 添加新的显示页面（日期数字-2个月）
-async function loadnewlist(num) {
-    if (needload === true && num > 0) {
-        numlist = num + 1;
-        needload = false;
-        const minid = minmaxid(num)[0]
-        const maxid = minmaxid(num)[1]
-        const dataArray = await getDbData(minid, maxid)
-        const newdata = ord_data(dataArray)
-        listmovimento.push(newdata)
-    } else {
-        const minid = minmaxid(0)[0]
-        const maxid = minmaxid(0)[1]
-        const dataArray = await getDbData(minid, maxid)
-        const newdata = ord_data(dataArray)
-        listmovimento[0] = newdata
-    }
-
-    function minmaxid(n) {
-        // 获取当前时间
-        const difm = n * 2 - 1
-        const mindata = new Date();
-        const maxdata = new Date();
-        mindata.setMonth(mindata.getMonth() - difm - 2);
-        maxdata.setMonth(maxdata.getMonth() - difm);
-        const minyear = String(mindata.getFullYear()).slice(-2); // 取年份的最后两位
-        const minmonth = String(mindata.getMonth() + 1).padStart(2, '0'); // 月份是0-11，所以加1，并格式化为两位
-        const maxyear = String(maxdata.getFullYear()).slice(-2); // 取年份的最后两位
-        const maxmonth = String(maxdata.getMonth() + 1).padStart(2, '0'); // 月份是0-11，所以加1，并格式化为两位
-        const minid = `${minyear}${minmonth}000000000`
-        const maxid = `${maxyear}${maxmonth}000000000`
-        return [Number(minid),Number(maxid)]
-    }
 }
 // 显示movimentolist
 function showlist() {
-    let list = document.getElementById("listmovimento");
+    const list = document.getElementById("listmovimento");
     list.innerHTML = "";
     for (let i = 0; i < listmovimento.length; i++) {
         const element = listmovimento[i];
@@ -737,78 +700,41 @@ function showlist() {
 }
 // 添加新的显示页面
 function addnewlist(dataArray) {
-    if (dataArray !== undefined) {
-        let list = document.getElementById("listmovimento");
+    if (dataArray?.length) {
+        const list = document.getElementById("listmovimento");
+        let html = "";
         for (let j = dataArray.length - 1; j >= 0; j--) {
             const item = dataArray[j];
-            const li = document.createElement("li");
-            const divli = document.createElement("div");
-            const lidate = document.createElement("div");
-            const limotivo = document.createElement("div");
-            const linome = document.createElement("div");
-            const livalue = document.createElement("div");
-            const libut = document.createElement("button");
-    
-            divli.className = "li";
-            lidate.className = "li-date";
-            limotivo.className = "li-motivo";
-            limotivo.textContent = item.MOTIVO;
-            linome.className = "li-nome";
-            livalue.className = "li-value";
-            livalue.textContent = item.SPESA;
-    
-            if (item.ID < 10000) {
-                li.className = "li-tot";
-                if (item.ID !==0) {
-                    li.classList.add("li-floor");
-                    li.setAttribute("data-floor", item.ID);
-                }
-                lidate.textContent = item.DATE;
-                libut.style.display = "none";
-            } else {
-                li.className = "li-movi";
-                divli.classList.add("movili");
-                const liicon = document.createElement("img");
-                liicon.className = "li-icon";
-                liicon.src = item.IMG;
-                lidate.appendChild(liicon);
-                libut.className = "li-but";
-                if (item.UTENTE.slice(0,1) == 'j') {
-                    linome.textContent = item.UTENTE.slice(0,2);
-                }
-                libut.setAttribute("data-id", item.ID);
-                libut.textContent = "删除";
-                libut.addEventListener('click',()=> key_del(libut))
-                const linota = document.createElement("div");
-                linota.className = "li-nota";
-                linota.textContent = item.NOTA;
-                limotivo.appendChild(linota);
-                setdelete(divli);
-            }
-            divli.appendChild(lidate);
-            divli.appendChild(limotivo);
-            divli.appendChild(linome);
-            divli.appendChild(livalue);
-            li.appendChild(divli);
-            li.appendChild(libut);
-            list.appendChild(li)
+            const isTot = item.ID < 10000;
+            const isFloor = isTot && item.ID !== 0;
+            const userText = (item.UTENTE && item.UTENTE.startsWith("j")) ? item.UTENTE.slice(0, 2) : "";
+            html += `
+                <li class="${isTot ? "li-tot" : "li-movi"} ${isFloor ? `li-floor" data-floor="${item.ID}"` : `"`}>
+                    <div class="li ${isTot ? "" : "movili"}">
+                        <div class="li-date">
+                            ${isTot ? item.DATE : `<img class="li-icon" src="${item.IMG}" />`}
+                        </div>
+                        <div class="li-motivo">
+                            ${item.MOTIVO}
+                            ${!isTot ? `<div class="li-nota">${item.NOTA}</div>` : ""}
+                        </div>
+                        <div class="li-nome">${userText}</div>
+                        <div class="li-value">${item.SPESA}</div>
+                    </div>
+                    ${isTot ? "" : `<button class="li-but" data-id="${item.ID}">删除</button>`}
+                </li>
+            `;
         }
-        setscroll();
-        scrolling();
+        list.innerHTML += html;
+        document.querySelectorAll(".li-but").forEach(btn => 
+            btn.addEventListener("click", () => key_del(btn))
+        );
+        const items = document.querySelectorAll(".movili")
+        items.forEach(item => setdelete(item));
+        
     }
-    lis = document.querySelectorAll('.movili');
-    needload = true
-}
-// 设置滚动监听楼层
-function setscroll() {
-    floors = document.querySelectorAll('.li-floor')
-    // 定义一个存放楼层高度的空数组
-    floorHeight = []
-    // 遍历所有楼层
-    for (let i = 0; i < floors.length; i++) {
-        // 将所有楼层在页面中距离顶部的高度存到floorHeight中
-        floorHeight[i] = floors[i].offsetTop - 90;
-    }
+    scrolling();
+    needload = true;    
 }
 // 显示未上传数据
 function showunload() {
@@ -824,103 +750,80 @@ function showunload() {
 }
 // 创建视图表-列
 function create_biaolie(dataArray) {
-    const num = dataArray.length;
     const biao = document.getElementById("biao-lie");
-    biao.innerHTML = '';
     const di = document.getElementById("biao-di");
+    biao.innerHTML = '';
     di.innerHTML = '';
-    const w = 100 - num * 1 -2;
-    const maxValue = dataArray.reduce((max, current) => {
-        return current[1] > max ? current[1] : max;
-    }, dataArray[0][1]);
+    const num = dataArray.length;
+    const w = 100 - num * 1 - 2;
     const maxh = 150;
+    const maxValue = Math.max(...dataArray.map(item => item[1]));
+    const biaoFrag = document.createDocumentFragment();
+    const diFrag = document.createDocumentFragment();
     let sum = 0;
-    for (let i = 0; i < num; i++) {
-        const item = dataArray[i];
+    let maxElement = null;
+    dataArray.forEach((item, i) => {
+        const width = `${w / num}%`;
         const lie = document.createElement("div");
-        lie.className = 'lie'
-        lie.style.width = w/num + '%'
-        lie.style.height = item[1]/maxValue * maxh + 'px'
-        lie.setAttribute('data-value', item[1])
-        lie.addEventListener('click', (event) => setevent(event.target));
+        lie.className = 'lie';
+        lie.style.width = width;
+        lie.style.height = `${(item[1] / maxValue) * maxh}px`;
+        lie.dataset.value = item[1];
+        lie.addEventListener('click', () => setevent(lie));
+        biaoFrag.appendChild(lie);
         const ndi = document.createElement("div");
-        ndi.style.width = w/num + '%'
-        ndi.className = 'di'
-        if (num < 20) {
-            ndi.innerText = i + 1;
-        } else if ( i % 2 == 0) {
-            ndi.innerText = item[0];
-        }
-        di.appendChild(ndi);
-        biao.appendChild(lie);
-        if (item[1] == maxValue) {
-            setevent(lie);
-        }
+        ndi.className = 'di';
+        ndi.style.width = width;
+        ndi.innerText = num < 20 ? item[0] : i % 2 === 0 ? item[0] : '';
+        diFrag.appendChild(ndi);
+        if (item[1] === maxValue) maxElement = lie;
         sum -= item[1];
-    }
-    function setevent(event) {
-        const lies = document.querySelectorAll('.lie');
-        lies.forEach(lie => {
-            if (lie === event) {
-                lie.style.backgroundColor = 'rgb(146, 39, 0)'
-            } else {
-                lie.style.backgroundColor = 'orangered'
-            }
-        })
-        const viewportWidth = window.innerWidth;
-        const ewidth = event.style.width.replace('%', '');
-        const elementwidth = eval(ewidth*viewportWidth/100)
-        const difwidth = (60 - elementwidth)/2
+    });
+    biao.appendChild(biaoFrag);
+    di.appendChild(diFrag);
+    if (maxElement) setevent(maxElement);
+    document.querySelector('.biao-tot-num').textContent = sum.toFixed(2);
+    function setevent(target) {
+        document.querySelectorAll('.lie').forEach(lie => {
+            lie.style.backgroundColor = lie === target ? 'rgb(146, 39, 0)' : 'orangered';
+        });
         const biaoDisplay = document.getElementById('biao-display');
-        const rect = event.getBoundingClientRect();
-        biaoDisplay.style.left = rect.left - difwidth  + 'px';
-        biaoDisplay.style.top = (rect.top - 30) + 'px';
+        const rect = target.getBoundingClientRect();
+        const elementWidth = parseFloat(target.style.width) * window.innerWidth / 100;
+        const offset = (60 - elementWidth) / 2;
+        biaoDisplay.style.left = `${rect.left - offset}px`;
+        biaoDisplay.style.top = `${rect.top - 30}px`;
         biaoDisplay.style.display = 'block';
-        biaoDisplay.innerText = Number(event.getAttribute('data-value')).toFixed(2)
-    }
-    const tot = document.querySelector('.biao-tot-num')
-    tot.textContent = sum.toFixed(2)
+        biaoDisplay.innerText = Number(target.dataset.value).toFixed(2);
+    }    
 }
 // 创建视图表-行
 function create_biaohang(dataArray) {
-    const num = dataArray.length;
     const biao = document.getElementById("biao-hang");
     biao.innerHTML = '';
     dataArray.sort((a, b) => b[1] - a[1]);
-    const sum = dataArray.reduce((sum, current) => sum + current[1], 0);
-    for (let i = 0; i < num; i++) {
-        const item = dataArray[i];
+    const sum = dataArray.reduce((total, current) => total + current[1], 0);
+    const frag = document.createDocumentFragment();
+    dataArray.forEach(item => {
+        const percentage = (item[1] / sum * 100).toFixed(2);
         const hang = document.createElement("div");
-        hang.addEventListener('click',()=>showinfolist(Number(item[0])))
-        hang.className = 'hang'
-        const imgbox = document.createElement("div");
-        imgbox.className = 'hang-imgbox'
-        const img = document.createElement("img");
-        imgsrc = getimgmotivo(item[0]);
-        img.src = 'icons/' + imgsrc + '.png';
-        img.className = 'hang-img'
-        imgbox.appendChild(img);
-        hang.appendChild(imgbox);
-        const info = document.createElement("div");
-        info.className = 'hang-info'
-        const box = document.createElement("div");
-        box.className = 'hang-box'
-        const des = document.createElement("div");
-        des.className = 'hang-des'
-        des.innerText = getnomemotivo(item[0]) + ' ' + (item[1]/sum*100).toFixed(2) + '%';
-        const tot = document.createElement("div");
-        tot.className = 'hang-tot'
-        tot.innerText = item[1].toFixed(2);
-        const tu = document.createElement("div");
-        tu.className = 'hang-tu'
-        tu.style.width = item[1]/sum*100 + '%'
-        box.appendChild(des);
-        box.appendChild(tot);
-        info.appendChild(box);
-        info.appendChild(tu);
-        hang.appendChild(info);
-        biao.appendChild(hang);
-    }
+        hang.className = "hang";
+        hang.addEventListener("click", () => showinfolist(Number(item[0])));
+    
+        hang.innerHTML = `
+            <div class="hang-imgbox">
+                <img class="hang-img" src="icons/${getimgmotivo(item[0])}.png">
+            </div>
+            <div class="hang-info">
+                <div class="hang-box">
+                    <div class="hang-des">${getnomemotivo(item[0])} ${percentage}%</div>
+                    <div class="hang-tot">${item[1].toFixed(2)}</div>
+                </div>
+                <div class="hang-tu" style="width:${percentage}%"></div>
+            </div>`;
+        frag.appendChild(hang);
+    });
+    biao.appendChild(frag);
 }   
 // 获取表数据(分类，dataArray)
 function ord_biaodata(order,dataArray) {
@@ -933,6 +836,12 @@ function ord_biaodata(order,dataArray) {
         for (let i = 1; i < 13; i++) {
             result[i] = 0;
         }
+    } else if (order === 'year') {
+        const dal = String(dataArray[0].ID).slice(0,2)
+        const al = String(dataArray[dataArray.length - 1].ID).slice(0,2)
+        for (let i = Number(al); i >= Number(dal); i--){
+            result[i] = 0;
+        }
     };
     for (let i = 0; i < dataArray.length; i++) {
         const item = dataArray[i];
@@ -941,6 +850,8 @@ function ord_biaodata(order,dataArray) {
             key = Number(String(item.ID).slice(4,6));
         } else if (order === 'month') {
             key = Number(String(item.ID).slice(2,4));
+        } else if (order === 'year') {
+            key = Number(String(item.ID).slice(0,2));
         } else if (order === 'motivo') {
             key = item.MOTIVO;
             if (!result[key]) {
@@ -949,7 +860,6 @@ function ord_biaodata(order,dataArray) {
         }
         result[key] -= item.SPESA;
     }
-    
     const res =  Object.entries(result)
     return res;
 }
@@ -1059,6 +969,40 @@ function init_biao_year() {
     });
     items[0].click();
 }
+// 表-diy初始化
+function init_biao_diy() {
+    const yeardal = document.getElementById('biao-diy-year-dal')
+    const yearal = document.getElementById('biao-diy-year-al')
+    const monthdal = document.getElementById('biao-diy-month-dal')
+    const monthal = document.getElementById('biao-diy-month-al')
+    yeardal.innerHTML = '';
+    yearal.innerHTML = '';
+    monthdal.innerHTML = '';
+    monthal.innerHTML = '';
+    const now = new Date();
+    const year = now.getFullYear();
+    for (let i = 2019; i <= year; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.innerText = i + '年';
+        const option2 = option.cloneNode(true);
+        if (i === 2019) option.selected = true;
+        if (i === year) option2.selected = true;
+        yeardal.appendChild(option);
+        yearal.appendChild(option2);
+    }
+    for (let i = 1; i < 13; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.innerText = i + '月';
+        const option2 = option.cloneNode(true);
+        if (i === 1) option.selected = true;
+        if (i === 12) option2.selected = true;
+        monthdal.appendChild(option);
+        monthal.appendChild(option2);
+    }
+    key_diy();
+}
 // 表-年报表选择年份事件
 async function key_year(event) {
     const year = event.target.textContent.replace('年', '').slice(2, 4);
@@ -1068,6 +1012,26 @@ async function key_year(event) {
     const datamonth = ord_biaodata('month',databiao)
     const datamotivi = ord_biaodata('motivo',databiao)
     create_biaolie(datamonth);
+    create_biaohang(datamotivi);
+}
+// 表-自定义页
+async function key_diy() {
+    const yeardal = document.getElementById('biao-diy-year-dal')
+    const yearal = document.getElementById('biao-diy-year-al')
+    const monthdal = document.getElementById('biao-diy-month-dal')
+    const monthal = document.getElementById('biao-diy-month-al')
+    const dal = yeardal.value.slice(2, 4) + monthdal.value.padStart(2, '0') + '000000000';
+    const al = yearal.value.slice(2, 4) + monthal.value.padStart(2, '0') + '999999999';
+    const minid = Number(dal);
+    const maxid = Number(al);
+    if (minid >= maxid) {
+        showmsg('请选择正确的日期范围');
+        return;
+    }
+    databiao = await getDbData(minid, maxid);
+    const datayear = ord_biaodata('year',databiao)
+    const datamotivi = ord_biaodata('motivo',databiao)
+    create_biaolie(datayear);
     create_biaohang(datamotivi);
 }
 // 显示详细统计信息
@@ -1083,52 +1047,95 @@ function showinfolist(idmotivo) {
         }
     }
     const ndata = ord_data(dataArray);
-    if (ndata !== undefined) {
-        let list = document.getElementById("info-list");
+    if (ndata) {
+        const list = document.getElementById("info-list");
         list.innerHTML = '';
         for (let j = ndata.length - 1; j >= 0; j--) {
-            const item = ndata[j];
+            const { ID, DATE, MOTIVO, SPESA, IMG, UTENTE, NOTA } = ndata[j];
             const li = document.createElement("li");
+            li.className = ID < 10000 ? "li-tot" : "li-movi";
             const divli = document.createElement("div");
-            const lidate = document.createElement("div");
-            const limotivo = document.createElement("div");
-            const linome = document.createElement("div");
-            const livalue = document.createElement("div");
-    
             divli.className = "li";
-            lidate.className = "li-date";
-            limotivo.className = "li-motivo";
-            limotivo.textContent = item.MOTIVO;
-            linome.className = "li-nome";
-            livalue.className = "li-value";
-            livalue.textContent = item.SPESA;
-    
-            if (item.ID < 10000) {
-                li.className = "li-tot";
-                lidate.textContent = item.DATE;
-            } else {
-                li.className = "li-movi";
-                divli.classList.add("movili");
-                const liicon = document.createElement("img");
-                liicon.className = "li-icon";
-                liicon.src = item.IMG;
-                lidate.appendChild(liicon);
-                if (item.UTENTE.slice(0,1) == 'j') {
-                    linome.textContent = item.UTENTE.slice(0,2);
-                }
-                const linota = document.createElement("div");
-                linota.className = "li-nota";
-                linota.textContent = item.NOTA;
-                limotivo.appendChild(linota);
-                sumspesa += Number(item.SPESA);
-            }
-            divli.appendChild(lidate);
-            divli.appendChild(limotivo);
-            divli.appendChild(linome);
-            divli.appendChild(livalue);
+            if (ID >= 10000) divli.classList.add("movili");
+            divli.innerHTML = `
+                <div class="li-date">${ID < 10000 ? DATE : `<img class="li-icon" src="${IMG}">`}</div>
+                <div class="li-motivo">${MOTIVO}${ID >= 10000 ? `<div class="li-nota">${NOTA}</div>` : ''}</div>
+                <div class="li-nome">${ID >= 10000 && UTENTE.startsWith('j') ? UTENTE.slice(0,2) : ''}</div>
+                <div class="li-value">${SPESA}</div>
+            `;
+            if (ID >= 10000) sumspesa += Number(SPESA);
             li.appendChild(divli);
-            list.appendChild(li)
-        };
+            list.appendChild(li);
+        }
     }
     document.querySelector('.info-tot-spesa').textContent = sumspesa.toFixed(2);
+}
+// 加载新内容
+async function loading() {
+    const load = document.querySelector('#load'); // 加载动画元素
+    // 加载数据
+    async function loadMoreData() {
+        await loadnewlist()
+        const dataArray = listmovimento[listmovimento.length-1];
+        addnewlist(dataArray)
+    }
+    // 观察器：检测 load 图片是否进入视口
+    const observer = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && needload) {
+            setTimeout(() => {
+                loadMoreData();
+            }, 100);
+        }
+    });
+    observer.observe(load); // 监听 load 图片
+}
+// 添加新的显示页面（日期数字-2个月）
+async function loadnewlist() {
+    const numlist = listmovimento.length
+    if (needload === false) return
+    needload = false;
+    const id = minmaxid(numlist)
+    const minid = id[0]
+    const maxid = id[1]
+    const dataArray = await getDbData(minid, maxid)
+    const newdata = ord_data(dataArray)
+    listmovimento.push(newdata)
+    function minmaxid(n) {
+        const difm = n - 1;
+        const mindata = new Date();
+        const maxdata = new Date();
+        // 先将日期设为1号，避免日期跳过
+        mindata.setDate(1);
+        maxdata.setDate(1);
+        mindata.setMonth(mindata.getMonth() - difm - 1);
+        maxdata.setMonth(maxdata.getMonth() - difm);
+        const minyear = String(mindata.getFullYear()).slice(-2);
+        const minmonth = String(mindata.getMonth() + 1).padStart(2, '0');
+        const maxyear = String(maxdata.getFullYear()).slice(-2);
+        const maxmonth = String(maxdata.getMonth() + 1).padStart(2, '0');
+        const minid = `${minyear}${minmonth}000000000`;
+        const maxid = `${maxyear}${maxmonth}000000000`;
+        return [Number(minid), Number(maxid)];
+    }
+}
+function scrolling() {
+    const main = document.getElementById('mainpage').style.display;
+    if (main === 'none') return;
+    // 获取所有楼层
+    const floors = document.querySelectorAll('.li-floor');
+    let floorH = document.documentElement.scrollTop;
+    for (let i = 0; i < floors.length; i++) {
+        const floorTop = floors[i].offsetTop - 90;
+        const nextFloorTop = i < floors.length - 1 ? floors[i + 1].offsetTop - 90 : Infinity;
+        if (floorH >= floorTop && floorH < nextFloorTop) {
+            const headanno = document.querySelector('#head-anno');
+            const headmese = document.querySelector('#head-mese');
+            const headtot = document.querySelector('#head-tot');
+            const strmese = floors[i].getAttribute('data-floor').toString();
+            headtot.innerHTML = groupmese[strmese].toFixed(2);
+            headanno.innerHTML = '20' + strmese.slice(0, 2) + '年';
+            headmese.innerHTML = parseInt(strmese.slice(2, 4)) + '月';
+            break;
+        }
+    }
 }

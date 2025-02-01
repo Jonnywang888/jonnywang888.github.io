@@ -65,7 +65,7 @@ function addData(dataArray) {
     });
 }
 // 获取appDB内的数据(最小，最大)-promise
-function getDbData(minId, maxId) {
+function getDbData(minId, maxId, getdel = false) {
     return new Promise((resolve, reject) => {
         // 打开数据库连接
         let request = indexedDB.open("appDB");
@@ -92,7 +92,7 @@ function getDbData(minId, maxId) {
                 if (cursor) {
                     let value = cursor.value;
                     // 检查 DEL 和 UPLOAD 的条件
-                    if (value.DEL === 0) {
+                    if (getdel || value.DEL === 0) {
                         results.push(value);
                     }
                     cursor.continue(); // 继续下一个数据
@@ -181,19 +181,60 @@ function istoday(sixid) {
     const inputDate = new Date(`20${sixid.slice(0, 2)}-${sixid.slice(2, 4)}-${sixid.slice(4, 6)}`);
     const today = new Date();
     const yesterday = new Date();
+    const diy = document.getElementById("biao-diy");
+    let showyear = false;
+    if (diy.style.display !== "none") showyear = true;
     yesterday.setDate(today.getDate() - 1);
     const month = inputDate.getMonth() + 1;
-
+    const year = sixid.slice(0, 2);
     // 将日期部分清零，只比较日期
     today.setHours(0, 0, 0, 0);
     yesterday.setHours(0, 0, 0, 0);
     inputDate.setHours(0, 0, 0, 0);
-
     if (inputDate.getTime() === today.getTime()) {
         return "今天";
     } else if (inputDate.getTime() === yesterday.getTime()) {
         return "昨天";
     } else {
-        return `${Number(month)}月${inputDate.getDate()}日`;
+        if(showyear){
+            return `${year}-${month}-${inputDate.getDate()}`;
+        } else {
+            return `${month}月${inputDate.getDate()}日`;
+        }
     }
+}
+// 显示message
+function showmsg(message) {
+    // 获取提示框容器，如果不存在则创建
+    var container = document.getElementById("notification-container");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "notification-container";
+        document.body.appendChild(container);
+    }
+    // 创建新的提示框
+    var notification = document.createElement("div");
+    notification.className = "notification";
+    notification.innerText = message;
+    container.insertBefore(notification, container.firstChild); // 插入到最上方
+    // 2 秒后开始淡出并移除
+    setTimeout(function () {
+        notification.style.opacity = "0"; // 渐隐
+        notification.style.transform = "translate(0, 0) scale(0)"; // 缩小到不可见
+        // 1 秒后完全移除元素
+        setTimeout(function () {
+            if (notification && notification.parentNode) {
+                container.removeChild(notification);
+                // 重新调整剩余提示框的位置
+                var remainingNotifications = container.getElementsByClassName("notification");
+                for (var i = 0; i < remainingNotifications.length; i++) {
+                    remainingNotifications[i].style.transform = "translateY(0)";
+                }
+                // 如果容器为空，移除容器
+                if (container.children.length === 0) {
+                    document.body.removeChild(container);
+                }
+            }
+        },200);
+    }, 1500);
 }

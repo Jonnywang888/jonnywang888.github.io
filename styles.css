@@ -19,6 +19,13 @@ body, html {
 #calendar{
     z-index: 1001;
 }
+#load-container{
+    text-align: center;
+}
+#load {
+    width: 25px;
+    height: 25px;
+}
 .head {
     background-color: var(--beijinghui);
     text-align: center;
@@ -151,7 +158,10 @@ body, html {
     border-bottom: 0.5px solid #ccc;
     border-top: 0.5px solid #ccc;
     font-size: 12px;
-    height: 33px;
+    height: 25px;
+}
+.li-tot .li-date{
+    height: 22px;
 }
 .li-movi{
     background-color: #fff;
@@ -372,6 +382,7 @@ body, html {
     border: none;
     font-size: 16px;
     cursor: pointer;
+    color: var(--lan);
 }
 .calendar-body {
     padding: 10px;
@@ -751,4 +762,44 @@ input[type="submit"] {
     padding-bottom: 80px; /* Match footer height */
     overflow-y: auto;
     list-style-type: none;
+}
+#biao-diy{
+    display: none;
+    justify-content: space-between;
+}
+.biao-diy-month,
+.biao-diy-year{
+    color: #000;
+    width: 15vw;
+    text-align: center;
+    height: 30px;
+    border-radius: 5px;
+    border: 1px solid var(--lan);
+    background-color: var(--beijinghui);
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
+    appearance: none;         /* 隐藏select下来箭头 对于其他支持 appearance 的浏览器 */
+}
+.biao-diy-year {
+    width: 20vw;
+}
+#notification-container {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+.notification {
+    background-color: var(--qianlan);
+    color: #fff;
+    width: 85vw;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-bottom: 5px; /* 提示框间距 */
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    text-align: center;
 }
