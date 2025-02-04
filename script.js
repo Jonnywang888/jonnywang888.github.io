@@ -42,26 +42,33 @@ function Configurazione() {
     document.querySelector('#biao-diy-year-al').addEventListener('change',key_diy)
     document.querySelector('#biao-diy-month-dal').addEventListener('change',key_diy)
     document.querySelector('#biao-diy-month-al').addEventListener('change',key_diy)
+    document.querySelector('#memori-container .close').addEventListener('click',() => {
+        document.getElementById('memori-container').style.display = 'none';
+    })
 
-    const prevYearButton = document.querySelector('.prev-year');
-    const nextYearButton = document.querySelector('.next-year');
-    const prevMonthButton = document.querySelector('.prev-month');
-    const nextMonthButton = document.querySelector('.next-month');
-    prevYearButton.addEventListener('click', function() {
+    document.querySelector('.prev-year').addEventListener('click', function() {
         currentDate.setFullYear(currentDate.getFullYear() - 1);
         updateCalendar();
     });
-    nextYearButton.addEventListener('click', function() {
+    document.querySelector('.next-year').addEventListener('click', function() {
         currentDate.setFullYear(currentDate.getFullYear() + 1);
         updateCalendar();
     });
-    prevMonthButton.addEventListener('click', function() {
+    document.querySelector('.prev-month').addEventListener('click', function() {
         currentDate.setMonth(currentDate.getMonth() - 1);
         updateCalendar();
     });
-    nextMonthButton.addEventListener('click', function() {
+    document.querySelector('.next-month').addEventListener('click', function() {
         currentDate.setMonth(currentDate.getMonth() + 1);
         updateCalendar();
+    });
+    // setpage
+    document.getElementById('modifimemori').addEventListener('click', set_memori_modifica);
+    document.getElementById('addmemori').addEventListener('click', set_memori_add);
+    document.getElementById('set-back').addEventListener('click', () => change_setpage('sp-main'));
+    document.getElementById('mensile').addEventListener('click', () => {
+        set_memori_carica();
+        change_setpage('sp-memori');
     });
 }
 // 初始化
@@ -74,13 +81,16 @@ async function init() {
         if (checked === true) {
             await createDB();
             await createlocalstorage();
+            get_memori();
             changepage('mainpage');
             caricamovimentolist();
             caricamotivilist();
+            set_memori_carica();
             updateCalendar();
             fetch(baseurl);
             setTimeout(loading,100);
             setTimeout(aggiornamento,200)
+            setTimeout(notifica_memori,300);
         }
     } else {
         changepage('logpage')
@@ -128,6 +138,9 @@ function createlocalstorage() {
         if (localStorage.getItem('upload') === null) {
             localStorage.setItem('upload', '[]')
         }
+        if (localStorage.getItem('memori') === null) {
+            localStorage.setItem('memori', '[]')
+        }
         if (localStorage.getItem('motivi') === null) {
             var url =baseurl + mi + "&action=getmotivi";
             fetch(url).then(response => response.text())
@@ -139,6 +152,14 @@ function createlocalstorage() {
             resolve(true);
         }
     });
+}
+// 加载提醒事项
+function get_memori() {
+    const url = baseurl + mi + "&action=getmemori";
+    fetch(url).then(response => response.json())
+        .then(dataArray => {
+            localStorage.setItem('memori', JSON.stringify(dataArray));
+    })
 }
 // 从数据库获取数据，加载页面
 async function caricamovimentolist() {
@@ -455,6 +476,7 @@ function key_tianjia() {
         init_newmovimento();
         setdatacalendar();
     } else {
+        notifica_memori();
         changepage('mainpage');
     };
 }
@@ -1114,6 +1136,7 @@ async function loadnewlist() {
         return [Number(minid), Number(maxid)];
     }
 }
+// 滚动设置
 function scrolling() {
     const main = document.getElementById('mainpage').style.display;
     if (main === 'none') return;
@@ -1134,4 +1157,267 @@ function scrolling() {
             break;
         }
     }
+}
+// 设置页，编辑记忆模式
+function set_memori_modifica() {
+    const items = document.querySelectorAll('.set-memori-item');
+    const but = document.querySelector('#modifimemori');
+    const check = (but.innerHTML === '退出编辑')
+    if (check) {
+        but.innerHTML = '编辑事项'
+        but.style.backgroundColor = '#EDF6FF'
+    } else {
+        but.innerHTML = '退出编辑'
+        but.style.backgroundColor = '#FFF'
+    }
+    items.forEach(item => {
+        const select = item.querySelector('.set-memori-select');
+        const del = item.querySelector('.set-memori-del');
+        if (check) {
+            select.style.display = 'block'
+            del.style.display = 'none'
+        } else {
+            select.style.display = 'none'
+            del.style.display = 'block'
+        }
+    })
+}
+// 设置页，添加记忆事项
+function set_memori_add() {
+    change_setpage('sp-add')
+    const motivi = JSON.parse(localStorage.getItem('motivi'));
+    const tabmotivi = document.getElementById('settabmotivi');
+    tabmotivi.innerHTML = '';
+    for (let i = 0; i < motivi.length; i++) {
+        const item = motivi[i];
+        const motiviitem = document.createElement('div');
+        motiviitem.setAttribute('idmotivo',item.ID)
+        motiviitem.addEventListener('click', () => set_memori_add_click(motiviitem));
+        motiviitem.classList.add('motivi-item');
+        const img = document.createElement('img');
+        img.src = 'icons/'+ item.IMG +'.png';
+        const span = document.createElement('span');
+        span.textContent = item.MOTIVONAME;
+        motiviitem.appendChild(img);
+        motiviitem.appendChild(span);
+        tabmotivi.appendChild(motiviitem);
+    }
+}
+// 设置页，切换页面
+function change_setpage(id) {
+    const pages = document.querySelectorAll('.set-page');
+    pages.forEach(page => {
+        if (page.id === id) {
+            page.style.display = 'block';
+        } else {
+            page.style.display = 'none';
+        }
+    })
+}
+// 设置页，点击添加新的提醒事项
+function set_memori_add_click(element) {
+    const idmotivo = parseInt(element.getAttribute('idmotivo'));
+    const img = element.querySelector('img').src;
+    const name = element.querySelector('span').textContent;
+    const dati = `${idmotivo},'${name}',1,0`
+    const url = baseurl + mi + "&action=addmemori&dati=" + dati;
+    fetch(url)
+        .then(response => response.json())
+        .then(dati => {
+            if (dati[0] === true) {
+                const id = dati[1];
+                const content = document.querySelector('.set-memori-content');
+                const item = document.createElement('div');
+                item.className = 'set-memori-item';
+                item.setAttribute('idmotivo', idmotivo);
+                item.setAttribute('n', id);
+                item.innerHTML = `
+                    <label class="switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                    <img src="${img}">
+                    <span class="name">${name}</span>
+                    <select class="set-memori-select">
+                        <option value="1">1个月</option>
+                        <option value="2">2个月</option>
+                        <option value="3">3个月</option>
+                    </select>
+                    <button class="set-memori-del" onclick="set_memori_del(this)">删除</button>
+                `;
+                item.querySelector('.switch input').addEventListener('change', () => set_memori_update(item));
+                item.querySelector('.set-memori-select').addEventListener('change', () => set_memori_update(item));
+                content.appendChild(item);
+                const memori = JSON.parse(localStorage.getItem('memori'));
+                const obj = {
+                    MOTIVOID: idmotivo,
+                    MOTIVONAME: name,
+                    MESE: 1,
+                    ID: id,
+                    ATTIVA: 0
+                }
+                memori.push(obj);
+                localStorage.setItem('memori', JSON.stringify(memori));
+            }  else {
+                showmsg('无法连接服务器！请在服务器启动后重试！');
+            }
+        })
+    change_setpage('sp-memori');
+}
+// 设置页，删除提醒事项
+function set_memori_del(button) {
+    const item = button.parentElement;
+    const id = parseInt(item.getAttribute('n'));
+    const url = baseurl + mi + "&action=delmemori&dati=" + id;
+    fetch(url)
+        .then(response => response.json())
+        .then(dati => {
+            console.log(dati)
+            if (dati === true) {
+                const memori = JSON.parse(localStorage.getItem('memori'));
+                console.log(memori[0].ID,id)
+                const index = memori.findIndex(item => item.ID == id);
+                memori.splice(index, 1);
+                localStorage.setItem('memori', JSON.stringify(memori));
+                item.remove();
+            }  else {
+                showmsg('无法连接服务器！请在服务器启动后重试！');
+            }
+        })
+}
+// 设置页，加载提醒事项
+function set_memori_carica() {
+    const memori = JSON.parse(localStorage.getItem('memori'));
+    const content = document.querySelector('.set-memori-content');
+    content.innerHTML = '';
+    for (let i = 0; i < memori.length; i++) {
+        const item = memori[i];
+        const id = item.ID;
+        const idmotivo = item.MOTIVOID;
+        const img = getimgmotivo(idmotivo);
+        const name = getnomemotivo(idmotivo);
+        const mese = item.MESE;
+        const attiva = item.ATTIVA;
+        let checked = '';
+        attiva == 1? checked = 'checked' : checked = '';
+        const line = document.createElement('div');
+        line.className = 'set-memori-item';
+        line.setAttribute('idmotivo', idmotivo);
+        line.setAttribute('n', id);
+        line.innerHTML = `
+            <label class="switch">
+                <input type="checkbox" ${checked}>
+                <span class="slider"></span>
+            </label>
+            <img src="icons/${img}.png">
+            <span class="name">${name}</span>
+            <select class="set-memori-select">
+                <option value="1">1个月</option>
+                <option value="2">2个月</option>
+                <option value="3">3个月</option>
+            </select>
+            <button class="set-memori-del" onclick="set_memori_del(this)">删除</button>
+        `;
+        line.querySelector('input').addEventListener('change', () => set_memori_update(line));
+        line.querySelector('.set-memori-select').addEventListener('change', () => set_memori_update(line));
+        const options = line.querySelector('.set-memori-select').options;
+        options[mese - 1].selected = true;
+        content.appendChild(line);
+    };
+}
+// 设置页，更新提醒事项
+function set_memori_update(item) {
+    const id = parseInt(item.getAttribute('n'));
+    const attiva = item.querySelector('.switch input').checked? 1 : 0;
+    const mese = item.querySelector('.set-memori-select').value;
+    const dati = `${id}-${mese}-${attiva}`
+    const url = baseurl + mi + "&action=updatememori&dati=" + dati;
+    fetch(url)
+        .then(response => response.json())
+        .then(dati => {
+            if (dati === true) {
+                const memori = JSON.parse(localStorage.getItem('memori'));
+                const index = memori.findIndex(item => item.ID == id);
+                memori[index].MESE = parseInt(mese);
+                memori[index].ATTIVA = attiva;
+                localStorage.setItem('memori', JSON.stringify(memori));
+            } else {
+                showmsg('无法连接服务器！请在服务器启动后重试！');
+            }
+        })
+}
+// 提醒事件
+async function notifica_memori() {
+    const container = document.querySelector('#memori-container');
+    container.style.display = 'none';
+    const box = container.querySelector('.memori-box');
+    box.innerHTML = '';
+    const memori = JSON.parse(localStorage.getItem('memori'));
+    const mindata = new Date();
+    // 先将日期设为1号，避免日期跳过
+    mindata.setDate(1);
+    mindata.setMonth(mindata.getMonth() - 4);
+    const minyear = String(mindata.getFullYear()).slice(-2);
+    const minmonth = String(mindata.getMonth() + 1).padStart(2, '0');
+    
+    const minid = `${minyear}${minmonth}000000000`;
+    const maxid = `9999000000000`;
+    const dati = await getDbData(minid, maxid);
+    
+    if (dati.length === 0) return;
+    const result = {};
+    for (const mem of memori) {
+        if (mem.ATTIVA !== 1) continue;
+        const snow = new Date();
+        const enow = new Date();
+        snow.setDate(1);
+        snow.setMonth(snow.getMonth() - mem.MESE);
+        enow.setDate(1);
+        const staryear = String(snow.getFullYear()).slice(-2);
+        const starmonth = String(snow.getMonth() + 1).padStart(2, '0');
+        const endyear = String(enow.getFullYear()).slice(-2);
+        const endmonth = String(enow.getMonth() + 1).padStart(2, '0');
+        const starid = parseInt(`${staryear}${starmonth}000000000`);
+        const endid = parseInt(`${endyear}${endmonth}000000000`);
+        result[mem.MOTIVONAME] = false;
+        for (const d of dati) {
+            const id = parseInt(d.ID);
+            if (id >= starid && id <= endid && d.MOTIVO == mem.MOTIVOID && mem.ATTIVA == 1) {
+                result[mem.MOTIVONAME] = true;
+                break;
+            };
+        }
+        if (!result[mem.MOTIVONAME]) {
+            main_showmemori(mem.MOTIVOID);
+        }
+    }
+}
+// 显示提醒message
+function main_showmemori(idmotivo) {
+    // 获取提示框容器，如果不存在则创建
+    const container = document.getElementById("memori-container");
+    container.style.display = "block";
+    const img = getimgmotivo(idmotivo);
+    const name = getnomemotivo(idmotivo);
+    const box = container.querySelector('.memori-box')
+    const item = document.createElement('div')
+    item.className = 'memori-item'
+    item.innerHTML = `
+        <img src="icons/${img}.png">
+        <div class="memori-item-name">${name}</div>`
+    item.addEventListener('click',() => {
+        currentDate = new Date();
+        updateCalendar();
+        setdatacalendar();
+        document.getElementById('calendar').style.display = 'none';
+        changepage('addpage');
+        document.getElementById('current-motivo').innerText = name;
+        document.getElementById('current-motivo').setAttribute('idmotivo',idmotivo);
+        document.getElementById('current-img').src = `icons/${img}.png`;
+        document.getElementById('tas-nota').value = '';
+        document.getElementById('current-value').innerText = '0.00';
+        document.getElementById('current-value').setAttribute('num','')
+        document.querySelector('.nota').style.display = 'none';
+    })
+    box.appendChild(item)
 }

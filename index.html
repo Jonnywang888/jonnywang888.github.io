@@ -8,7 +8,7 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icons/app.png">
     <meta name="theme-color" content="#f7f7f7"/>
-    <link rel="stylesheet" href="styles.css?v=1.1">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="page" id="mainpage">
@@ -24,6 +24,13 @@
         </ul>
         <div id="load-container">
             <img id="load" src="icons/load.gif" alt="加载中...">
+        </div>
+        <div id="memori-container">
+            <div class="memori-head">
+                <div class="memori-title">提醒事项</div>
+                <div class="close">X</div>
+            </div>
+            <div class="memori-box"></div>
         </div>
     </div>
     <div class="page" id="addpage">
@@ -128,7 +135,7 @@
             <div class="head-title">记账簿</div>
             <div class="head-title">设置界面</div>
         </div>
-        <div class="main center">
+        <div class="set-page main center" id="sp-main">
             <div class="avatar main">
                 <img class="famiglia logo-utente" src="icons/famiglia.jpg" alt="">
             </div>
@@ -136,10 +143,23 @@
             <div>
                 <div class="set-unload"></div>
             </div>
+            <br>
+            <button class="but-mensile" id="mensile">配置提醒</button>
             <div class="item-flex set-buts">
                 <button class="set-but" id="reload">重新加载</button>
                 <button class="set-but" id="logout">退出登录</button>
             </div>
+        </div>
+        <div class="set-page set-memori" id="sp-memori">
+            <div class="set-memori-content"></div>
+            <button id="modifimemori">编辑事项</button>   
+            <div class="item-flex set-buts">
+                <button class="set-but" id="addmemori">添加事项</button>
+                <button class="set-but" id="set-back">返回</button>
+            </div>           
+        </div>
+        <div class="set-page set-memori-motivi" id="sp-add">
+            <div id="settabmotivi"></div>
         </div>
     </div>
     <div class="page" id="biaopage">
@@ -210,7 +230,7 @@
             <div>设置</div>
         </div>
     </div>
-    <script src="fun.js?v=1.1"></script>
-    <script src="script.js?v=1.1"></script>
+    <script src="fun.js?v=1.0"></script>
+    <script src="script.js?v=1.0"></script>
 </body>
 </html>

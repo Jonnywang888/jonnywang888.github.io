@@ -66,6 +66,8 @@ function addData(dataArray) {
 }
 // 获取appDB内的数据(最小，最大)-promise
 function getDbData(minId, maxId, getdel = false) {
+    minId = parseInt(minId);
+    maxId = parseInt(maxId);
     return new Promise((resolve, reject) => {
         // 打开数据库连接
         let request = indexedDB.open("appDB");
