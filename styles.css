@@ -94,6 +94,10 @@ body, html {
     width: 25px;
     height: 25px;
 }
+#but-tianjia img{
+    width: 30px;
+    height: 30px;
+}
 .foot-item div{
     font-size: 10px;
     text-align: center;
@@ -1003,4 +1007,7 @@ input:checked + .slider:before {
 }
 #biao-hang{
     padding-bottom: 70px;
+}
+button:active{
+    transform: scale(0.9);
 }

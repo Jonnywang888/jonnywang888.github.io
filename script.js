@@ -70,6 +70,10 @@ function Configurazione() {
         set_memori_carica();
         change_setpage('sp-memori');
     });
+    const buts = document.querySelectorAll('.foot-item');
+    buts.forEach(b=>{
+        b.addEventListener('click', () => but_style(b))
+    })
 }
 // 初始化
 async function init() {
@@ -1420,4 +1424,26 @@ function main_showmemori(idmotivo) {
         document.querySelector('.nota').style.display = 'none';
     })
     box.appendChild(item)
+}
+// 按钮动画
+function but_style(element) {
+    console.log(element)
+    const items = document.querySelectorAll('.foot-item');
+    items.forEach(item => {
+        const [firstchild,secondchild] = item.children;
+        // console.log(item,element)
+        if (item === element) {
+            firstchild.style.width = '30px'
+            firstchild.style.height = '30px'
+            firstchild.style.marginTop = '5px';
+            firstchild.style.transition = 'width 0.3s ease, height 0.3s ease, margin 0.3s ease';
+            secondchild.style.transition = 'color 0.3s ease';
+        }else {
+            firstchild.style.width = '25px'
+            firstchild.style.height = '25px'
+            firstchild.style.marginTop = '10px';
+            firstchild.style.transition = 'width 0.3s ease, height 0.3s ease, margin 0.3s ease';
+            secondchild.style.transition = 'color 0.3s ease';  
+        }
+    })
 }
