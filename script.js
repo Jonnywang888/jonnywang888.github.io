@@ -1427,7 +1427,6 @@ function main_showmemori(idmotivo) {
 }
 // 按钮动画
 function but_style(element) {
-    console.log(element)
     const items = document.querySelectorAll('.foot-item');
     items.forEach(item => {
         const [firstchild,secondchild] = item.children;
