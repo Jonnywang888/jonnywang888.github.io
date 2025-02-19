@@ -93,49 +93,53 @@ async function init() {
             updateCalendar();
             fetch(baseurl);
             setTimeout(loading,100);
-            setTimeout(aggiornamento,200)
+            setTimeout(aggiornamento,200);
             setTimeout(notifica_memori,300);
         }
     } else {
         changepage('logpage')
     }
 }
-// 创建appDB数据库--promise
 function createDB() {
-    return new Promise((resolve, reject) => {
-        // 打开或创建 IndexedDB 数据库
-        let request = indexedDB.open("appDB", 1);
-        request.onupgradeneeded = function(event) {
-            let db = event.target.result;
-            // 创建 movimento 表
-            if (!db.objectStoreNames.contains("movimento")) {
-                let movimentoStore = db.createObjectStore("movimento", { keyPath: "ID", autoIncrement: false });
-                movimentoStore.createIndex("MOTIVO", "MOTIVO", { unique: false });
-                movimentoStore.createIndex("SPESA", "SPESA", { unique: false });
-                movimentoStore.createIndex("NOTA", "NOTA", { unique: false });
-                movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
-                movimentoStore.createIndex("DEL", "DEL", { unique: false });
-
-                var url = baseurl + mi + "&action=getmovimento"
-                fetch(url).then(response => response.json())
-                    .then(dataArray => addData(dataArray))
-                    resolve(true);
-            } else {
+    return new Promise(async (resolve, reject) => {
+        // 判断是否已经存在 appDB
+        try {
+            const databases = await indexedDB.databases();
+            const appDBExists = databases.some(db => db.name === "appDB");
+            if (appDBExists) {
+                // 如果 appDB 已存在，直接返回 resolve
                 resolve(true);
+                return;
+            }
+            // 如果 appDB 不存在，创建数据库并执行更新操作
+            let request = indexedDB.open("appDB", 1);
+            request.onupgradeneeded = function(event) {
+                let db = event.target.result;
+                if (!db.objectStoreNames.contains("movimento")) {
+                    let movimentoStore = db.createObjectStore("movimento", { keyPath: "ID", autoIncrement: false });
+                    movimentoStore.createIndex("MOTIVO", "MOTIVO", { unique: false });
+                    movimentoStore.createIndex("SPESA", "SPESA", { unique: false });
+                    movimentoStore.createIndex("NOTA", "NOTA", { unique: false });
+                    movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
+                    movimentoStore.createIndex("DEL", "DEL", { unique: false });
+                    var url = baseurl + mi + "&action=getmovimento";
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(dataArray => addData(dataArray)) // 确保 addData 先执行
+                        .then(() => resolve(true))
+                        .catch(error => reject(error));
+                };
             };
-        };
-
-        request.onsuccess = function(event) {
-            // 数据库打开成功
-            resolve(event.target.result);
-        };
-
-        request.onerror = function(event) {
-            // 数据库打开失败
-            reject(event.target.error);
-        };
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+        } catch (error) {
+            console.error("Error checking databases:", error);
+            reject(error);
+        }
     });
 }
+
 // 加载motivi本地数据 --promise
 function createlocalstorage() {
     return new Promise((resolve, reject) => {
@@ -198,7 +202,6 @@ async function aggiornamento() {
             getDbData(0,999999999999999,true).then(res => {
                 const check = JSON.stringify(response) === JSON.stringify(res)
                 if (!check) {
-                    console.log('已更新不同数据！')
                     listmovimento = []
                     caricamovimentolist()
                 }
@@ -548,12 +551,8 @@ async function reload() {
     await res;
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.controller.postMessage('clear-cache');
-    }
-    needload = true;
-    listmovimento = [];
-    groupdata = {};
-    groupmese = {}; // 每月数据
-    window.location.reload();
+    };
+    window.location.reload(true); // 强制从服务器重新加载
 }
 // 清除所有数据
 function azzeramento() {
