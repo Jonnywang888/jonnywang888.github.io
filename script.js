@@ -549,6 +549,10 @@ async function reload() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.controller.postMessage('clear-cache');
     }
+    needload = true;
+    listmovimento = [];
+    groupdata = {};
+    groupmese = {}; // 每月数据
     window.location.reload();
 }
 // 清除所有数据
