@@ -552,7 +552,7 @@ async function reload() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.controller.postMessage('clear-cache');
     };
-    window.location.reload(true); // 强制从服务器重新加载
+    window.location.reload(); // 强制从服务器重新加载
 }
 // 清除所有数据
 function azzeramento() {
@@ -565,7 +565,7 @@ function key_nota() {
     if (nota.style.display !== 'block') {
         nota.style.display = 'block'
         const input = nota.querySelector('input')
-        input.select();
+        input.focus();
     } else {
         nota.style.display = 'none'
     }
