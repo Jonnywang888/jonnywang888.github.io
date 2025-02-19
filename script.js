@@ -100,7 +100,6 @@ async function init() {
         changepage('logpage')
     }
 }
-// 加载DB数据库
 function createDB() {
     return new Promise(async (resolve, reject) => {
         // 判断是否已经存在 appDB
@@ -140,6 +139,7 @@ function createDB() {
         }
     });
 }
+
 // 加载motivi本地数据 --promise
 function createlocalstorage() {
     return new Promise((resolve, reject) => {
@@ -564,6 +564,8 @@ function key_nota() {
     const nota = document.querySelector('.nota')
     if (nota.style.display !== 'block') {
         nota.style.display = 'block'
+        const input = nota.querySelector('input')
+        input.select();
     } else {
         nota.style.display = 'none'
     }
