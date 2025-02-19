@@ -100,6 +100,7 @@ async function init() {
         changepage('logpage')
     }
 }
+// 加载DB数据库
 function createDB() {
     return new Promise(async (resolve, reject) => {
         // 判断是否已经存在 appDB
@@ -139,7 +140,6 @@ function createDB() {
         }
     });
 }
-
 // 加载motivi本地数据 --promise
 function createlocalstorage() {
     return new Promise((resolve, reject) => {
