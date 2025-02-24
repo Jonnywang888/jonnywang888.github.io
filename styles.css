@@ -21,9 +21,11 @@ body, html {
 #calendar{
     z-index: 1001;
 }
+#refresh-container,
 #load-container{
     text-align: center;
 }
+#refresh,
 #load {
     width: 25px;
     height: 25px;
@@ -117,7 +119,7 @@ body, html {
 }
 .main {
     flex: 1;
-    margin-top: 80px; /* Match header height */
+    margin-top: 28px; /* Match header height */
     margin-bottom: 100px; /* Match footer height */
     overflow-y: auto;
     box-sizing: border-box;
