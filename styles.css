@@ -117,7 +117,7 @@ body, html {
     height: 100%;
     display: none;
 }
-.main {
+#listmovimento {
     flex: 1;
     margin-top: 28px; /* Match header height */
     margin-bottom: 100px; /* Match footer height */
@@ -126,7 +126,16 @@ body, html {
     list-style-type: none;
     padding: 0;
 }
-.main li {
+.main {
+    flex: 1;
+    margin-top: 80px; /* Match header height */
+    margin-bottom: 100px; /* Match footer height */
+    overflow-y: auto;
+    box-sizing: border-box;
+    list-style-type: none;
+    padding: 0;
+}
+#listmovimento li {
     position: relative;
 }
 .li{
