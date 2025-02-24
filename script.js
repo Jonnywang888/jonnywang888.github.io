@@ -319,7 +319,7 @@ function addnewmovimento() {
         key_closeaddpage()
         uploadmovimento()
     } else {
-        alert('请输入消费金额')
+        showmsg('请输入消费金额')
     }
 }
 // 初始化新建消费记录属性
@@ -476,6 +476,8 @@ function key_tianjia() {
     const tianjia = document.getElementById('but-tianjia')
     const img = tianjia.children[0].src;
     if (img.includes('active')) {
+        const url = baseurl + mi + '&action=attiva';
+        fetch(url);
         document.getElementById('calendar').style.display = 'none';
         currentDate = new Date();
         updateCalendar();
