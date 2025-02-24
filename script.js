@@ -5,6 +5,8 @@ var needload = true;
 var listmovimento = [];
 var groupdata = {};
 var groupmese = {};
+let startPosition = 0;  // 下拉的开始位置
+let distance = 0;   // 下拉距离的差值
 Configurazione() 
 init()
 
@@ -21,6 +23,7 @@ function Configurazione() {
     click_footbut(document.getElementById('but-tianjia'));
     document.querySelectorAll('.foot-item').forEach(x => x.addEventListener('click', () => click_footbut(x))); 
     window.addEventListener('scroll', scrolling);
+    window.addEventListener('scroll', refresh)
     document.querySelectorAll('.key').forEach(k => k.addEventListener('click', () => tastiera(k)));
     document.getElementById('backtomain').addEventListener('click', key_closeaddpage);
     document.getElementById('login-form').addEventListener('submit', login);
@@ -74,6 +77,7 @@ function Configurazione() {
     buts.forEach(b=>{
         b.addEventListener('click', () => but_style(b))
     })
+    refresh();
 }
 // 初始化
 async function init() {
@@ -187,27 +191,33 @@ async function aggiornamento() {
         })
         .then((response)=>localStorage.setItem('motivi', response))
         .catch(error => console.error('There was a problem with the fetch operation:', error));
-    var url = baseurl + mi + "&action=getmovimento"
+
+    var url = baseurl + mi + "&action=getmovimento";
     fetch(url)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok ' + response.statusText);
             }
+            // 等待 response.json() 解析
             return response.json();
         })
-        .then(response => {
-            addData(response);
-            return response})
-        .then((response) => {
-            getDbData(0,999999999999999,true).then(res => {
-                const check = JSON.stringify(response) === JSON.stringify(res)
+        .then(responseData => {
+            // 获取数据库数据并处理
+            return getDbData(0, 999999999999999, true).then(res => {
+                // 比较从接口获取的响应和数据库中的数据
+                const check = JSON.stringify(responseData) === JSON.stringify(res);
                 if (!check) {
-                    listmovimento = []
-                    caricamovimentolist()
-                }
-            })
+                    addData(responseData).then(() => {
+                        listmovimento = [];
+                        caricamovimentolist();
+                    });
+                } 
+            });
         })
-        .catch(error => console.error('There was a problem with the fetch operation:', error));
+        .catch(error => {
+            console.error('Fetch error: ', error);
+        });
+    
 }
 // 底部按钮效果
 function click_footbut(element) {
@@ -1118,6 +1128,45 @@ async function loading() {
     });
     observer.observe(load); // 监听 load 图片
 }
+// 刷新内容
+async function refresh() {
+    const maincontainer = document.getElementById('maincontainer');
+    maincontainer.addEventListener('touchstart', function (e) {
+        const refreshtext = document.getElementById('refresh-text');
+        refreshtext.textContent = '下拉刷新';
+        startPosition = e.touches[0].pageY;
+    });
+    maincontainer.addEventListener('touchmove', function (e) {
+        const refreshtext = document.getElementById('refresh-text');
+        const currentPosition = e.touches[0].pageY;
+        distance = currentPosition - startPosition;
+        if (distance > 150) {
+            refreshtext.textContent = '释放刷新';
+        }
+        if (distance < 100) {
+            this.style.transition = 'transform 0s';
+        }
+    })
+    maincontainer.addEventListener('touchend', async function (e) {
+        const refreshtext = document.getElementById('refresh-text');
+        this.style.transition = 'transform 0.5s';
+        if (distance > 0 && distance < 100) {
+            this.style.transform = `translateY(0px)`
+            return;
+        }
+        if (distance > 150) {
+            this.style.transform = `translateY(100px)`;
+            refreshtext.textContent = '刷新中';
+            await aggiornamento();
+            setTimeout(() => {
+                refreshtext.textContent = '刷新成功';
+                this.style.transform = `translateY(0px)`
+            },750)
+        }
+        distance = 0;
+    })
+}
+
 // 添加新的显示页面（日期数字-2个月）
 async function loadnewlist() {
     const numlist = listmovimento.length
@@ -1453,3 +1502,4 @@ function but_style(element) {
         }
     })
 }
+
