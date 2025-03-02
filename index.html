@@ -7,17 +7,28 @@
     <title>记账App</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icons/app.png">
-    <meta name="theme-color" content="#f7f7f7"/>
+    <!-- <meta name="theme-color" content="#f7f7f7"/> -->
+    <meta name="theme-color" content="'#49c2ef">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="page" id="mainpage">
         <div class="head">
-            <div class="head-title">记账簿</div>
+            <div class="head-title">
+                <div class="head-data">
+                    <span id="head-mese"></span>/
+                    <span id="head-anno"></span>
+                </div>
+            </div>
             <div class="head-infotot">
-                <div id="head-anno"></div>
-                <div id="head-mese"></div>
-                <div id="head-tot"></div>
+                <div class="head-tot-in">
+                    <div class="text">收入：</div>
+                    <div id="head-tot-in"></div>
+                </div>
+                <div class="head-tot-out">
+                    <div class="text">:支出</div>
+                    <div id="head-tot"></div>
+                </div>
             </div>
         </div>
         <div id="maincontainer">
@@ -45,14 +56,18 @@
                     <img src="icons/back-nero.png" alt="">
                     <span>返回</span>
                 </div>
-                <div class="addhead-zhichu">支出</div>
+                <div class="text addhead-out dixian">支出</div>
+                <div class="text addhead-in">收入</div>
             </div>
             <div class="current-selection">
                 <div class="current-img">
                     <img id="current-img" src="icons/chaoshi.png" alt="超市">
                 </div>
-                <span id="current-motivo">超市</span>
-                <span id="current-value">0.00</span>
+                <div id="current-motivo">超市</div>
+                <div class="current-value">
+                    <span class="current-sign">-</span>
+                    <span id="current-value">0.00</span>
+                </div>
             </div>
         </div>
         <div id="tabmotivi">
@@ -195,8 +210,9 @@
         </div>
         <div class="main">
             <div class="biao-tot">
-                <div>总支出：</div>
-                <div class="biao-tot-num"></div>
+                <div>总计：</div>
+                <div class="biao-tot-in"></div>
+                <div class="biao-tot-out"></div>
             </div>
             <div id="biao-lie"></div>
             <div id="biao-di"></div>

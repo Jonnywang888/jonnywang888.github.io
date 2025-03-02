@@ -6,6 +6,7 @@
     --huihei:#262c4e;
     --beijinghui:#F7F7F7;
     --hong: #FF0000;
+    --qianhui: #8a949e;
 }
 body, html {
     margin: 0;
@@ -38,11 +39,20 @@ body, html {
     width: 100%;
     z-index: 1000;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    height: 80px;
+    height: 85px;
 }
 .head-title{
     font-size: 1.2em;
-    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+}
+.head-data {
+    padding: 0 20px;
+    height: 32px;
+    font-size: 1.2em;
+    box-sizing: border-box;
+    border-bottom: 2px solid var(--lan);
+    /* background-color: #0A84FF; */
 }
 .head-infotot{
     display: flex;
@@ -51,25 +61,38 @@ body, html {
 }
 #head-anno{
     text-align: left;
-    padding-left: 3%;
     width: 40%;
-    font-size: 1.2em;
     margin-top: 6px;
 }
 #head-mese{
-    width: 20%;
-    text-align: center;
-    font-size: 1.5em;
-    border-radius: 10px;
-    color: #fff;
-    background-color: var(--qianlan);
-}
-#head-tot {
+    text-align: left;
     width: 40%;
-    text-align: right;
-    padding-right: 3%;
-    font-size: 1.2em;
     margin-top: 6px;
+}
+.head-tot-in {
+    text-align: left;
+    padding-left: 3vw;
+}
+.head-tot-out {
+    text-align: right;
+    padding-right: 3vw;
+}
+.head-infotot .text{
+    font-size: 0.8em;
+    color: var(--qianhui);
+    -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
+}
+#head-tot{
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--lan);
+}
+#head-tot-in{
+    font-size: 1.2em;
+    line-height: 2.2;
+    /* font-weight: bold; */
+    /* color: #3f3f3f; */
+    /* color: var(--lan); */
 }
 .foot {
     background-color: #fff;
@@ -119,7 +142,7 @@ body, html {
 }
 #listmovimento {
     flex: 1;
-    margin-top: 28px; /* Match header height */
+    margin-top: 33px; /* Match header height */
     margin-bottom: 100px; /* Match footer height */
     overflow-y: auto;
     box-sizing: border-box;
@@ -148,7 +171,7 @@ body, html {
 }
 .li-nome{
     width: 10%;
-    color: var(--lan);
+    color: var(--qianlan);
     font-weight: bold;
     text-transform: capitalize;
 }
@@ -171,6 +194,11 @@ body, html {
     width: 27%;
     text-align: right;
 }
+.li-valuein{
+    width: 10%;
+    text-align: right;
+    color: var(--hui);
+}
 .li-tot{
     background-color: var(--beijinghui);
     border-bottom: 0.5px solid #ccc;
@@ -186,7 +214,7 @@ body, html {
 }
 .li-nota{
     font-size: 12px;
-    color: #8a949e;
+    color: var(--qianhui);
 }
 .li-but{
     font-size: 14px;
@@ -304,9 +332,11 @@ body, html {
     vertical-align: middle;
     padding: 5px;
 }
-.addhead-zhichu{
-    text-align: center;
-    width: 53%;
+.addhead-title .text{
+    width: 20vw;
+    text-align-last:justify;
+    margin: 0px 5vw;
+    -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
 }
 .current-selection {
     width: 100%;
@@ -335,7 +365,7 @@ body, html {
     font-size: 1.2em;
     margin-left: 20px;
 }
-#current-value{
+.current-value{
     width: 45%;
     text-align: right;
     font-size: 1.5em;
@@ -699,8 +729,6 @@ input[type="submit"] {
 }
 .biao-tot div{
     color: #fff;
-}
-.biao-tot-num {
     text-align: right;
 }
 #biao-year{
@@ -957,7 +985,6 @@ input:checked + .slider:before {
     animation: fadeIn 0.5s ease-in-out;
     z-index: 1;
 }
-
 .memori-head {
     display: flex;
     justify-content: space-between;
@@ -968,12 +995,10 @@ input:checked + .slider:before {
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
-
 .memori-title {
     font-size: 16px;
     font-weight: bold;
 }
-
 .close {
     cursor: pointer;
     font-size: 14px;
@@ -983,7 +1008,6 @@ input:checked + .slider:before {
     color: var(--hong);
     border: 1px solid var(--hong);
 }
-
 .memori-item {
     display: flex;
     align-items: center;

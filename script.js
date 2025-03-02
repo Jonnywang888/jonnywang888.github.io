@@ -29,6 +29,10 @@ function Configurazione() {
     document.getElementById('login-form').addEventListener('submit', login);
     document.getElementById('but-renwu').addEventListener('click', showunload);
     document.getElementById('but-baobiao').addEventListener('click', key_biao);
+    
+    document.querySelector('.addhead-out').addEventListener('click', (e) => click_inout(e));
+    document.querySelector('.addhead-in').addEventListener('click', (e) => click_inout(e));
+
     document.getElementById('tas-butnota').addEventListener('click', key_nota);
     document.getElementById('tas-data').addEventListener('click', key_calendar);
     document.querySelector('.calendar-ok').addEventListener('click', setdatacalendar);
@@ -92,7 +96,6 @@ async function init() {
             get_memori();
             changepage('mainpage');
             caricamovimentolist();
-            caricamotivilist();
             set_memori_carica();
             updateCalendar();
             fetch(baseurl);
@@ -243,20 +246,51 @@ function caricamotivilist() {
     const motivi = JSON.parse(localStorage.getItem('motivi'));
     const tabmotivi = document.getElementById('tabmotivi');
     tabmotivi.innerHTML = '';
+    const heads = document.querySelectorAll('.addhead-title .text');
+    let inout = ''
+    heads.forEach(head => {
+        const classList = head.classList;
+        if (classList.contains('dixian')) {
+            const sign = document.querySelector('.current-sign')
+            if (head.innerText === '支出') {
+                inout = 'out';
+                sign.innerHTML = '-'
+            } else if (head.innerText === '收入') {
+                inout = 'in';
+                sign.innerHTML = '+'
+            }
+        }
+    })
     for (let i = 0; i < motivi.length; i++) {
         const item = motivi[i];
+        if (inout === 'out') {
+            if (item.ID > 100) continue;
+        } else if (inout === 'in') {
+            if (item.ID < 100) continue;
+        }
         const motiviitem = document.createElement('div');
         motiviitem.setAttribute('idmotivo',item.ID)
         motiviitem.addEventListener('click', () => scegliemotivo(motiviitem));
         motiviitem.classList.add('motivi-item');
-        const img = document.createElement('img');
-        img.src = 'icons/'+ item.IMG +'.png';
-        const span = document.createElement('span');
-        span.textContent = item.MOTIVONAME;
-        motiviitem.appendChild(img);
-        motiviitem.appendChild(span);
+        const html = `<img src="icons/${item.IMG}.png"><span>${item.MOTIVONAME}</span>`
+        motiviitem.innerHTML = html;
         tabmotivi.appendChild(motiviitem);
     }
+    init_newmovimento()
+}
+//添加消费页 点击收入-支出
+function click_inout(event) {
+    const heads = document.querySelectorAll('.addhead-title .text');
+    const inout = event.target;
+    heads.forEach(head => {
+        const classList = head.classList;
+        if (inout === head) {
+            classList.add('dixian');
+        } else {
+            classList.remove('dixian');
+        }
+    })
+    caricamotivilist();
 }
 // 选择消费原因
 function scegliemotivo(element) {
@@ -304,15 +338,19 @@ function scegliemotivo(element) {
 }
 // 添加新的消费记录
 function addnewmovimento() {
-    const spesa = Number(document.getElementById('current-value').innerText);
+    let spesa = Number(document.getElementById('current-value').innerText);
     if (spesa > 0) {
         const id = Number(get_timeid());
         const idmotivo = Number(document.getElementById('current-motivo').getAttribute('idmotivo'));
         const nota = document.getElementById('tas-nota').value;
+        const sign = document.querySelector('.current-sign').innerText;
+        if (sign === '-') {
+            spesa = 0 - spesa;
+        }
         const data = [{
             "ID": id,
             "MOTIVO": idmotivo,
-            "SPESA": 0 - spesa,
+            "SPESA": spesa,
             "NOTA": nota,
             "UTENTE": utente,
             "DEL": 0
@@ -329,14 +367,19 @@ function addnewmovimento() {
         key_closeaddpage()
         uploadmovimento()
     } else {
-        showmsg('请输入消费金额')
+        showmsg('请输入消费金额');
     }
 }
 // 初始化新建消费记录属性
 function init_newmovimento() {
-    document.getElementById('current-motivo').innerText = '超市';
-    document.getElementById('current-motivo').setAttribute('idmotivo',3);
-    document.getElementById('current-img').src = 'icons/chaoshi.png';
+    const tabmotivi = document.getElementById('tabmotivi');
+    const child = tabmotivi.children[0];
+    const motivo = child.querySelector('span').innerText;
+    const id = child.getAttribute('idmotivo');
+    const img = child.querySelector('img').src;
+    document.getElementById('current-motivo').innerText = motivo;
+    document.getElementById('current-motivo').setAttribute('idmotivo',id);
+    document.getElementById('current-img').src = img;
     document.getElementById('tas-nota').value = '';
     document.getElementById('current-value').innerText = '0.00';
     document.getElementById('current-value').setAttribute('num','')
@@ -492,7 +535,7 @@ function key_tianjia() {
         currentDate = new Date();
         updateCalendar();
         changepage('addpage');
-        init_newmovimento();
+        caricamotivilist();
         setdatacalendar();
     } else {
         notifica_memori();
@@ -519,6 +562,7 @@ function changepage(page) {
         themeColorMetaTag.setAttribute('content', '#49c2ef');
     } else {
         themeColorMetaTag.setAttribute('content', '#f7f7f7');
+        // themeColorMetaTag.setAttribute('content', '#49c2ef');
     }
     pages.forEach(p => {
         if (p.id === page) {
@@ -590,12 +634,52 @@ function key_del(item) {
         getDbData(id-1,id+1).then(data => {
             data[0].DEL = 1
             addData(data).then(() => {
-                listmovimento = []
-                caricamovimentolist()
+                const parent = item.parentElement;
+                delelement(parent)
             })
             addtolocalupload(data);
             uploadmovimento()
         });
+    }
+    async function delelement(element) {
+        const list = document.getElementById('listmovimento')
+        const value = Number(element.querySelector('.li-value').innerText)
+        const children = list.children;
+        let check = false;
+        for (let i = children.length - 1; i >= 0; i--) {
+            const child = children[i];
+            if (child === element) {
+                check = true
+            }
+            if (check) {
+                const classlist = child.classList
+                if (classlist.contains('li-tot')) {
+                    if (value < 0) {
+                        const tot = child.querySelector('.li-value');
+                        tot.innerText = (Number(tot.innerText) - value).toFixed(2);
+                        const headtot = document.querySelector('#head-tot');
+                        headtot.innerText = (Number(headtot.innerText) - value).toFixed(2);
+                    } else {
+                        const tot = child.querySelector('.li-valuein');
+                        tot.innerText = '+' + (Number(tot.innerText) - value).toFixed(2);
+                        const headtot = document.querySelector('#head-tot-in');
+                        headtot.innerText = '+' + (Number(headtot.innerText) - value).toFixed(2);
+                    }
+                    break;
+                }
+            }
+        }
+        list.removeChild(element)
+        const len = listmovimento.length;
+        listmovimento = []
+        for (let i = 0; i < len; i++) {
+            const id = minmaxid(i)
+            const minid = id[0]
+            const maxid = id[1]
+            const dataArray = await getDbData(minid, maxid)
+            const newdata = ord_data(dataArray)
+            listmovimento.push(newdata)
+        }
     }
 }
 // 日历按钮
@@ -670,7 +754,10 @@ function ord_data(dataArray) {
     dataArray.sort((a, b) => a.ID - b.ID);
     // 变量用于跟踪当前前6位数字
     let current6DigitPrefix = null;
-    let current6DigitSum = 0;
+    let current6DigitSum = {
+        'in': 0,
+        'out': 0
+    };
     let current4DigitPrefix = null;
     for (let i = 0; i < dataArray.length; i++) {
         const item = dataArray[i];
@@ -688,14 +775,21 @@ function ord_data(dataArray) {
             }
             newdata.DATE = istoday(current6DigitPrefix);
             newdata.MOTIVO = getDayOfWeek(current6DigitPrefix);
-            newdata.SPESA = current6DigitSum.toFixed(2);;
+            newdata.SPESA = current6DigitSum;
             result.push(newdata);
-            current6DigitSum = 0;
+            current6DigitSum = {
+                'in': 0,
+                'out': 0
+            };
         }
 
         // 更新当前前6位的前缀和总和
         current6DigitPrefix = prefix6;
-        current6DigitSum += item.SPESA;
+        if (item.SPESA < 0) {
+            current6DigitSum.out += Number(item.SPESA);
+        } else {
+            current6DigitSum.in += Number(item.SPESA);
+        }
         current4DigitPrefix = prefix4;
         item.IMG = 'icons/' + getimgmotivo(item.MOTIVO) + '.png';
         item.MOTIVO = getnomemotivo(item.MOTIVO);
@@ -703,16 +797,27 @@ function ord_data(dataArray) {
         result.push(item);
         // 按前6位更新 groupdata
         if (!gdata[prefix6]) {
-            gdata[prefix6] = 0;
+            gdata[prefix6] = {
+                'in': 0,
+                'out': 0
+            };
         }
-        gdata[prefix6] += Number(item.SPESA);
-        groupdata[prefix6] = gdata[prefix6];
-
         // 按前4位更新 groupmese
         if (!gmese[prefix4]) {
-            gmese[prefix4] = 0;
+            gmese[prefix4] = {
+                'in': 0,
+                'out': 0
+            };
         }
-        gmese[prefix4] += Number(item.SPESA);
+        if (item.SPESA < 0) {
+            gdata[prefix6].out += Number(item.SPESA);
+            gmese[prefix4].out += Number(item.SPESA);
+        } else {
+            gdata[prefix6].in += Number(item.SPESA);
+            gmese[prefix4].in += Number(item.SPESA);
+        }
+
+        groupdata[prefix6] = gdata[prefix6];
         groupmese[prefix4] = gmese[prefix4];
         // 检查是否位最后一个
         if (i === dataArray.length - 1) {
@@ -720,7 +825,7 @@ function ord_data(dataArray) {
             newdata.ID = current4DigitPrefix;
             newdata.DATE = istoday(current6DigitPrefix);
             newdata.MOTIVO = getDayOfWeek(current6DigitPrefix);
-            newdata.SPESA = current6DigitSum.toFixed(2);;
+            newdata.SPESA = current6DigitSum;
             result.push(newdata);
             current6DigitSum = 0;
         }
@@ -757,8 +862,10 @@ function addnewlist(dataArray) {
                             ${item.MOTIVO}
                             ${!isTot ? `<div class="li-nota">${item.NOTA}</div>` : ""}
                         </div>
-                        <div class="li-nome">${userText}</div>
-                        <div class="li-value">${item.SPESA}</div>
+                        ${isTot ? `<div class="li-valuein">${item.SPESA.in === 0 ? "": "+" + item.SPESA.in.toFixed(2)}</div>
+                                <div class="li-value">${item.SPESA.out.toFixed(2)}</div>`
+                            :`<div class="li-nome">${userText}</div>
+                                <div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
                     </div>
                     ${isTot ? "" : `<button class="li-but" data-id="${item.ID}">删除</button>`}
                 </li>
@@ -770,7 +877,6 @@ function addnewlist(dataArray) {
         );
         const items = document.querySelectorAll(".movili")
         items.forEach(item => setdelete(item));
-        
     }
     scrolling();
     needload = true;    
@@ -796,18 +902,21 @@ function create_biaolie(dataArray) {
     const num = dataArray.length;
     const w = 100 - num * 1 - 2;
     const maxh = 150;
-    const maxValue = Math.max(...dataArray.map(item => item[1]));
+    const maxValue = Math.min(...dataArray.map(item => item[1].out));
     const biaoFrag = document.createDocumentFragment();
     const diFrag = document.createDocumentFragment();
-    let sum = 0;
+    const sum = {
+        'in':0,
+        'out':0
+    };
     let maxElement = null;
     dataArray.forEach((item, i) => {
         const width = `${w / num}%`;
         const lie = document.createElement("div");
         lie.className = 'lie';
         lie.style.width = width;
-        lie.style.height = `${(item[1] / maxValue) * maxh}px`;
-        lie.dataset.value = item[1];
+        lie.style.height = `${(item[1].out / maxValue) * maxh}px`;
+        lie.dataset.value = item[1].out;
         lie.addEventListener('click', () => setevent(lie));
         biaoFrag.appendChild(lie);
         const ndi = document.createElement("div");
@@ -815,13 +924,15 @@ function create_biaolie(dataArray) {
         ndi.style.width = width;
         ndi.innerText = num < 20 ? item[0] : i % 2 === 0 ? item[0] : '';
         diFrag.appendChild(ndi);
-        if (item[1] === maxValue) maxElement = lie;
-        sum -= item[1];
+        if (item[1].out === maxValue) maxElement = lie;
+        sum.in += item[1].in;
+        sum.out += item[1].out;
     });
     biao.appendChild(biaoFrag);
     di.appendChild(diFrag);
     if (maxElement) setevent(maxElement);
-    document.querySelector('.biao-tot-num').textContent = sum.toFixed(2);
+    document.querySelector('.biao-tot-in').textContent = '+' + sum.in.toFixed(2);
+    document.querySelector('.biao-tot-out').textContent = sum.out.toFixed(2);
     function setevent(target) {
         document.querySelectorAll('.lie').forEach(lie => {
             lie.style.backgroundColor = lie === target ? 'rgb(146, 39, 0)' : 'orangered';
@@ -840,11 +951,11 @@ function create_biaolie(dataArray) {
 function create_biaohang(dataArray) {
     const biao = document.getElementById("biao-hang");
     biao.innerHTML = '';
-    dataArray.sort((a, b) => b[1] - a[1]);
-    const sum = dataArray.reduce((total, current) => total + current[1], 0);
+    dataArray.sort((a, b) => a[1].out - b[1].out);
+    const sum = dataArray.reduce((total, current) => total + Math.abs(current[1].in + current[1].out), 0);
     const frag = document.createDocumentFragment();
     dataArray.forEach(item => {
-        const percentage = (item[1] / sum * 100).toFixed(2);
+        const percentage = (Math.abs(item[1].in + item[1].out) / sum * 100).toFixed(2);
         const hang = document.createElement("div");
         hang.className = "hang";
         hang.addEventListener("click", () => showinfolist(Number(item[0])));
@@ -856,7 +967,7 @@ function create_biaohang(dataArray) {
             <div class="hang-info">
                 <div class="hang-box">
                     <div class="hang-des">${getnomemotivo(item[0])} ${percentage}%</div>
-                    <div class="hang-tot">${item[1].toFixed(2)}</div>
+                    <div class="hang-tot">${item[1].in > 0 ? "+" + item[1].in.toFixed(2) : item[1].out.toFixed(2)}</div>
                 </div>
                 <div class="hang-tu" style="width:${percentage}%"></div>
             </div>`;
@@ -869,17 +980,26 @@ function ord_biaodata(order,dataArray) {
     const result = {}
     if (order === 'day') {
         for (let i = 1; i < 32; i++) {
-            result[i] = 0;
+            result[i] = {
+                'in':0,
+                'out':0
+            };
         }
     } else if ( order === 'month') {
         for (let i = 1; i < 13; i++) {
-            result[i] = 0;
+            result[i] = {
+                'in':0,
+                'out':0
+            };
         }
     } else if (order === 'year') {
         const dal = String(dataArray[0].ID).slice(0,2)
         const al = String(dataArray[dataArray.length - 1].ID).slice(0,2)
         for (let i = Number(al); i >= Number(dal); i--){
-            result[i] = 0;
+            result[i] = {
+                'in':0,
+                'out':0
+            };
         }
     };
     for (let i = 0; i < dataArray.length; i++) {
@@ -894,10 +1014,13 @@ function ord_biaodata(order,dataArray) {
         } else if (order === 'motivo') {
             key = item.MOTIVO;
             if (!result[key]) {
-                result[key] = 0;
+                result[key] = {
+                    'in':0,
+                    'out':0
+                };
             }
         }
-        result[key] -= item.SPESA;
+        item.SPESA > 0 ? result[key].in += item.SPESA : result[key].out += item.SPESA;
     }
     const res =  Object.entries(result)
     return res;
@@ -937,7 +1060,7 @@ function changeselectyear() {
     }
     const items = document.querySelectorAll('.biao-head-month div');
     items.forEach(month => {
-        month.addEventListener('click', function() {
+        month.addEventListener('click', function(event) {
             items.forEach(month => month.classList.remove('dixian'));
             month.classList.add('dixian');
             key_month(event);
@@ -1090,21 +1213,24 @@ function showinfolist(idmotivo) {
         const list = document.getElementById("info-list");
         list.innerHTML = '';
         for (let j = ndata.length - 1; j >= 0; j--) {
-            const { ID, DATE, MOTIVO, SPESA, IMG, UTENTE, NOTA } = ndata[j];
-            const li = document.createElement("li");
-            li.className = ID < 10000 ? "li-tot" : "li-movi";
-            const divli = document.createElement("div");
-            divli.className = "li";
-            if (ID >= 10000) divli.classList.add("movili");
-            divli.innerHTML = `
-                <div class="li-date">${ID < 10000 ? DATE : `<img class="li-icon" src="${IMG}">`}</div>
-                <div class="li-motivo">${MOTIVO}${ID >= 10000 ? `<div class="li-nota">${NOTA}</div>` : ''}</div>
-                <div class="li-nome">${ID >= 10000 && UTENTE.startsWith('j') ? UTENTE.slice(0,2) : ''}</div>
-                <div class="li-value">${SPESA}</div>
-            `;
-            if (ID >= 10000) sumspesa += Number(SPESA);
-            li.appendChild(divli);
-            list.appendChild(li);
+            const item = ndata[j];
+            const isTot = item.ID < 10000;
+            const userText = (item.UTENTE && item.UTENTE.startsWith("j")) ? item.UTENTE.slice(0, 2) : "";
+            const html = `<li class="${isTot ? "li-tot" : "li-movi"}">
+                    <div class="li ${isTot ? "" : "movili"}">
+                        <div class="li-date">
+                            ${isTot ? item.DATE : `<img class="li-icon" src="${item.IMG}" />`}
+                        </div>
+                        <div class="li-motivo">
+                            ${item.MOTIVO}
+                            ${!isTot ? `<div class="li-nota">${item.NOTA}</div>` : ""}
+                        </div>
+                        <div class="li-nome">${userText}</div>
+                        ${isTot ? `<div class="li-value">${item.SPESA.in === 0 ? item.SPESA.out.toFixed(2): "+" + item.SPESA.in.toFixed(2)}</div>`
+                            :`<div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
+                    </div>
+                </li>`
+            list.innerHTML += html;
         }
     }
     document.querySelector('.info-tot-spesa').textContent = sumspesa.toFixed(2);
@@ -1178,23 +1304,6 @@ async function loadnewlist() {
     const dataArray = await getDbData(minid, maxid)
     const newdata = ord_data(dataArray)
     listmovimento.push(newdata)
-    function minmaxid(n) {
-        const difm = n - 1;
-        const mindata = new Date();
-        const maxdata = new Date();
-        // 先将日期设为1号，避免日期跳过
-        mindata.setDate(1);
-        maxdata.setDate(1);
-        mindata.setMonth(mindata.getMonth() - difm - 1);
-        maxdata.setMonth(maxdata.getMonth() - difm);
-        const minyear = String(mindata.getFullYear()).slice(-2);
-        const minmonth = String(mindata.getMonth() + 1).padStart(2, '0');
-        const maxyear = String(maxdata.getFullYear()).slice(-2);
-        const maxmonth = String(maxdata.getMonth() + 1).padStart(2, '0');
-        const minid = `${minyear}${minmonth}000000000`;
-        const maxid = `${maxyear}${maxmonth}000000000`;
-        return [Number(minid), Number(maxid)];
-    }
 }
 // 滚动设置
 function scrolling() {
@@ -1210,8 +1319,10 @@ function scrolling() {
             const headanno = document.querySelector('#head-anno');
             const headmese = document.querySelector('#head-mese');
             const headtot = document.querySelector('#head-tot');
+            const headtotin = document.querySelector('#head-tot-in');
             const strmese = floors[i].getAttribute('data-floor').toString();
-            headtot.innerHTML = groupmese[strmese].toFixed(2);
+            headtotin.innerHTML = '+' + groupmese[strmese].in.toFixed(2);
+            headtot.innerHTML = groupmese[strmese].out.toFixed(2);
             headanno.innerHTML = '20' + strmese.slice(0, 2) + '年';
             headmese.innerHTML = parseInt(strmese.slice(2, 4)) + '月';
             break;

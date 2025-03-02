@@ -240,3 +240,21 @@ function showmsg(message) {
         },200);
     }, 1500);
 }
+// 获取最小和最大的id
+function minmaxid(n) {
+    const difm = n - 1;
+    const mindata = new Date();
+    const maxdata = new Date();
+    // 先将日期设为1号，避免日期跳过
+    mindata.setDate(1);
+    maxdata.setDate(1);
+    mindata.setMonth(mindata.getMonth() - difm - 1);
+    maxdata.setMonth(maxdata.getMonth() - difm);
+    const minyear = String(mindata.getFullYear()).slice(-2);
+    const minmonth = String(mindata.getMonth() + 1).padStart(2, '0');
+    const maxyear = String(maxdata.getFullYear()).slice(-2);
+    const maxmonth = String(maxdata.getMonth() + 1).padStart(2, '0');
+    const minid = `${minyear}${minmonth}000000000`;
+    const maxid = `${maxyear}${maxmonth}000000000`;
+    return [Number(minid), Number(maxid)];
+}
