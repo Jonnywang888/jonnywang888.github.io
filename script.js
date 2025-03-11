@@ -481,10 +481,6 @@ function tastiera(button) {
             display.innerText = '0.00';
             display.setAttribute('num','');
             break;
-        case '+':
-            break;
-        case '-':
-            break;
         case '确定':
             addnewmovimento();
             break;

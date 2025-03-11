@@ -301,7 +301,7 @@ body, html {
 .key {
     background-color: #fff;
     border: none;
-    height: 50px;
+    min-height: 50px;
     font-size: 24px;
     text-align: center;
     cursor: pointer;
@@ -309,6 +309,10 @@ body, html {
 .conferma {
     background-color: var(--lan);
     color: white;
+    grid-row: span 3; 
+    text-align-last: justify;
+    padding: 40% 0;
+    writing-mode: vertical-rl; /* 文字竖向排列 */
 }
 .addhead {
     background-color: var(--beijinghui);
@@ -383,7 +387,7 @@ body, html {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-gap: 10px;
-    margin-bottom: 300px;
+    padding-bottom: 300px;
 }
 .motivi-item {
     text-align: center;
