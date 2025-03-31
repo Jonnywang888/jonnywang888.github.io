@@ -258,3 +258,8 @@ function minmaxid(n) {
     const maxid = `${maxyear}${maxmonth}000000000`;
     return [Number(minid), Number(maxid)];
 }
+// 获取url
+function geturl(obj) {
+    const params = new URLSearchParams(obj).toString();
+    return `https://trustmarket.ddnsfree.com/server/app.asp?${params}`;
+}
