@@ -1,5 +1,4 @@
 var mi,utente,databiao;
-var baseurl = 'https://trustmarket.ddnsfree.com/server/app.asp?mi=';
 var currentDate = new Date();
 var needload = true;
 var listmovimento = [];
@@ -98,7 +97,12 @@ async function init() {
             caricamovimentolist();
             set_memori_carica();
             updateCalendar();
-            fetch(baseurl);
+            const addurl = {
+                mi:mi,
+                action:'attiva'
+            }
+            const url = geturl(addurl)
+            fetch(url);
             setTimeout(loading,100);
             setTimeout(aggiornamento,200);
             setTimeout(notifica_memori,300);
@@ -129,7 +133,11 @@ function createDB() {
                     movimentoStore.createIndex("NOTA", "NOTA", { unique: false });
                     movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
                     movimentoStore.createIndex("DEL", "DEL", { unique: false });
-                    var url = baseurl + mi + "&action=getmovimento";
+                    const addurl = {
+                        mi:mi,
+                        action:'getmovimento'
+                    }
+                    const url = geturl(addurl)
                     fetch(url)
                         .then(response => response.json())
                         .then(dataArray => addData(dataArray)) // 确保 addData 先执行
@@ -157,7 +165,11 @@ function createlocalstorage() {
             localStorage.setItem('memori', '[]')
         }
         if (localStorage.getItem('motivi') === null) {
-            var url =baseurl + mi + "&action=getmotivi";
+            const addurl = {
+                mi:mi,
+                action:'getmotivi'
+            }
+            const url = geturl(addurl)
             fetch(url).then(response => response.text())
                 .then(response => {
                     localStorage.setItem('motivi', response);
@@ -170,7 +182,11 @@ function createlocalstorage() {
 }
 // 加载提醒事项
 function get_memori() {
-    const url = baseurl + mi + "&action=getmemori";
+    const addurl = {
+        mi:mi,
+        action:'getmemori'
+    }
+    const url = geturl(addurl)
     fetch(url).then(response => response.json())
         .then(dataArray => {
             localStorage.setItem('memori', JSON.stringify(dataArray));
@@ -184,7 +200,11 @@ async function caricamovimentolist() {
 // 更新数据
 async function aggiornamento() {
     await uploadmovimento()
-    var url = baseurl + mi + "&action=getmotivi"
+    const addurl = {
+        mi:mi,
+        action:'getmotivi'
+    }
+    let url = geturl(addurl)
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -195,7 +215,12 @@ async function aggiornamento() {
         .then((response)=>localStorage.setItem('motivi', response))
         .catch(error => console.error('There was a problem with the fetch operation:', error));
 
-    var url = baseurl + mi + "&action=getmovimento";
+
+    const addurl1 = {
+        mi:mi,
+        action:'getmovimento'
+    }
+    url = geturl(addurl1)
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -391,7 +416,13 @@ async function uploadmovimento() {
     for (let i = 0; i < data.length; i++) {
         const item = data[i];
         const dati = item.ID + "," + item.MOTIVO + "," + item.SPESA + ",'" + String(item.NOTA).replace(","," ") + "','" + item.UTENTE + "'," + item.DEL;
-        const url = baseurl + mi + '&action=uploadmovimento&dati=' + dati
+        // const url = baseurl + mi + '&action=uploadmovimento&dati=' + dati
+        const addurl = {
+            mi:mi,
+            action:'uploadmovimento',
+            dati:dati
+        }
+        const url = geturl(addurl)
         const res = await fetch(url).then(response => response.text());
         if (res == 'True') {
             data.splice(i, 1);
@@ -525,8 +556,6 @@ function key_tianjia() {
     const tianjia = document.getElementById('but-tianjia')
     const img = tianjia.children[0].src;
     if (img.includes('active')) {
-        const url = baseurl + mi + '&action=attiva';
-        fetch(url);
         document.getElementById('calendar').style.display = 'none';
         currentDate = new Date();
         updateCalendar();
@@ -574,7 +603,11 @@ function login(event) {
     const username = String(document.getElementById('username').value).toLowerCase();
     const password = document.getElementById('password').value;
     mi = btoa(username + password)
-    const url = baseurl + mi + '&action=login'
+    const addurl = {
+        mi:mi,
+        action:'login'
+    }
+    const url = geturl(addurl)
     fetch(url).then(response => response.text())
         .then(data => {
             if (data === 'True') {
@@ -1212,7 +1245,9 @@ function showinfolist(idmotivo) {
             const item = ndata[j];
             const isTot = item.ID < 10000;
             const userText = (item.UTENTE && item.UTENTE.startsWith("j")) ? item.UTENTE.slice(0, 2) : "";
-            const html = `<li class="${isTot ? "li-tot" : "li-movi"}">
+            const li = document.createElement("li");
+            li.className = `${isTot ? "li-tot" : "li-movi"}`
+            const html = `
                     <div class="li ${isTot ? "" : "movili"}">
                         <div class="li-date">
                             ${isTot ? item.DATE : `<img class="li-icon" src="${item.IMG}" />`}
@@ -1224,9 +1259,9 @@ function showinfolist(idmotivo) {
                         <div class="li-nome">${userText}</div>
                         ${isTot ? `<div class="li-value">${item.SPESA.in === 0 ? item.SPESA.out.toFixed(2): "+" + item.SPESA.in.toFixed(2)}</div>`
                             :`<div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
-                    </div>
-                </li>`
-            list.innerHTML += html;
+                    </div>`
+            li.innerHTML = html;
+            list.appendChild(li);
         }
     }
     document.querySelector('.info-tot-spesa').textContent = sumspesa.toFixed(2);
@@ -1387,7 +1422,12 @@ function set_memori_add_click(element) {
     const img = element.querySelector('img').src;
     const name = element.querySelector('span').textContent;
     const dati = `${idmotivo},'${name}',1,0`
-    const url = baseurl + mi + "&action=addmemori&dati=" + dati;
+    const addurl = {
+        mi:mi,
+        action:'addmemori',
+        dati:dati
+    }
+    const url = geturl(addurl)
     fetch(url)
         .then(response => response.json())
         .then(dati => {
@@ -1435,7 +1475,12 @@ function set_memori_add_click(element) {
 function set_memori_del(button) {
     const item = button.parentElement;
     const id = parseInt(item.getAttribute('n'));
-    const url = baseurl + mi + "&action=delmemori&dati=" + id;
+    const addurl = {
+        mi:mi,
+        action:'delmemori',
+        dati:id
+    }
+    const url = geturl(addurl)
     fetch(url)
         .then(response => response.json())
         .then(dati => {
@@ -1498,7 +1543,12 @@ function set_memori_update(item) {
     const attiva = item.querySelector('.switch input').checked? 1 : 0;
     const mese = item.querySelector('.set-memori-select').value;
     const dati = `${id}-${mese}-${attiva}`
-    const url = baseurl + mi + "&action=updatememori&dati=" + dati;
+    const addurl = {
+        mi:mi,
+        action:'updatememori',
+        dati:dati
+    }
+    const url = geturl(addurl)
     fetch(url)
         .then(response => response.json())
         .then(dati => {
@@ -1593,7 +1643,6 @@ function but_style(element) {
     const items = document.querySelectorAll('.foot-item');
     items.forEach(item => {
         const [firstchild,secondchild] = item.children;
-        // console.log(item,element)
         if (item === element) {
             firstchild.style.width = '30px'
             firstchild.style.height = '30px'
@@ -1609,4 +1658,3 @@ function but_style(element) {
         }
     })
 }
-
