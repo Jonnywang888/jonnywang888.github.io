@@ -1096,8 +1096,8 @@ button:active{
     text-align: center;
 }
 .codice-text{
-    text-align: center;
-    letter-spacing: 8px; /* 适当增加字母间距 */
+    display: flex;
+    justify-content:space-between
 }
 .carta-mycarta{
     font-weight: bolder;

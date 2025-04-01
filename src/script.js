@@ -653,8 +653,14 @@ function carta_showcode(element) {
     let code = codeobj[type]
     const space = code.space
     const codicetext = document.querySelector('#cartapage .codice-text')
-    codicetext.innerHTML = text
-    codicetext.style.letterSpacing  = space + 'px'
+    text = 'WNGXYI86L06Z210Z'
+    let html = ''
+    for (let i = 0; i < text.length; i++) {
+        const letter = text[i];
+        html += `<div>${letter}</div>`
+    }
+    codicetext.innerHTML = html
+    // codicetext.style.letterSpacing  = space + 'px'
     code.type.text = text
     bwipjs.toCanvas('#canvas-carta', code.type)
     const head = document.querySelector('#cartapage .carta-name')
