@@ -18,7 +18,7 @@ function Configurazione() {
     document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });
     // 设置默认按钮界面
     document.getElementById('but-tianjia').addEventListener('click', key_tianjia);
-    click_footbut(document.getElementById('but-tianjia'));
+    click_footbut(document.getElementById('but-home'));
     document.querySelectorAll('.foot-item').forEach(x => x.addEventListener('click', () => click_footbut(x))); 
     window.addEventListener('scroll', scrolling);
     window.addEventListener('scroll', refresh)
@@ -27,6 +27,7 @@ function Configurazione() {
     document.getElementById('login-form').addEventListener('submit', login);
     document.getElementById('but-renwu').addEventListener('click', showunload);
     document.getElementById('but-baobiao').addEventListener('click', key_biao);
+    document.getElementById('but-home').addEventListener('click', key_home);
     document.getElementById('but-carta').addEventListener('click', key_carta);
     document.querySelector('.addhead-out').addEventListener('click', (e) => click_inout(e));
     document.querySelector('.addhead-in').addEventListener('click', (e) => click_inout(e));
@@ -268,11 +269,6 @@ function click_footbut(element) {
         if (item === element) {
             firstchild.src = firstchild.src.replace('.png', '-active.png');
             secondchild.style.color = '#0A84FF'
-        }
-        if (firstchild.src.includes('tianjia-active')) {
-            secondchild.textContent = '添加'
-        } else if (firstchild.src.includes('tianjia')) {
-            secondchild.textContent = '主页'
         }
     })
 }
@@ -563,19 +559,15 @@ function tastiera_key(event) {
 }
 // 添加按钮
 function key_tianjia() {
-    const tianjia = document.getElementById('but-tianjia')
-    const img = tianjia.children[0].src;
-    if (img.includes('active')) {
-        document.getElementById('calendar').style.display = 'none';
-        currentDate = new Date();
-        updateCalendar();
-        changepage('addpage');
-        caricamotivilist();
-        setdatacalendar();
-    } else {
-        notifica_memori();
-        changepage('mainpage');
-    };
+    currentDate = new Date();
+    updateCalendar();
+    changepage('addpage');
+    caricamotivilist();
+    setdatacalendar();
+}
+function key_home() {
+    notifica_memori();
+    changepage('mainpage');
 }
 // 切换报表页面
 function key_biao() {
