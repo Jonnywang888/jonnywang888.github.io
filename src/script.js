@@ -653,7 +653,6 @@ function carta_showcode(element) {
     let code = codeobj[type]
     const space = code.space
     const codicetext = document.querySelector('#cartapage .codice-text')
-    text = 'WNGXYI86L06Z210Z'
     let html = ''
     for (let i = 0; i < text.length; i++) {
         const letter = text[i];
