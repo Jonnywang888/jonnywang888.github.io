@@ -559,6 +559,7 @@ function tastiera_key(event) {
 }
 // 添加按钮
 function key_tianjia() {
+    document.getElementById('calendar').style.display = 'none';
     currentDate = new Date();
     updateCalendar();
     changepage('addpage');
