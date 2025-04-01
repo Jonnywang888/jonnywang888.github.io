@@ -1097,7 +1097,7 @@ button:active{
 }
 .codice-text{
     display: flex;
-    justify-content:space-between
+    justify-content: space-between;
 }
 .carta-mycarta{
     font-weight: bolder;
