@@ -1096,6 +1096,9 @@ button:active{
     text-align: center;
 }
 .codice-text{
+    font-weight: bolder;
+    font-size: 1.2em;
+    padding: 0 2%;
     display: flex;
     justify-content: space-between;
 }
