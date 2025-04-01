@@ -721,8 +721,14 @@ async function reload() {
     });
     await res;
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.controller.postMessage('clear-cache');
-    };
+        navigator.serviceWorker.ready.then((registration) => {
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage('clear-cache');
+            } else {
+                console.warn('Service Worker 已注册，但当前页面未被控制');
+            }
+        }).catch(err => console.error('Service Worker 注册失败:', err));
+    }
     window.location.reload(); // 强制从服务器重新加载
 }
 // 清除所有数据
@@ -961,15 +967,19 @@ function showlist() {
 function addnewlist(dataArray) {
     if (dataArray?.length) {
         const list = document.getElementById("listmovimento");
-        let html = "";
         for (let j = dataArray.length - 1; j >= 0; j--) {
             const item = dataArray[j];
             const isTot = item.ID < 10000;
             const isFloor = isTot && item.ID !== 0;
             const userText = (item.UTENTE && item.UTENTE.startsWith("j")) ? item.UTENTE.slice(0, 2) : "";
-            html += `
-                <li class="${isTot ? "li-tot" : "li-movi"} ${isFloor ? `li-floor" data-floor="${item.ID}"` : `"`}>
-                    <div class="li ${isTot ? "" : "movili"}">
+            const li = document.createElement("li");
+            li.classList.add(`${isTot ? "li-tot" : "li-movi"}`)
+            if (isFloor) {
+                li.setAttribute("data-floor", item.ID);
+                li.classList.add("li-floor");
+            }
+            li.innerHTML = 
+                    `<div class="li ${isTot ? "" : "movili"}">
                         <div class="li-date">
                             ${isTot ? item.DATE : `<img class="li-icon" src="${item.IMG}" />`}
                         </div>
@@ -982,14 +992,14 @@ function addnewlist(dataArray) {
                             :`<div class="li-nome">${userText}</div>
                                 <div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
                     </div>
-                    ${isTot ? "" : `<button class="li-but" data-id="${item.ID}">删除</button>`}
-                </li>
-            `;
+                    ${isTot ? "" : `<button class="li-but" data-id="${item.ID}">删除</button>`}`
+            list.appendChild(li);
         }
-        list.innerHTML += html;
-        document.querySelectorAll(".li-but").forEach(btn => 
+        const buts = document.querySelectorAll(".li-but");
+        buts.forEach(btn => {
+            btn.onclick = null; // 清除之前的点击事件
             btn.addEventListener("click", () => key_del(btn))
-        );
+        });
         const items = document.querySelectorAll(".movili")
         items.forEach(item => setdelete(item));
     }
@@ -1074,7 +1084,6 @@ function create_biaohang(dataArray) {
         const hang = document.createElement("div");
         hang.className = "hang";
         hang.addEventListener("click", () => showinfolist(Number(item[0])));
-    
         hang.innerHTML = `
             <div class="hang-imgbox">
                 <img class="hang-img" src="icons/${getimgmotivo(item[0])}.png">
@@ -1330,6 +1339,7 @@ function showinfolist(idmotivo) {
         for (let j = ndata.length - 1; j >= 0; j--) {
             const item = ndata[j];
             const isTot = item.ID < 10000;
+            !isTot ? sumspesa += parseFloat(item.SPESA):null;
             const userText = (item.UTENTE && item.UTENTE.startsWith("j")) ? item.UTENTE.slice(0, 2) : "";
             const li = document.createElement("li");
             li.className = `${isTot ? "li-tot" : "li-movi"}`
@@ -1351,6 +1361,7 @@ function showinfolist(idmotivo) {
         }
     }
     document.querySelector('.info-tot-spesa').textContent = sumspesa.toFixed(2);
+    
 }
 // 加载新内容
 async function loading() {
@@ -1409,7 +1420,6 @@ async function refresh() {
         distance = 0;
     })
 }
-
 // 添加新的显示页面（日期数字-2个月）
 async function loadnewlist() {
     const numlist = listmovimento.length
