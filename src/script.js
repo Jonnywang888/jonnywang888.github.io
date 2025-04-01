@@ -8,7 +8,6 @@ let startPosition = 0;  // 下拉的开始位置
 let distance = 0;   // 下拉距离的差值
 Configurazione() 
 init()
-
 // 配置文件
 function Configurazione() {
     registraserviceWorker();
@@ -28,10 +27,9 @@ function Configurazione() {
     document.getElementById('login-form').addEventListener('submit', login);
     document.getElementById('but-renwu').addEventListener('click', showunload);
     document.getElementById('but-baobiao').addEventListener('click', key_biao);
-    
+    document.getElementById('but-carta').addEventListener('click', key_carta);
     document.querySelector('.addhead-out').addEventListener('click', (e) => click_inout(e));
     document.querySelector('.addhead-in').addEventListener('click', (e) => click_inout(e));
-
     document.getElementById('tas-butnota').addEventListener('click', key_nota);
     document.getElementById('tas-data').addEventListener('click', key_calendar);
     document.querySelector('.calendar-ok').addEventListener('click', setdatacalendar);
@@ -93,6 +91,7 @@ async function init() {
             await createDB();
             await createlocalstorage();
             get_memori();
+            get_carte();
             changepage('mainpage');
             caricamovimentolist();
             set_memori_carica();
@@ -154,7 +153,6 @@ function createDB() {
         }
     });
 }
-
 // 加载motivi本地数据 --promise
 function createlocalstorage() {
     return new Promise((resolve, reject) => {
@@ -190,6 +188,18 @@ function get_memori() {
     fetch(url).then(response => response.json())
         .then(dataArray => {
             localStorage.setItem('memori', JSON.stringify(dataArray));
+    })
+}
+// 加载卡片
+function get_carte() {
+    const addurl = {
+        mi:mi,
+        action:'getcarte'
+    }
+    const url = geturl(addurl)
+    fetch(url).then(response => response.json())
+        .then(dataArray => {
+            localStorage.setItem('carte', JSON.stringify(dataArray));
     })
 }
 // 从数据库获取数据，加载页面
@@ -573,6 +583,79 @@ function key_biao() {
         init_biao();
     }
     changepage('biaopage');
+}
+// 切换到卡界面
+function key_carta() {
+    const page = document.getElementById('cartapage')
+    changepage('cartapage')
+    carta_carica();
+}
+// 加载卡片
+function carta_carica() {
+    const carte = JSON.parse(localStorage.getItem('carte'));
+    const cartalist = document.querySelector('#cartapage .carta-list');
+    cartalist.innerHTML = '';
+    for (let i = 0; i < carte.length; i++) {
+        const carta = carte[i];
+        const cartaElement = document.createElement('div');
+        cartaElement.classList.add('carta-item');
+        cartaElement.innerHTML = carta.NAME;
+        cartaElement.setAttribute('tycode',carta.TPCODE);
+        cartaElement.setAttribute('code',carta.CODE);
+        cartaElement.style.backgroundColor = carta.COLORE;
+        cartaElement.addEventListener('click', ()=>carta_showcode(cartaElement));
+        if (i === 0) {
+            carta_showcode(cartaElement)
+        }
+        cartalist.appendChild(cartaElement);
+    }
+}
+// 显示条形码
+function carta_showcode(element) {
+    const type = element.getAttribute('tycode')
+    const text = element.getAttribute('code')
+    const name = element.innerHTML
+    const color = element.style.backgroundColor
+    const box = document.querySelector('#cartapage .carta-box')
+    box.style.backgroundColor = color
+    const codeobj = {
+        ean13:{
+            type:{
+                bcid: 'ean13',       // 条码类型
+                text: '5000204616439',     // 编码内容
+                scale: 3,              // 缩放比例（高清）
+                height: 13,            // 条码高度（像素）
+            },
+            space:14
+        },
+        code39:{
+            type:{
+                bcid: 'code39',       // 条码类型
+                text: 'WNGXYI86L06Z210Z',     // 编码内容
+                scale: 1,              // 缩放比例（高清）
+                height: 40,            // 条码高度（像素）
+            },
+            space:8
+        },
+        code128:{
+            type:{
+                bcid: 'code128',       // 条码类型
+                text: 'WNGXYI86L06Z210Z',     // 编码内容
+                scale: 1,              // 缩放比例（高清）
+                height: 40,            // 条码高度（像素）
+            },
+            space:8       // 条码高度（像素）
+        }
+    }
+    let code = codeobj[type]
+    const space = code.space
+    const codicetext = document.querySelector('#cartapage .codice-text')
+    codicetext.innerHTML = text
+    codicetext.style.letterSpacing  = space + 'px'
+    code.type.text = text
+    bwipjs.toCanvas('#canvas-carta', code.type)
+    const head = document.querySelector('#cartapage .carta-name')
+    head.innerHTML = name
 }
 // 关闭addpage
 function key_closeaddpage() {
