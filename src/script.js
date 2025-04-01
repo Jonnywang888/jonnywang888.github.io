@@ -1738,19 +1738,13 @@ function main_showmemori(idmotivo) {
 function but_style(element) {
     const items = document.querySelectorAll('.foot-item');
     items.forEach(item => {
-        const [firstchild,secondchild] = item.children;
+        const img = item.querySelector('img');
         if (item === element) {
-            firstchild.style.width = '30px'
-            firstchild.style.height = '30px'
-            firstchild.style.marginTop = '5px';
-            firstchild.style.transition = 'width 0.3s ease, height 0.3s ease, margin 0.3s ease';
-            secondchild.style.transition = 'color 0.3s ease';
+            img.style.width = '30px'
+            img.style.height = '30px'
         }else {
-            firstchild.style.width = '25px'
-            firstchild.style.height = '25px'
-            firstchild.style.marginTop = '10px';
-            firstchild.style.transition = 'width 0.3s ease, height 0.3s ease, margin 0.3s ease';
-            secondchild.style.transition = 'color 0.3s ease';  
+            img.style.width = '25px'
+            img.style.height = '25px'
         }
     })
 }
