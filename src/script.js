@@ -580,9 +580,9 @@ function key_biao() {
 }
 // 切换到卡界面
 function key_carta() {
-    const page = document.getElementById('cartapage')
+    const list = document.querySelector('#cartapage .carta-list');
+    list.innerHTML === '' && carta_carica();
     changepage('cartapage')
-    carta_carica();
 }
 // 加载卡片
 function carta_carica() {
