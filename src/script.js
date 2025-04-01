@@ -566,6 +566,7 @@ function key_tianjia() {
     caricamotivilist();
     setdatacalendar();
 }
+// 主页按钮
 function key_home() {
     notifica_memori();
     changepage('mainpage');
@@ -638,6 +639,15 @@ function carta_showcode(element) {
                 height: 40,            // 条码高度（像素）
             },
             space:8       // 条码高度（像素）
+        },
+        qr:{
+            type:{
+                bcid: 'qrcode',       // 生成二维码
+                text: 'https://example.com',
+                scale: 3,             // 缩放比例
+                eclevel: 'M'          // 纠错级别 (L, M, Q, H)
+            },
+            space:0       // 条码高度（像素）
         }
     }
     let code = codeobj[type]
