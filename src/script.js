@@ -614,44 +614,36 @@ function carta_showcode(element) {
     box.style.backgroundColor = color
     const codeobj = {
         ean13:{
-            type:{
-                bcid: 'ean13',       // 条码类型
-                text: '5000204616439',     // 编码内容
-                scale: 3,              // 缩放比例（高清）
-                height: 13,            // 条码高度（像素）
-            },
-            space:14
+            bcid: 'ean13',       // 条码类型
+            text: '5000204616439',     // 编码内容
+            scale: 5,              // 缩放比例（高清）
+            height: 13,            // 条码高度（像素）
         },
         code39:{
-            type:{
-                bcid: 'code39',       // 条码类型
-                text: 'WNGXYI86L06Z210Z',     // 编码内容
-                scale: 1,              // 缩放比例（高清）
-                height: 40,            // 条码高度（像素）
-            },
-            space:8
+            bcid: 'code39',       // 条码类型
+            text: 'WNGXYI86L06Z210Z',     // 编码内容
+            scale: 5,              // 缩放比例（高清）
+            height: 40,            // 条码高度（像素）
         },
         code128:{
-            type:{
-                bcid: 'code128',       // 条码类型
-                text: 'WNGXYI86L06Z210Z',     // 编码内容
-                scale: 1,              // 缩放比例（高清）
-                height: 40,            // 条码高度（像素）
-            },
-            space:8       // 条码高度（像素）
+            bcid: 'code128',       // 条码类型
+            text: 'WNGXYI86L06Z210Z',     // 编码内容
+            scale: 5,              // 缩放比例（高清）
+            height: 30,            // 条码高度（像素）
         },
         qr:{
-            type:{
-                bcid: 'qrcode',       // 生成二维码
-                text: 'https://example.com',
-                scale: 3,             // 缩放比例
-                eclevel: 'M'          // 纠错级别 (L, M, Q, H)
-            },
-            space:0       // 条码高度（像素）
+            bcid: 'qrcode',       // 生成二维码
+            text: 'https://example.com',
+            scale: 5,             // 缩放比例
+            eclevel: 'M'          // 纠错级别 (L, M, Q, H)
         }
     }
     let code = codeobj[type]
-    const space = code.space
+    if (type === 'code128') {
+        /^[0-9]+$/.test(text) && text.length < 18 ? code.height = 20:code.height = 30;
+    }
+    code.text = text
+    bwipjs.toCanvas('#canvas-carta', code)
     const codicetext = document.querySelector('#cartapage .codice-text')
     let html = ''
     for (let i = 0; i < text.length; i++) {
@@ -659,9 +651,6 @@ function carta_showcode(element) {
         html += `<div>${letter}</div>`
     }
     codicetext.innerHTML = html
-    // codicetext.style.letterSpacing  = space + 'px'
-    code.type.text = text
-    bwipjs.toCanvas('#canvas-carta', code.type)
     const head = document.querySelector('#cartapage .carta-name')
     head.innerHTML = name
 }
