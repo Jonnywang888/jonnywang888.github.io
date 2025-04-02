@@ -157,6 +157,7 @@ body, html {
 .page{
     height: 100%;
     display: none;
+    background-color: var(--beijinghui);
 }
 #listmovimento {
     flex: 1;
@@ -545,6 +546,10 @@ input[type="submit"] {
     height: 100%;
     overflow: hidden;
 }
+.set-page{
+    background-color: var(--beijinghui);
+    height: 100%;
+}
 .set-utente {
     font-size: 25px;
     margin: 0 30% 20px 30%;
@@ -594,6 +599,9 @@ input[type="submit"] {
     color: #fff;
     -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
     border: 1px solid var(--lan);
+}
+#biaopage{
+    background-color: var(--beijinghui);
 }
 #biao-lie {
     margin-left:3%;
@@ -904,6 +912,9 @@ input[type="submit"] {
     -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
     appearance: none;  
 }
+#setpage {
+    background-color: var(--beijinghui);
+}
 .set-memori{
     display: none;
     margin-top: 85px;
@@ -1064,6 +1075,9 @@ input:checked + .slider:before {
 button:active{
     transform: scale(0.9);
 }
+#cartapage{
+    background-color: var(--beijinghui);
+}
 .carta-head {
     position: fixed;
     width: 100%;
@@ -1119,11 +1133,13 @@ button:active{
     color: #fff;
     display: flex;
     font-size: 1.2em;
-    background-color: #0A84FF;
     width: 48%;
     height: 80px;
     border-radius: 10px;
     margin: 7px 0px;
     align-items: center;  /* 垂直居中 */
     justify-content: center; /* 水平居中（可选） */
+}
+.carta-item.active{
+    filter: brightness(80%);
 }

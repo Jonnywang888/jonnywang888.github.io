@@ -606,6 +606,10 @@ function carta_carica() {
 }
 // 显示条形码
 function carta_showcode(element) {
+    element.classList.add('active')
+    setTimeout(() => {
+        element.classList.remove('active')
+    }, 200);
     const type = element.getAttribute('tycode')
     const text = element.getAttribute('code')
     const name = element.innerHTML
@@ -667,16 +671,10 @@ function changepage(page) {
         themeColorMetaTag.setAttribute('content', '#49c2ef');
     } else {
         themeColorMetaTag.setAttribute('content', '#f7f7f7');
-        // themeColorMetaTag.setAttribute('content', '#49c2ef');
     }
-    pages.forEach(p => {
-        if (p.id === page) {
-            p.style.display = 'inline'
-        } else {
-            p.style.display = 'none'
-        }
-    });
+    move_page(page,pages)
 }
+
 // 登录事件
 function login(event) {
     event.preventDefault();
@@ -1498,13 +1496,7 @@ function set_memori_add() {
 // 设置页，切换页面
 function change_setpage(id) {
     const pages = document.querySelectorAll('.set-page');
-    pages.forEach(page => {
-        if (page.id === id) {
-            page.style.display = 'block';
-        } else {
-            page.style.display = 'none';
-        }
-    })
+    move_page(id,pages)
 }
 // 设置页，点击添加新的提醒事项
 function set_memori_add_click(element) {
@@ -1741,4 +1733,80 @@ function but_style(element) {
             img.style.height = '25px'
         }
     })
+}
+// 切换页面动画效果
+function move_page(page,pages) {
+    // 找到当前显示的页面
+    const currentPage = Array.from(pages).find(p => p.style.display === 'block' ||  p.style.display === 'inline' || p.style.display === '');
+    // 找到目标页面
+    const targetPage = document.getElementById(page);
+    
+    if (!currentPage || currentPage === targetPage) return; // 如果没有当前页面或点击当前页面，不执行任何操作
+    
+    // 获取页面在DOM中的位置来判断方向
+    const pageArray = Array.from(pages);
+    const currentIndex = pageArray.indexOf(currentPage);
+    const targetIndex = pageArray.indexOf(targetPage);
+    
+    // 判断滑动方向
+    const slideFromLeft = targetIndex < currentIndex;
+
+    // 隐藏所有其他页面
+    pages.forEach(p => {
+        if (p !== currentPage && p !== targetPage) {
+            p.style.display = 'none';
+        }
+    });
+    
+    // 创建容器以保持页面层次结构
+    document.body.style.overflow = 'hidden'; // 防止滚动条出现
+    
+    // 当前页面保持原位置，添加模糊效果
+    currentPage.style.position = 'absolute';
+    currentPage.style.left = '0';
+    currentPage.style.top = '0';
+    currentPage.style.width = '100%';
+    currentPage.style.zIndex = '1';
+    currentPage.style.transition = 'filter 0.4s ease-out';
+    
+    // 设置目标页面初始位置
+    targetPage.style.display = 'block';
+    targetPage.style.position = 'absolute';
+    targetPage.style.left = slideFromLeft ? '-100%' : '100%';
+    targetPage.style.top = '0';
+    targetPage.style.width = '100%';
+    targetPage.style.zIndex = '2'; // 确保新页面在当前页面上方
+    targetPage.style.transition = 'left 0.3s ease-out';
+    
+    // 强制重排，确保样式已应用
+    void targetPage.offsetWidth;
+    
+    // 执行动画 - 当前页面添加模糊效果，目标页面滑入
+    currentPage.style.filter = 'blur(5px)';
+    targetPage.style.left = '0';
+    
+    // 动画完成后清理
+    setTimeout(() => {
+        // 恢复正常显示
+        document.body.style.overflow = '';
+        
+        currentPage.style.display = 'none';
+        // 重置当前页面样式
+        currentPage.style.position = '';
+        currentPage.style.left = '';
+        currentPage.style.top = '';
+        currentPage.style.width = '';
+        currentPage.style.zIndex = '';
+        currentPage.style.transition = '';
+        currentPage.style.filter = '';
+        
+        // 重置目标页面样式
+        targetPage.style.position = '';
+        targetPage.style.left = '';
+        targetPage.style.top = '';
+        targetPage.style.width = '';
+        targetPage.style.zIndex = '';
+        targetPage.style.transition = '';
+        
+    }, 350); // 等待动画完成后再清理
 }

@@ -9,9 +9,64 @@
     <link rel="icon" href="/icons/app.png">
     <meta name="theme-color" content="#f7f7f7"/>
     <!-- <meta name="theme-color" content="#49c2ef"> -->
-    <link rel="stylesheet" href="src/styles.css?v=1.52">
+    <link rel="stylesheet" href="src/styles.css?v=1.55">
 </head>
 <body>
+    <div class="page" id="biaopage">
+        <div class="head">
+            <div class="biao-tongji">
+                <div class="dixian biao-month" page='biao-month'>月统计</div>
+                <div class="biao-year" page='biao-year'>年统计</div>
+                <div class="biao-diy" page='biao-diy'>自定义</div>
+            </div>
+            <div class="biao-head-display">
+                <div class="biao-page" id="biao-month">
+                    <select class="biao-head-year" id="biao-head-year"></select>
+                    <div class="biao-head-month"></div>
+                </div>
+                <div class="biao-page" id="biao-year"></div>
+                <div class="biao-page" id="biao-diy">
+                    <div>
+                        <select class="biao-diy-year" id="biao-diy-year-dal"></select>
+                        <select class="biao-diy-month" id="biao-diy-month-dal"></select>
+                    </div>
+                    <div>---</div>
+                    <div>
+                        <select class="biao-diy-year" id="biao-diy-year-al"></select>
+                        <select class="biao-diy-month" id="biao-diy-month-al"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="main">
+            <div class="biao-tot">
+                <div>总计：</div>
+                <div class="biao-tot-in"></div>
+                <div class="biao-tot-out"></div>
+            </div>
+            <div id="biao-lie"></div>
+            <div id="biao-di"></div>
+            <div id="biao-display"></div>
+            <div id="biao-hang"></div>
+        </div>
+    </div>
+    <div class="page" id="infopage">
+        <div class="info-head">
+            <div class="info-title">
+                <div class="backup" id="backtobiao">
+                    <img src="icons/back-bianco.png" alt=""><span>返回</span>
+                </div>
+                <div class="info-motivo">其他</div>
+            </div>
+            <div class="info-tot">
+                <div>总支出：</div>
+                <div class="info-tot-spesa"></div>
+            </div>
+        </div>
+        <div>
+            <ul id="info-list"></ul>
+        </div>
+    </div>
     <div class="page" id="mainpage">
         <div class="head">
             <div class="head-title">
@@ -139,17 +194,18 @@
             </div>
         </div>
     </div>
-    <div class="page center" id="logpage">
-        <div class="head-title">记账簿</div>
-        <div class="head-title">记录生活每一天</div>
-        <div class="avatar main">
-            <img class="famiglia" src="icons/famiglia.jpg" alt="">
+    <div class="page" id="cartapage">
+        <div class="carta-head">
+            <div class="carta-box">
+                <div class="carta-name"></div>
+                <div class="codice-box">
+                    <canvas id="canvas-carta"></canvas>
+                    <div class="codice-text"></div>
+                </div>
+            </div>
+            <div class="carta-mycarta">我的卡片</div>
         </div>
-        <form id="login-form">
-            <input class="loginput" id="username" type="text" placeholder="Username" required>
-            <input class="loginput" id="password" type="password" placeholder="Password" required>
-            <input type="submit" value="登录">
-        </form>
+        <div class="carta-list"></div>
     </div>
     <div class="page" id="setpage">
         <div class="head">
@@ -183,73 +239,17 @@
             <div id="settabmotivi"></div>
         </div>
     </div>
-    <div class="page" id="biaopage">
-        <div class="head">
-            <div class="biao-tongji">
-                <div class="dixian biao-month" page='biao-month'>月统计</div>
-                <div class="biao-year" page='biao-year'>年统计</div>
-                <div class="biao-diy" page='biao-diy'>自定义</div>
-            </div>
-            <div class="biao-head-display">
-                <div class="biao-page" id="biao-month">
-                    <select class="biao-head-year" id="biao-head-year"></select>
-                    <div class="biao-head-month"></div>
-                </div>
-                <div class="biao-page" id="biao-year"></div>
-                <div class="biao-page" id="biao-diy">
-                    <div>
-                        <select class="biao-diy-year" id="biao-diy-year-dal"></select>
-                        <select class="biao-diy-month" id="biao-diy-month-dal"></select>
-                    </div>
-                    <div>---</div>
-                    <div>
-                        <select class="biao-diy-year" id="biao-diy-year-al"></select>
-                        <select class="biao-diy-month" id="biao-diy-month-al"></select>
-                    </div>
-                </div>
-            </div>
+    <div class="page center" id="logpage">
+        <div class="head-title">记账簿</div>
+        <div class="head-title">记录生活每一天</div>
+        <div class="avatar main">
+            <img class="famiglia" src="icons/famiglia.jpg" alt="">
         </div>
-        <div class="main">
-            <div class="biao-tot">
-                <div>总计：</div>
-                <div class="biao-tot-in"></div>
-                <div class="biao-tot-out"></div>
-            </div>
-            <div id="biao-lie"></div>
-            <div id="biao-di"></div>
-            <div id="biao-display"></div>
-            <div id="biao-hang"></div>
-        </div>
-    </div>
-    <div class="page" id="infopage">
-        <div class="info-head">
-            <div class="info-title">
-                <div class="backup" id="backtobiao">
-                    <img src="icons/back-bianco.png" alt=""><span>返回</span>
-                </div>
-                <div class="info-motivo">其他</div>
-            </div>
-            <div class="info-tot">
-                <div>总支出：</div>
-                <div class="info-tot-spesa"></div>
-            </div>
-        </div>
-        <div>
-            <ul id="info-list"></ul>
-        </div>
-    </div>
-    <div class="page" id="cartapage">
-        <div class="carta-head">
-            <div class="carta-box">
-                <div class="carta-name"></div>
-                <div class="codice-box">
-                    <canvas id="canvas-carta"></canvas>
-                    <div class="codice-text"></div>
-                </div>
-            </div>
-            <div class="carta-mycarta">我的卡片</div>
-        </div>
-        <div class="carta-list"></div>
+        <form id="login-form">
+            <input class="loginput" id="username" type="text" placeholder="Username" required>
+            <input class="loginput" id="password" type="password" placeholder="Password" required>
+            <input type="submit" value="登录">
+        </form>
     </div>
     <div class="foot">
         <div class="foot-item" id="but-baobiao">
