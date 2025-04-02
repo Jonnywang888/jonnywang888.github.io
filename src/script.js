@@ -93,7 +93,7 @@ async function init() {
             await createlocalstorage();
             get_memori();
             get_carte();
-            changepage('mainpage');
+            // changepage('mainpage');
             caricamovimentolist();
             set_memori_carica();
             updateCalendar();

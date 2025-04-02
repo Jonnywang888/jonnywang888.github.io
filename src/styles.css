@@ -151,13 +151,14 @@ body, html {
     background-color: var(--beijinghui);
     z-index: 1000;
 }
-#mainpage{
-    background-color: var(--beijinghui);
-}
 .page{
     height: 100%;
     display: none;
     background-color: var(--beijinghui);
+}
+#mainpage{
+    background-color: var(--beijinghui);
+    display: block;
 }
 #listmovimento {
     flex: 1;
