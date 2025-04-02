@@ -1775,7 +1775,7 @@ function move_page(page,pages) {
     targetPage.style.left = slideFromLeft ? '-100%' : '100%';
     targetPage.style.top = '0';
     targetPage.style.width = '100%';
-    targetPage.style.zIndex = '2'; // 确保新页面在当前页面上方
+    targetPage.style.zIndex = page === 'addpage'? '200':'2'; // 确保新页面在当前页面上方
     targetPage.style.transition = 'left 0.3s ease-out';
     
     // 强制重排，确保样式已应用
