@@ -633,6 +633,8 @@ function carta_showcode(element) {
     const head = document.querySelector('#cartapage .carta-name')
     head.innerHTML = name
     if (type === 'mi') {
+        const cartainfo = document.getElementById('carta-info')
+        cartainfo.innerHTML = ''
         codicetext.style.display = 'none';
         canvas.style.display = 'none';
         cartainfo.style.display = '';
