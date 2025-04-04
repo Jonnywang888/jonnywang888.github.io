@@ -152,6 +152,7 @@ body, html {
     z-index: 1000;
 }
 #mainpage{
+    display: block;
     background-color: var(--beijinghui);
 }
 .page{
