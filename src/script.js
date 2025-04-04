@@ -697,6 +697,11 @@ function carta_getinfo() {
     const url = geturl(addurl)
     const cartainfo = document.getElementById('carta-info')
     cartainfo.innerHTML = ''
+    const data = JSON.parse(localStorage.getItem('carteinfo'))
+    data.forEach(item => {
+        const info = $(item)(key)
+        cartainfo.innerHTML += `<div>${info}</div>`
+    });
     fetch(url).then(response => response.json())
         .then(data => {
             localStorage.setItem('carteinfo', JSON.stringify(data))
@@ -706,11 +711,7 @@ function carta_getinfo() {
             })
         })
         .catch(e => {
-            const data = JSON.parse(localStorage.getItem('carteinfo'))
-            data.forEach(item => {
-                const info = $(item)(key)
-                cartainfo.innerHTML += `<div>${info}</div>`
-            })
+            console.log(e)
         });
 }
 // 关闭addpage
