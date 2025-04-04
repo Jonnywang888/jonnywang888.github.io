@@ -99,7 +99,6 @@ async function init() {
             await createlocalstorage();
             get_memori();
             get_carte();
-            changepage('mainpage');
             caricamovimentolist();
             set_memori_carica();
             updateCalendar();
@@ -569,6 +568,11 @@ function key_tianjia() {
     currentDate = new Date();
     updateCalendar();
     changepage('addpage');
+    const addurl = {
+        mi:mi,
+        action:'attiva'
+    }
+    fetch(geturl(addurl));
     caricamotivilist();
     setdatacalendar();
 }
@@ -633,8 +637,6 @@ function carta_showcode(element) {
     const head = document.querySelector('#cartapage .carta-name')
     head.innerHTML = name
     if (type === 'mi') {
-        const cartainfo = document.getElementById('carta-info')
-        cartainfo.innerHTML = ''
         codicetext.style.display = 'none';
         canvas.style.display = 'none';
         cartainfo.style.display = '';
