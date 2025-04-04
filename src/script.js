@@ -641,6 +641,7 @@ function carta_showcode(element) {
         canvas.style.display = 'none';
         cartainfo.style.display = '';
         mibox.style.display = 'block';
+        cartainfo.innerHTML = '';
         mibox.querySelector('#carta-mipass').value = '';
         mibox.querySelector('#carta-mipass').focus();
         return
