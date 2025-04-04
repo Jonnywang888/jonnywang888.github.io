@@ -704,6 +704,7 @@ function carta_getinfo() {
     });
     fetch(url).then(response => response.json())
         .then(data => {
+            cartainfo.innerHTML = ''
             localStorage.setItem('carteinfo', JSON.stringify(data))
             data.forEach(item => {
                 const info = $(item)(key)

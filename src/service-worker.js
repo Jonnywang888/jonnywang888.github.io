@@ -1,4 +1,4 @@
-const cache_name = 'app_cache_v1.65';
+const cache_name = 'app_cache_v1.66';
 const urls = [
   '/index.html',
   '/manifest.json',
