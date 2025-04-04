@@ -75,6 +75,12 @@ function Configurazione() {
         set_memori_carica();
         change_setpage('sp-memori');
     });
+    document.querySelector('#carta-mibox .carta-mibut').addEventListener('click', carta_getinfo);
+    document.getElementById('carta-mipass').addEventListener('keypress', (e) => e.key === 'Enter' && carta_getinfo())
+    document.querySelector('#carta-mibox .close').addEventListener('click', () =>{
+        const mibox = document.getElementById('carta-mibox');
+        mibox.style.display = 'none';
+    });
     const buts = document.querySelectorAll('.foot-item');
     buts.forEach(b=>{
         b.addEventListener('click', () => but_style(b))
@@ -93,7 +99,7 @@ async function init() {
             await createlocalstorage();
             get_memori();
             get_carte();
-            // changepage('mainpage');
+            changepage('mainpage');
             caricamovimentolist();
             set_memori_carica();
             updateCalendar();
@@ -610,12 +616,31 @@ function carta_showcode(element) {
     setTimeout(() => {
         element.classList.remove('active')
     }, 200);
+    const codicetext = document.querySelector('#cartapage .codice-text');
+    const canvas = document.querySelector('#canvas-carta');
+    const cartainfo = document.getElementById('carta-info')
+    const mibox = document.getElementById('carta-mibox');
+    codicetext.style.display = 'flex';
+    canvas.style.display = '';
+    cartainfo.style.display = 'none';
+    mibox.style.display = 'none';
     const type = element.getAttribute('tycode')
     const text = element.getAttribute('code')
     const name = element.innerHTML
     const color = element.style.backgroundColor
     const box = document.querySelector('#cartapage .carta-box')
     box.style.backgroundColor = color
+    const head = document.querySelector('#cartapage .carta-name')
+    head.innerHTML = name
+    if (type === 'mi') {
+        codicetext.style.display = 'none';
+        canvas.style.display = 'none';
+        cartainfo.style.display = '';
+        mibox.style.display = 'block';
+        mibox.querySelector('#carta-mipass').value = '';
+        mibox.querySelector('#carta-mipass').focus();
+        return
+    }
     const codeobj = {
         ean13:{
             bcid: 'ean13',       // 条码类型
@@ -648,15 +673,40 @@ function carta_showcode(element) {
     }
     code.text = text
     bwipjs.toCanvas('#canvas-carta', code)
-    const codicetext = document.querySelector('#cartapage .codice-text')
     let html = ''
     for (let i = 0; i < text.length; i++) {
         const letter = text[i];
         html += `<div>${letter}</div>`
     }
     codicetext.innerHTML = html
-    const head = document.querySelector('#cartapage .carta-name')
-    head.innerHTML = name
+}
+// 卡片页，获取信息
+function carta_getinfo() {
+    const mibox = document.getElementById('carta-mibox');
+    mibox.style.display = 'none';
+    const key = document.querySelector('#carta-mipass').value
+    const addurl = {
+        mi:mi,
+        action:'carteinfo'
+    }
+    const url = geturl(addurl)
+    const cartainfo = document.getElementById('carta-info')
+    cartainfo.innerHTML = ''
+    fetch(url).then(response => response.json())
+        .then(data => {
+            localStorage.setItem('carteinfo', JSON.stringify(data))
+            data.forEach(item => {
+                const info = $(item)(key)
+                cartainfo.innerHTML += `<div>${info}</div>`
+            })
+        })
+        .catch(e => {
+            const data = JSON.parse(localStorage.getItem('carteinfo'))
+            data.forEach(item => {
+                const info = $(item, key)
+                cartainfo.innerHTML += `<div>${info}</div>`
+            })
+        });
 }
 // 关闭addpage
 function key_closeaddpage() {

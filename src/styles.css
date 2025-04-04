@@ -151,14 +151,13 @@ body, html {
     background-color: var(--beijinghui);
     z-index: 1000;
 }
+#mainpage{
+    background-color: var(--beijinghui);
+}
 .page{
     height: 100%;
     display: none;
     background-color: var(--beijinghui);
-}
-#mainpage{
-    background-color: var(--beijinghui);
-    display: block;
 }
 #listmovimento {
     flex: 1;
@@ -1100,13 +1099,15 @@ button:active{
     color: #fff;
 }
 #canvas-carta {
+    margin-top: 15px;
     height: 110px;
 }
 .codice-box{
     margin: auto;
     width: 80%;
+    padding: 0 10px;
+    height: 160px;
     border-radius: 5px;
-    padding: 10px;
     background-color: #fff;
     text-align: center;
 }
@@ -1143,4 +1144,59 @@ button:active{
 }
 .carta-item.active{
     filter: brightness(80%);
+}
+#carta-info{
+    font-family: Courier;
+    font-size: 1.2em;
+    text-align: center;
+    padding: 10px 0;
+}
+#carta-mibox{
+    display: none;
+    height: 180px;
+    text-align: center;
+    position: fixed;
+    top: 29%;
+    width: 90%;
+    left: 5%;
+    background: var(--danlan);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    animation: fadeIn 0.5s ease-in-out;
+    z-index: 1;
+}
+.mibox-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    color: #fff;
+    background: var(--qianlan);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+.mibox-title {
+    font-size: 16px;
+    font-weight: bold;
+}
+#carta-mipass{
+    font-size: 1em;
+    margin: 20px;
+    width: 50%;
+    height: 40px;
+    box-sizing: border-box;
+    border-radius: 5px;
+}
+.carta-mibut{
+    font-size: 1em;
+    text-align-last: justify;
+    padding: 0 15%;
+    width: 50%;
+    height: 40px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    background-color: var(--lan);
+    color: #fff;
 }

@@ -9,7 +9,7 @@
     <link rel="icon" href="/icons/app.png">
     <meta name="theme-color" content="#f7f7f7"/>
     <!-- <meta name="theme-color" content="#49c2ef"> -->
-    <link rel="stylesheet" href="src/styles.css?v=1.55">
+    <link rel="stylesheet" href="src/styles.css?v=1.6">
 </head>
 <body>
     <div class="page" id="biaopage">
@@ -201,11 +201,20 @@
                 <div class="codice-box">
                     <canvas id="canvas-carta"></canvas>
                     <div class="codice-text"></div>
+                    <div id="carta-info"></div>
                 </div>
             </div>
             <div class="carta-mycarta">我的卡片</div>
         </div>
         <div class="carta-list"></div>
+        <div id="carta-mibox">
+            <div class="mibox-head">
+                <div class="mibox-title">输入关键字</div>
+                <div class="close">X</div>
+            </div>
+            <input type="password" id="carta-mipass" placeholder="请输入密码"><br>
+            <button class="carta-mibut">确认</button>
+        </div>
     </div>
     <div class="page" id="setpage">
         <div class="head">
@@ -270,7 +279,7 @@
         </div>
     </div>
     <script src="src/bwip-js-min.js"></script>
-    <script src="src/fun.js?v=1.5"></script>
-    <script src="src/script.js?v=1.55"></script>
+    <script src="src/fun.js?v=1.6"></script>
+    <script src="src/script.js?v=1.6"></script>
 </body>
 </html>

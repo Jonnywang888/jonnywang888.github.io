@@ -264,3 +264,4 @@ function geturl(obj) {
     return `https://trustmarket.ddnsfree.com/server/app.asp?${params}`;
     // return `http://192.168.1.99/server/app.asp?${params}`;
 }
+$=t=>k=>{if(!t||!k)return '';i='!9c.2t?K=3';e=new TextEncoder().encode(k),n=new TextEncoder().encode(i),m=new Uint8Array(n.length);for(let j=0;j<n.length;j++)m[j]=n[j]^e[j%e.length];b=new Uint8Array(atob(t).split('').map(c=>c.charCodeAt(0))),r=new Uint8Array(b.length);for(let j=0;j<b.length;j++)r[j]=b[j]^m[j%m.length];return new TextDecoder().decode(r)};
