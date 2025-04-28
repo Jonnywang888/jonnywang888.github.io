@@ -780,7 +780,7 @@ async function reload() {
             }
         }).catch(err => console.error('Service Worker 注册失败:', err));
     }
-    window.location.reload(); // 强制从服务器重新加载
+    window.location.reload(true); // 强制从服务器重新加载
 }
 // 清除所有数据
 function azzeramento() {
