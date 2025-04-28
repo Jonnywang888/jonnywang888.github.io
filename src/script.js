@@ -698,11 +698,12 @@ function carta_getinfo() {
     const cartainfo = document.getElementById('carta-info')
     cartainfo.innerHTML = ''
     const data = JSON.parse(localStorage.getItem('carteinfo'))
-    data.forEach(item => {
-        showmsg(item)
-        const info = $(item)(key)
-        cartainfo.innerHTML += `<div>${info}</div>`
-    });
+    if (data) {
+        data.forEach(item => {
+            const info = $(item)(key)
+            cartainfo.innerHTML += `<div>${info}</div>`
+        });
+    }
     fetch(url).then(response => response.json())
         .then(data => {
             cartainfo.innerHTML = ''
