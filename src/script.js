@@ -89,32 +89,51 @@ function Configurazione() {
 }
 // 初始化
 async function init() {
-    if (localStorage.getItem('user') !== null) {
-        const user = JSON.parse(localStorage.getItem('user'))
-        const checked = user.checked
-        utente = user.utente
-        mi = user.mi
-        if (checked === true) {
-            await createDB();
-            await createlocalstorage();
-            get_memori();
-            get_carte();
-            caricamovimentolist();
-            set_memori_carica();
-            updateCalendar();
-            const addurl = {
-                mi:mi,
-                action:'attiva'
-            }
-            const url = geturl(addurl)
-            fetch(url);
-            setTimeout(loading,100);
-            setTimeout(aggiornamento,200);
-            setTimeout(notifica_memori,300);
-        }
-    } else {
+    if (localStorage.getItem('user') === null) {
         changepage('logpage')
+        return
     }
+    const user = JSON.parse(localStorage.getItem('user'))
+    const checked = user.checked
+    utente = user.utente
+    if (checked !== true) {
+        changepage('logpage')
+        return
+    } 
+    await createDB();
+    await createlocalstorage();
+    get_memori();
+    get_carte();
+    caricamovimentolist();
+    set_memori_carica();
+    updateCalendar();
+    const body = {
+        action:'attiva'
+    }
+    fetchdata(body,()=>{})
+    setTimeout(loading,100);
+    setTimeout(aggiornamento,200);
+    setTimeout(notifica_memori,300);
+}
+async function fetchdata(body) {
+    // const url = '/server/app.asp'
+    const url = 'http://localhost:8888/http://192.168.1.99/server/app.asp'
+    // const url = 'https://trustmarket.ddnsfree.com/server/app.asp'
+    const user = JSON.parse(localStorage.getItem('user'));
+    let authorization = '';
+    if (user) {
+        authorization = 'Basic ' + user.mi;
+    }
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': authorization
+        },
+        body: new URLSearchParams(body).toString()
+    };
+    const response = await fetch(url, options);
+    return response;  // 返回原生 response 对象
 }
 function createDB() {
     return new Promise(async (resolve, reject) => {
@@ -138,12 +157,10 @@ function createDB() {
                     movimentoStore.createIndex("NOTA", "NOTA", { unique: false });
                     movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
                     movimentoStore.createIndex("DEL", "DEL", { unique: false });
-                    const addurl = {
-                        mi:mi,
+                    const body = {
                         action:'getmovimento'
                     }
-                    const url = geturl(addurl)
-                    fetch(url)
+                    fetchdata(body)
                         .then(response => response.json())
                         .then(dataArray => addData(dataArray)) // 确保 addData 先执行
                         .then(() => resolve(true))
@@ -169,12 +186,10 @@ function createlocalstorage() {
             localStorage.setItem('memori', '[]')
         }
         if (localStorage.getItem('motivi') === null) {
-            const addurl = {
-                mi:mi,
+            const body = {
                 action:'getmotivi'
             }
-            const url = geturl(addurl)
-            fetch(url).then(response => response.text())
+            fetchdata(body).then(response => response.text())
                 .then(response => {
                     localStorage.setItem('motivi', response);
                     resolve(true);
@@ -186,24 +201,20 @@ function createlocalstorage() {
 }
 // 加载提醒事项
 function get_memori() {
-    const addurl = {
-        mi:mi,
+    const body = {
         action:'getmemori'
     }
-    const url = geturl(addurl)
-    fetch(url).then(response => response.json())
+    fetchdata(body).then(response => response.json())
         .then(dataArray => {
             localStorage.setItem('memori', JSON.stringify(dataArray));
     })
 }
 // 加载卡片
 function get_carte() {
-    const addurl = {
-        mi:mi,
+    const body = {
         action:'getcarte'
     }
-    const url = geturl(addurl)
-    fetch(url).then(response => response.json())
+    fetchdata(body).then(response => response.json())
         .then(dataArray => {
             localStorage.setItem('carte', JSON.stringify(dataArray));
     })
@@ -216,12 +227,10 @@ async function caricamovimentolist() {
 // 更新数据
 async function aggiornamento() {
     await uploadmovimento()
-    const addurl = {
-        mi:mi,
+    const body = {
         action:'getmotivi'
     }
-    let url = geturl(addurl)
-    fetch(url)
+    fetchdata(body)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok ' + response.statusText);
@@ -232,12 +241,10 @@ async function aggiornamento() {
         .catch(error => console.error('There was a problem with the fetch operation:', error));
 
 
-    const addurl1 = {
-        mi:mi,
+    const body1 = {
         action:'getmovimento'
     }
-    url = geturl(addurl1)
-    fetch(url)
+    fetchdata(body1)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok ' + response.statusText);
@@ -427,14 +434,11 @@ async function uploadmovimento() {
     for (let i = 0; i < data.length; i++) {
         const item = data[i];
         const dati = item.ID + "," + item.MOTIVO + "," + item.SPESA + ",'" + String(item.NOTA).replace(","," ") + "','" + item.UTENTE + "'," + item.DEL;
-        // const url = baseurl + mi + '&action=uploadmovimento&dati=' + dati
-        const addurl = {
-            mi:mi,
+        const body = {
             action:'uploadmovimento',
             dati:dati
         }
-        const url = geturl(addurl)
-        const res = await fetch(url).then(response => response.text());
+        const res = await fetchdata(body).then(response => response.text());
         if (res == 'True') {
             data.splice(i, 1);
             i--;
@@ -568,11 +572,10 @@ function key_tianjia() {
     currentDate = new Date();
     updateCalendar();
     changepage('addpage');
-    const addurl = {
-        mi:mi,
+    const body = {
         action:'attiva'
     }
-    fetch(geturl(addurl));
+    fetchdata(body);
     caricamotivilist();
     setdatacalendar();
 }
@@ -690,11 +693,9 @@ function carta_getinfo() {
     const mibox = document.getElementById('carta-mibox');
     mibox.style.display = 'none';
     const key = document.querySelector('#carta-mipass').value
-    const addurl = {
-        mi:mi,
+    const body = {
         action:'carteinfo'
     }
-    const url = geturl(addurl)
     const cartainfo = document.getElementById('carta-info')
     cartainfo.innerHTML = ''
     const data = JSON.parse(localStorage.getItem('carteinfo'))
@@ -704,7 +705,7 @@ function carta_getinfo() {
             cartainfo.innerHTML += `<div>${info}</div>`
         });
     }
-    fetch(url).then(response => response.json())
+    fetchdata(body).then(response => response.json())
         .then(data => {
             cartainfo.innerHTML = ''
             localStorage.setItem('carteinfo', JSON.stringify(data))
@@ -739,23 +740,23 @@ function login(event) {
     event.preventDefault();
     const username = String(document.getElementById('username').value).toLowerCase();
     const password = document.getElementById('password').value;
-    mi = btoa(username + password)
-    const addurl = {
-        mi:mi,
-        action:'login'
+    const body = {
+        'action':'login',
+        'id': username,
+        'pin': password
     }
-    const url = geturl(addurl)
-    fetch(url).then(response => response.text())
+    fetchdata(body)
+        .then(response => response.json())
         .then(data => {
-            if (data === 'True') {
-                const user = {'checked': true,'utente': username,'mi': mi}
+            if (data[0] === true) {
+                const user = {'checked': true,'utente': username,'mi': data[1]}
                 localStorage.setItem('user', JSON.stringify(user));
                 init();
                 changepage('mainpage')
             } else {
                 alert('用户名或密码错误')
             }
-        });
+        })
 }
 // 退出事件
 function logout() {
@@ -1563,13 +1564,12 @@ function set_memori_add_click(element) {
     const img = element.querySelector('img').src;
     const name = element.querySelector('span').textContent;
     const dati = `${idmotivo},'${name}',1,0`
-    const addurl = {
+    const body = {
         mi:mi,
         action:'addmemori',
         dati:dati
     }
-    const url = geturl(addurl)
-    fetch(url)
+    fetchdata(body)
         .then(response => response.json())
         .then(dati => {
             if (dati[0] === true) {
@@ -1616,13 +1616,11 @@ function set_memori_add_click(element) {
 function set_memori_del(button) {
     const item = button.parentElement;
     const id = parseInt(item.getAttribute('n'));
-    const addurl = {
-        mi:mi,
+    const body = {
         action:'delmemori',
         dati:id
     }
-    const url = geturl(addurl)
-    fetch(url)
+    fetchdata(body)
         .then(response => response.json())
         .then(dati => {
             console.log(dati)
@@ -1684,13 +1682,11 @@ function set_memori_update(item) {
     const attiva = item.querySelector('.switch input').checked? 1 : 0;
     const mese = item.querySelector('.set-memori-select').value;
     const dati = `${id}-${mese}-${attiva}`
-    const addurl = {
-        mi:mi,
+    const body = {
         action:'updatememori',
         dati:dati
     }
-    const url = geturl(addurl)
-    fetch(url)
+    fetchdata(body)
         .then(response => response.json())
         .then(dati => {
             if (dati === true) {
