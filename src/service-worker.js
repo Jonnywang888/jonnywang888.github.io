@@ -1,11 +1,11 @@
-const cache_name = 'app_cache_v1.66';
+const cache_name = 'app_cache_v1.7';
 const urls = [
   '/index.html',
   '/manifest.json',
   '/icons/app.png',
-  '/styles.css', 
-  '/script.js',
-  '/fun.js' 
+  '/src/styles.css', 
+  '/src/script.js',
+  '/src/fun.js' 
 ]
 // 安装事件
 self.addEventListener('install', async e => {
