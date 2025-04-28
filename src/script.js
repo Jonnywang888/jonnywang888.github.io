@@ -759,7 +759,7 @@ function login(event) {
 }
 // 退出事件
 function logout() {
-    localStorage.removeItem('user');
+    localStorage.clear();
     window.location.reload();
 }
 // 重新载入
