@@ -116,9 +116,8 @@ async function init() {
     setTimeout(notifica_memori,300);
 }
 async function fetchdata(body) {
-    // const url = '/server/app.asp'
-    const url = 'http://localhost:8888/http://192.168.1.99/server/app.asp'
-    // const url = 'https://trustmarket.ddnsfree.com/server/app.asp'
+    // const url = 'http://localhost:8888/http://192.168.1.99/server/app.asp'
+    const url = 'https://trustmarket.ddnsfree.com/server/app.asp'
     const user = JSON.parse(localStorage.getItem('user'));
     let authorization = '';
     if (user) {
