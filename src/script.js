@@ -119,15 +119,15 @@ async function fetchdata(body) {
     // const url = 'http://localhost:8888/http://192.168.1.99/server/app.asp'
     const url = 'https://trustmarket.ddnsfree.com/server/app.asp'
     const user = JSON.parse(localStorage.getItem('user'));
-    let authorization = '';
+    let token = '';
     if (user) {
-        authorization = 'Basic ' + user.mi;
+        token = 'Basic ' + user.mi;
     }
+    body['token'] = token;
     const options = {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': authorization
+            'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: new URLSearchParams(body).toString()
     };
