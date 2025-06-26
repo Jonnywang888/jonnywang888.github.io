@@ -120,7 +120,7 @@
         <ol>
             <li>在左侧输入框中粘贴您的文本内容（意大利语+中文格式）</li>
             <li>点击"转换为JSON"按钮</li>
-            <li>右侧会显示转换后的JSON格式（仅content部分）</li>
+            <li>右侧会显示转换后的JSON格式（句子数组）</li>
             <li>点击"下载JSON"保存文件</li>
             <li>将下载的内容复制到books.json的content字段中</li>
         </ol>
@@ -209,12 +209,10 @@ Io scarpe mie non ne ho avute mai, porto quelle degli altri e mi fanno sempre ma
         }
         
         function generateContentJson(sentences) {
-            return {
-                "第一章": sentences.map(s => ({
-                    "ita": s.italian,
-                    "chi": s.chinese
-                }))
-            };
+            return sentences.map(s => ({
+                "ita": s.italian,
+                "chi": s.chinese
+            }));
         }
         
         function clearInput() {

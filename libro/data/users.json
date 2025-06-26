@@ -1,19 +1,19 @@
 [
   {
-    "id": "dad",
-    "name": "爸爸",
+    "id": "Jonny",
+    "name": "Jonny",
     "avatar": "👨",
     "color": "#4A90E2"
   },
   {
-    "id": "mom", 
-    "name": "妈妈",
+    "id": "Lolo", 
+    "name": "Lolo",
     "avatar": "👩",
     "color": "#E24A90"
   },
   {
-    "id": "child",
-    "name": "小朋友",
+    "id": "Matteo",
+    "name": "Matteo",
     "avatar": "👶",
     "color": "#90E24A"
   }
