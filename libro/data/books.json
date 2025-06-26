@@ -1,0 +1,333 @@
+[
+  {
+    "id": "book1",
+    "title": "我的妈妈",
+    "author": "埃莱娜·费兰特",
+    "description": "一个关于母亲和孩子的温馨故事",
+    "cover": "📖",
+    "content": {
+      "第一章": [
+        {
+          "ita": "Mia mamma avanti e io appresso.",
+          "chi": "我妈妈走在前面，我跟在后面。"
+        },
+        {
+          "ita": "Per dentro ai vicoli dei Quartieri spagnoli mia mamma cammina veloce: ogni passo suo, due miei.",
+          "chi": "穿过西班牙区的小巷，我妈妈走得飞快：她一步，我要走两步。"
+        },
+        {
+          "ita": "Guardo le scarpe della gente. Scarpa sana: un punto; scarpa bucata: perdo un punto.",
+          "chi": "我看着路人的鞋。鞋完好：得一分；破洞鞋：扣一分。"
+        },
+        {
+          "ita": "Senza scarpe: zero punti. Scarpe nuove: stella premio.",
+          "chi": "没穿鞋：零分。新鞋：星星奖励。"
+        },
+        {
+          "ita": "Io scarpe mie non ne ho avute mai, porto quelle degli altri e mi fanno sempre male.",
+          "chi": "我从来没有得到过自己的鞋，我穿别人的鞋，总是很痛。"
+        },
+        {
+          "ita": "Mia mamma dice che cammino storto.",
+          "chi": "我妈妈说我走路不直。"
+        },
+        {
+          "ita": "Non è colpa mia. Sono le scarpe degli altri.",
+          "chi": "这不是我的错。是别人的鞋的问题。"
+        },
+        {
+          "ita": "Hanno la forma dei piedi che le hanno usate prima di me.",
+          "chi": "它们有前面那些人脚的形状。"
+        },
+        {
+          "ita": "Hanno pigliato le abitudini loro, hanno fatto altre strade, altri giochi.",
+          "chi": "它们带了他们的习惯，走过他们的路，玩过他们的游戏。"
+        },
+        {
+          "ita": "E quando arrivano a me, che ne sanno di come cammino io e di dove voglio andare?",
+          "chi": "当轮到我穿的时候，它们怎么知道我怎么走、我要去哪里？"
+        },
+        {
+          "ita": "Si devono abituare mano mano, ma intanto il piede cresce, le scarpe si fanno piccole e stiamo punto e a capo.",
+          "chi": "它们要慢慢适应；但与此同时脚长了，鞋就变小，重新开始。"
+        },
+        {
+          "ita": "Mia mamma avanti e io appresso. Dove stiamo andando non lo so, dice che è per il mio bene.",
+          "chi": "我妈妈走在前面，我跟在后面。我不知道我们要去哪，她说这是为了我好。"
+        },
+        {
+          "ita": "Invece ci sta la fregatura sotto, come per i pidocchi.",
+          "chi": "但其实背后有陷阱，就像把虱子当好处。"
+        },
+        {
+          "ita": "È per il tuo bene, e mi ritrovai con il mellone.",
+          "chi": "“为了你好”，结果我得了虱子。"
+        },
+        {
+          "ita": "Per fortuna che pure all’amico mio Tommasino gli fecero il mellone, per il suo bene.",
+          "chi": "幸好我的朋友托马西诺也被处理了虱子，也是为了他好。"
+        },
+        {
+          "ita": "I compagni nostri del vicolo ci sfottevano, ci dicevano che parevamo due cape di morte uscite da dentro al Cimitero delle Fontanelle.",
+          "chi": "巷子里的伙伴讥笑我们，说我们看起来像从Fontanelle公墓出来的两具死尸。"
+        },
+        {
+          "ita": "Tommasino in principio non era amico mio.",
+          "chi": "起初，托马西诺不是我的朋友。"
+        },
+        {
+          "ita": "Una volta l’avevo visto che si fotteva una mela dal banco di Capajanca, il verdummaro che tiene il carretto a piazza Mercato, e allora ho pensato che non potevamo essere amici, perché mia mamma Antonietta mi ha spiegato che noi siamo poveri, sí, ma ladri no.",
+          "chi": "我曾看到他从市场广场Capajanca那个卖瓜的商贩那偷一颗苹果，所以我认为我们不能成为朋友，因为我妈妈Antonietta告诉我，我们可以穷，但决不能偷窃。"
+        },
+        {
+          "ita": "Altrimenti diventiamo pezzenti.",
+          "chi": "否则就变成乞丐了。"
+        },
+        {
+          "ita": "Però Tommasino mi ha visto e ha rubato una mela pure per me.",
+          "chi": "但托马西诺看见了，还给我也偷了一颗苹果。"
+        },
+        {
+          "ita": "Poiché la mela io non l’avevo rubata ma l’avevo avuta regalata, me la mangiai, infatti stavo con la fame agli occhi.",
+          "chi": "因为那苹果不是我偷的，是别人给的，我吃了它——我的眼睛里全是饥饿。"
+        },
+        {
+          "ita": "Da quel momento siamo diventati amici. Amici di mele.",
+          "chi": "从那一刻起，我们成了朋友。苹果之交。"
+        },
+        {
+          "ita": "Mia mamma cammina in mezzo alla via senza guardare mai a terra.",
+          "chi": "我妈妈走在街中，从不看地面。"
+        },
+        {
+          "ita": "Io trascino i piedi e sommo i punti delle scarpe per far passare la paura.",
+          "chi": "我拖着脚走，数着鞋子的分数来驱散恐惧。"
+        },
+        {
+          "ita": "Conto sulle dita fino a dieci e poi ricomincio daccapo.",
+          "chi": "我用手指数到十，然后重新开始。"
+        },
+        {
+          "ita": "Quando farò dieci volte dieci, succederà una cosa bella, cosí è il gioco.",
+          "chi": "当我数到十的十倍时，会有好事发生，就是游戏规则。"
+        },
+        {
+          "ita": "La cosa bella fino a mo non mi è mai capitata, forse perché ho contato male i punti.",
+          "chi": "好事到目前为止还没发生，也许是我数错了分。"
+        },
+        {
+          "ita": "A me i numeri mi piacciono assai. Le lettere invece no: da sole le riconosco, ma quando si mischiano per fare le parole mi confondo.",
+          "chi": "我很喜欢数字。但不喜欢字母：单独能认，会拼词就慌。"
+        },
+        {
+          "ita": "Dice mia mamma che io non devo crescere come lei, ed è per questo che mi ha mandato a scuola.",
+          "chi": "妈妈说我不应该像她一样，所以才送我去学校。"
+        },
+        {
+          "ita": "Io ci sono andato, ma non mi sono trovato bene.",
+          "chi": "我去了，但感觉不舒服。"
+        },
+        {
+          "ita": "Prima di tutto i compagni strillavano e me ne tornavo a casa con il male di capa, la stanza era piccola e puzzava di piedi sudati.",
+          "chi": "首先同学们尖叫，我回家时头痛，教室小，满是汗脚臭味。"
+        },
+        {
+          "ita": "Poi dovevo rimanere tutto il tempo fermo e zitto dietro a un banco a disegnare le asticelle.",
+          "chi": "还得一直坐在课桌后面画那些小棒。"
+        },
+        {
+          "ita": "La maestra teneva la scucchia e parlava con la zeppola in bocca e a chi la sfotteva gli arrivava una scoppola sulla testa.",
+          "chi": "老师拿着藤条，嘴里咬着甜圈，嘲笑她的人会被打头。"
+        },
+        {
+          "ita": "Io in cinque giorni ne ho avute dieci.",
+          "chi": "我五天内挨了十次。"
+        },
+        {
+          "ita": "Me le sono contate sulle dita come i punti delle scarpe, ma non ho vinto niente.",
+          "chi": "我像数鞋分一样数了它们，但什么也没赢。"
+        },
+        {
+          "ita": "Cosí a scuola non ci sono voluto andare piú.",
+          "chi": "所以我不想再去学校。"
+        },
+        {
+          "ita": "Mia mamma non era contenta, però ha detto che almeno mi dovevo imparare una fatica e cosí mi ha mandato a fare le pezze.",
+          "chi": "我妈妈不高兴，但说我至少要学一份苦差，所以让我去捡破布。"
+        },
+        {
+          "ita": "All’inizio ero contento: si trattava di stare tutto il giorno in giro a raccogliere gli stracci vecchi casa per casa oppure da dentro alla monnezza e portarli al mercato da Capa ’e fierro.",
+          "chi": "起初我很高兴：整天挨家挨户收旧布，或者从垃圾堆里捡，拿到Capa ’e fierro的市场去卖。"
+        },
+        {
+          "ita": "Dopo qualche giorno però mi ritiravo cosí stanco che mi rimpiangevo le scoppole della maestra con la scucchia.",
+          "chi": "但几天后我疲惫不堪，反而怀念老师的藤条打头。"
+        },
+        {
+          "ita": "Mia mamma si ferma davanti a un palazzo grigio e rosso, con le finestre grandi.",
+          "chi": "我妈妈停在一栋灰红色的大楼前，有大窗户。"
+        },
+        {
+          "ita": "– È qua, – dice. Questa scuola mi sembra piú bella di quella di prima. Dentro ci sta il silenzio e niente puzza di piedi.",
+          "chi": "“就是这里。”她说。“这学校比之前那个好多了。里面安静，也没有脚臭味。”"
+        },
+        {
+          "ita": "Saliamo al secondo piano e ci fanno aspettare in un corridoio sopra una panca di legno finché una voce non dice: il prossimo.",
+          "chi": "我们上二楼，在走廊的木凳上等，直到有人说：“下一个”。"
+        },
+        {
+          "ita": "Visto che nessuno si muove, mia mamma capisce che il prossimo siamo noi, e cosí entriamo.",
+          "chi": "没人动，妈妈知道该我们了，就进去了。"
+        },
+        {
+          "ita": "Mia mamma si chiama Antonietta Speranza.",
+          "chi": "我妈妈叫Antonietta Speranza。"
+        },
+        {
+          "ita": "La signorina che ci aspettava si segna il nome su un foglio e dice: – A voi vi è rimasta solo quella –.",
+          "chi": "接待我们的小姐在纸上写下名字，说：“你们就剩这一个名额了”。"
+        },
+        {
+          "ita": "Io allora penso: ecco qua, mo mia mamma gira i tacchi e ce ne torniamo a casa.",
+          "chi": "我当时想：好吧，我妈妈转身我们就回家了。"
+        },
+        {
+          "ita": "Invece no.",
+          "chi": "结果没有。"
+        },
+        {
+          "ita": "– Voi le date, le scoppole, maestra? – chiedo e mi copro la testa con le braccia, per sicurezza.",
+          "chi": "“你们打学生吗，老师？”我问，并用手臂护住头以防万一。"
+        },
+        {
+          "ita": "La signorina ride e mi prende la guancia tra il pollice e l’indice, ma senza stringere.",
+          "chi": "小姐笑了，用拇指和食指捏了捏我的脸颊，但没用力。"
+        },
+        {
+          "ita": "– Accomodatevi, – dice, e noi ci sediamo di fronte a lei.",
+          "chi": "“请坐。”她说，我们坐在她对面。"
+        },
+        {
+          "ita": "La signorina non somiglia proprio a quell’altra, non tiene il mento in fuori ma un bel sorriso e tanti denti bianchi e dritti, i capelli tagliati corti, e porta i pantaloni, come i maschi.",
+          "chi": "这位小姐看起来和前一个完全不同，不翘下巴，面带温和笑容，白牙整齐，短发，穿着裤子，像男生。"
+        },
+        {
+          "ita": "Noi restiamo zitti. Dice che si chiama Maddalena Criscuolo e che forse mia mamma se la ricorda, perché aveva combattuto per liberarci dall’oppressione dei nazisti.",
+          "chi": "我们保持安静。她说自己叫Maddalena Criscuolo，也许妈妈记得她，因为她曾参与抵抗纳粹压迫。"
+        },
+        {
+          "ita": "Mia mamma fa su e giú con la testa, ma si vede benissimo che lei questa Maddalena Criscuolo prima di mo non l’aveva mai sentita nominare.",
+          "chi": "妈妈点点头，但显然她以前没听说过Maddalena Criscuolo。"
+        },
+        {
+          "ita": "Maddalena racconta che in quelle giornate lei ha salvato il ponte del rione Sanità, perché i tedeschi lo volevano far saltare in aria con la dinamite e quindi alla fine le hanno dato una medaglia di bronzo e un attestato.",
+          "chi": "Maddalena 说那些天她拯救了Sanità区的桥，德国人想用炸药炸毁，结果她获得了铜牌和一份证书。"
+        },
+        {
+          "ita": "Io penso che era meglio se le davano le scarpe nuove perché ne tiene una buona e una bucata (zero punti).",
+          "chi": "我心想，如果给她新鞋也好啊，她现在一只好一只破（零分）。"
+        },
+        {
+          "ita": "Dice che abbiamo fatto bene ad andare da lei, che molta gente si vergogna, che lei e le compagne sue hanno dovuto bussare casa per casa e convincere le mamme che era una cosa buona, per loro e per i figli loro.",
+          "chi": "她说我们找她是对的，很多人害羞，她和同伴挨家挨户去，说服妈妈们这是件好事，对她们和孩子们都有好处。"
+        },
+        {
+          "ita": "Che hanno avuto molte porte in faccia e pure qualche malaparola.",
+          "chi": "她们遇到了很多关门，也遭到一些恶言。"
+        },
+        {
+          "ita": "Io ci credo, perché anche a me, quando vado a chiedere le pezze usate, spesso mi dicono le maleparole appresso.",
+          "chi": "我信，因为我去要旧布时，也常被人骂。"
+        },
+        {
+          "ita": "La signorina dice che tante brave persone si sono fidate di loro, che mia mamma Antonietta è una donna coraggiosa e che a suo figlio gli sta facendo un regalo.",
+          "chi": "小姐说很多善良的人相信她们，妈妈Antonietta是位勇敢的女人，还给我一个礼物。"
+        },
+        {
+          "ita": "Io di regali non ne ho avuti mai, tranne la scatola vecchia del cucito dove ci ho messo tutti i miei tesori.",
+          "chi": "我从没得到礼物，除了那个旧缝纫盒，我把所有宝贝都放进去。"
+        },
+        {
+          "ita": "Mia mamma Antonietta aspetta che questa Maddalena finisce di parlare, perché le chiacchiere non sono arte sua.",
+          "chi": "妈妈Antonietta等Maddalena说完，因为她不善言辞。"
+        },
+        {
+          "ita": "Quella dice che ai bambini bisogna dargli un’opportunità.",
+          "chi": "那位小姐说孩子们必须给机会。"
+        },
+        {
+          "ita": "Io ero piú contento se mi dava pane, zucchero e ricotta.",
+          "chi": "我当时更希望她给我面包、糖和乳清干酪。"
+        },
+        {
+          "ita": "Me la mangiai una volta a una festa degli americani dove mi ero infilato con Tommasino (scarpe vecchie: perdo un punto).",
+          "chi": "我和托马西诺混进一场美国人的聚会时吃过它（旧鞋：扣一分）。"
+        },
+        {
+          "ita": "Mia mamma resta zitta, perciò Maddalena continua a parlare: hanno organizzato dei treni speciali per portare i bambini là sopra.",
+          "chi": "妈妈沉默，于是Maddalena继续说：他们组织了特别列车把孩子们送上去。"
+        },
+        {
+          "ita": "Allora mia mamma risponde: – Ma siete sicura? Questo qua, lo vedete?, è un castigo di dio!",
+          "chi": "妈妈回应说：“你们确定吗？你们看见他了吗？这是神的惩罚！”"
+        },
+        {
+          "ita": "Maddalena dice che ci metteranno a tanti di noi dentro al treno, mica solo a me.",
+          "chi": "Maddalena说他们会把许多像我这样的孩子送上火车，不只是我。"
+        },
+        {
+          "ita": "– Quindi non è una scuola! – capisco finalmente io, e sorrido.",
+          "chi": "“所以这不是一所学校！”我这才明白，笑了。"
+        },
+        {
+          "ita": "Mia mamma Antonietta non sorride. – Se tenevo scelta non stavo qua, questo è l’unico che tengo, vedete che dovete fare.",
+          "chi": "妈妈Antonietta没有笑。“如果有选择我不会来，这是我唯一的选择，你们知道该怎么做。”"
+        },
+        {
+          "ita": "Quando ce ne andiamo, mia mamma cammina sempre avanti a me, ma piú piano.",
+          "chi": "我们离开时，妈妈还是走在前面，但走得更慢。"
+        },
+        {
+          "ita": "Passiamo per il banco delle pizze, dove ogni volta io mi attacco alla sua veste e non smetto di piangere fino a che non mi arriva un pacchero.",
+          "chi": "我们经过炸披萨摊时，我每次都抓住她的衣襟，哭个不停，直到我拿到一个炸大饼。"
+        },
+        {
+          "ita": "Lei si ferma. – Cicoli e ricotta, – dice al giovine dietro al banco. – Una sola.",
+          "chi": "她停下对摊位小伙说：“猪油渣和乳清干酪，一块。”"
+        },
+        {
+          "ita": "Io questa volta non ho chiesto niente e penso che, se mia mamma, di testa sua, mi vuole comprare la pizza fritta a metà mattinata, ci sta la fregatura sotto.",
+          "chi": "这次我没要任何东西，心想，如果妈妈突发奇想中午吃炸饼，那背后肯定有猫腻。"
+        },
+        {
+          "ita": "Il giovine incarta una pizza gialla come il sole e larga piú della mia faccia.",
+          "chi": "小伙包了一个像太阳一样黄、比我脸还大的炸饼。"
+        },
+        {
+          "ita": "Io la prendo con tutte e due le mani per paura di farla cadere.",
+          "chi": "我双手接过，怕它掉。"
+        },
+        {
+          "ita": "È calda e profumata, ci soffio sopra e l’odore dell’olio mi entra nel naso e nella bocca.",
+          "chi": "它又热又香，我吹了吹，油香钻进我的鼻子和嘴里。"
+        },
+        {
+          "ita": "Mia mamma si abbassa e mi guarda fisso. – Allora, hai sentito pure tu. Ormai sei grande, stai per compiere otto anni. La situazione nostra la sai.",
+          "chi": "我妈妈弯身盯着我。“好了，你也听到了。你都快八岁了。我们的处境你知道。”"
+        },
+        {
+          "ita": "Mi pulisce l’unto dalla faccia con il rovescio della mano. – Fammi assaggiare pure a me, – e con un pizzico se ne stacca un pezzo.",
+          "chi": "她用手背帮我擦油。“让我也尝一口，”她掐下一小块。"
+        },
+        {
+          "ita": "Poi si alza e ci avviamo a casa.",
+          "chi": "然后她站起来，我们往家走。"
+        },
+        {
+          "ita": "Non chiedo niente e mi incammino. Mia mamma avanti e io appresso.",
+          "chi": "我什么也没说，跟着她走。妈妈走前面，我跟在后面。"
+        }
+      ]
+    }
+  }
+]

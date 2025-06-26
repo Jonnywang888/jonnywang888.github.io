@@ -1,0 +1,280 @@
+/* 阅读页面样式 */
+.reader-header {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .reader-header {
+    background: #2d2d2d;
+    border-bottom-color: #444;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.reader-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.book-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#current-book-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+}
+
+.dark-mode #current-book-title {
+    color: #e0e0e0;
+}
+
+#current-chapter-title {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.dark-mode #current-chapter-title {
+    color: #aaa;
+}
+
+.translation-controls {
+    display: flex;
+    gap: 8px;
+}
+
+/* 阅读内容区域 */
+.reader-content {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: calc(100vh - 60px);
+}
+
+.sentence-pair {
+    margin-bottom: 5px;
+    padding: 10px;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    transition: none;
+    position: relative;
+}
+
+.dark-mode .sentence-pair {
+    background: transparent;
+    box-shadow: none;
+}
+
+.sentence-pair:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.dark-mode .sentence-pair:hover {
+    box-shadow: none;
+}
+
+.italian-sentence {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 8px;
+    font-weight: 500;
+    padding-right: 80px; /* 为按钮留出空间 */
+}
+
+.dark-mode .italian-sentence {
+    color: #e0e0e0;
+}
+
+.chinese-sentence {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #666;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #4A90E2;
+    transition: all 0.3s ease;
+    min-height: 1.5em;
+}
+
+.dark-mode .chinese-sentence {
+    color: #bbb;
+    background: #1a1a1a;
+    border-left-color: #4A90E2;
+}
+
+.chinese-sentence.hidden {
+    visibility: hidden;
+}
+
+.sentence-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.toggle-translation-btn {
+    background: #4A90E2;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-translation-btn:hover {
+    background: #357ABD;
+    transform: translateY(-1px);
+}
+
+/* 设置面板 */
+.settings-panel {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 350px;
+    height: 100vh;
+    background: white;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.dark-mode .settings-panel {
+    background: #2d2d2d;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.settings-panel.open {
+    right: 0;
+}
+
+.settings-content {
+    padding: 25px 20px;
+}
+
+.settings-content h3 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+.dark-mode .settings-content h3 {
+    color: #e0e0e0;
+}
+
+.setting-item {
+    margin-bottom: 20px;
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #333;
+}
+
+.dark-mode .setting-item label {
+    color: #e0e0e0;
+}
+
+.setting-item input[type="range"] {
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.setting-item input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.setting-item span {
+    font-size: 0.8rem;
+    color: #666;
+    margin-left: 10px;
+}
+
+.dark-mode .setting-item span {
+    color: #aaa;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .reader-header {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 15px;
+    }
+    
+    .reader-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .translation-controls {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .reader-content {
+        padding: 15px;
+        max-width: 100%;
+    }
+    
+    .sentence-pair {
+        padding: 5px;
+    }
+    
+    .italian-sentence {
+        font-size: 1rem;
+        padding-right: 70px; /* 移动端稍微减少右边距 */
+    }
+    
+    .chinese-sentence {
+        font-size: 0.9rem;
+    }
+    
+    .settings-panel {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .book-info {
+        text-align: center;
+    }
+}
+
+/* 自定义字体大小和行距 */
+.reader-content {
+    --font-size: 16px;
+    --line-height: 1.6;
+}
+
+.reader-content .italian-sentence,
+.reader-content .chinese-sentence {
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+} 

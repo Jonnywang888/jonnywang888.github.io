@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中意双语阅读</title>
+    <meta name="description" content="中意双语阅读网站 - 支持PWA的跨设备阅读体验">
+    <meta name="theme-color" content="#4A90E2">
+    
+    <!-- PWA 配置 -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- 样式文件 -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/home.css">
+    <link rel="stylesheet" href="styles/reader.css">
+    
+    <!-- 字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 首页 -->
+    <div id="home-page" class="page active">
+        <header class="header">
+            <h1>📚 中意双语阅读</h1>
+            <p>选择用户和书籍开始阅读</p>
+            <div class="header-actions">
+                <button onclick="window.location.href='tojson.html'" class="btn btn-secondary">🛠️ 文本转JSON工具</button>
+            </div>
+        </header>
+        
+        <!-- 用户选择 -->
+        <section class="user-selection">
+            <h2>👤 选择用户</h2>
+            <div class="user-grid" id="user-grid">
+                <!-- 用户选项将通过JavaScript动态生成 -->
+            </div>
+        </section>
+        
+        <!-- 书籍选择 -->
+        <section class="book-selection" id="book-selection" style="display: none;">
+            <h2>📘 选择书籍</h2>
+            <div class="book-grid" id="book-grid">
+                <!-- 书籍选项将通过JavaScript动态生成 -->
+            </div>
+        </section>
+    </div>
+    
+    <!-- 阅读页面 -->
+    <div id="reader-page" class="page">
+        <header class="reader-header">
+            <div class="reader-controls">
+                <button id="back-btn" class="btn btn-secondary">← 返回</button>
+                <div class="book-info">
+                    <span id="current-book-title"></span>
+                    <span id="current-chapter-title"></span>
+                </div>
+            </div>
+            
+            <div class="translation-controls">
+                <button id="prev-chapter-btn" class="btn btn-secondary">← 上一章</button>
+                <button id="toggle-all-translations" class="btn btn-primary">显示全部中文</button>
+                <button id="next-chapter-btn" class="btn btn-secondary">下一章 →</button>
+                <button id="settings-btn" class="btn btn-secondary">⚙️ 设置</button>
+            </div>
+        </header>
+        
+        <main class="reader-content">
+            <div id="chapter-content">
+                <!-- 章节内容将通过JavaScript动态生成 -->
+            </div>
+        </main>
+        
+        <!-- 设置面板 -->
+        <div id="settings-panel" class="settings-panel">
+            <div class="settings-content">
+                <h3>阅读设置</h3>
+                <div class="setting-item">
+                    <label for="font-size">字体大小:</label>
+                    <input type="range" id="font-size" min="12" max="24" value="16">
+                    <span id="font-size-value">16px</span>
+                </div>
+                <div class="setting-item">
+                    <label for="line-height">行距:</label>
+                    <input type="range" id="line-height" min="1.2" max="2.0" step="0.1" value="1.6">
+                    <span id="line-height-value">1.6</span>
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="dark-mode"> 夜间模式
+                    </label>
+                </div>
+                <button id="close-settings" class="btn btn-primary">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载指示器 -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="js/app.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/reader.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/pwa.js"></script>
+</body>
+</html> 

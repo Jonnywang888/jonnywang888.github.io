@@ -1,0 +1,20 @@
+[
+  {
+    "id": "dad",
+    "name": "爸爸",
+    "avatar": "👨",
+    "color": "#4A90E2"
+  },
+  {
+    "id": "mom", 
+    "name": "妈妈",
+    "avatar": "👩",
+    "color": "#E24A90"
+  },
+  {
+    "id": "child",
+    "name": "小朋友",
+    "avatar": "👶",
+    "color": "#90E24A"
+  }
+] 
