@@ -2,7 +2,7 @@
   "name": "中意双语阅读",
   "short_name": "双语阅读",
   "description": "中意双语阅读网站 - 支持PWA的跨设备阅读体验",
-  "start_url": "/",
+  "start_url": "/libro/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4A90E2",
