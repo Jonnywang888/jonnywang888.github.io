@@ -1,4 +1,7 @@
 /* 首页样式 */
+body {
+    padding-bottom: 50px;
+}
 .header {
     text-align: center;
     padding: 40px 20px;
