@@ -1,10 +1,10 @@
 [
   {
     "id": "book1",
-    "title": "我的妈妈",
-    "author": "埃莱娜·费兰特",
+    "title": "IL TRENO DEI BAMBINI",
+    "author": "VIOLA ARDONE",
     "description": "一个关于母亲和孩子的温馨故事",
-    "cover": "📖",
+    "cover": "",
     "content": {
       "第一章": [
         {
@@ -326,6 +326,340 @@
         {
           "ita": "Non chiedo niente e mi incammino. Mia mamma avanti e io appresso.",
           "chi": "我什么也没说，跟着她走。妈妈走前面，我跟在后面。"
+        }
+      ],
+      "第二章":[
+        {
+          "ita": "Del fatto di Maddalena non si è parlato piú.",
+          "chi": "关于玛达莱娜的事情再也没有人提起了。"
+        },
+        {
+          "ita": "Io ho pensato che forse mia mamma se l’era scordato o aveva cambiato idea.",
+          "chi": "我以为妈妈可能忘了，或者改变了主意。"
+        },
+        {
+          "ita": "Invece poi qualche giorno dopo viene a casa nostra una suora, la manda padre Gennaro.",
+          "chi": "但几天后，一位修女来我们家，是詹纳罗神父派来的。"
+        },
+        {
+          "ita": "Mia mamma spia da dietro i vetri: – E mo che vuole questa capa ’e pezza?",
+          "chi": "妈妈从窗后偷看，说道：“这破布头又想干嘛？”"
+        },
+        {
+          "ita": "La suora bussa un’altra volta, cosí mia mamma posa il cucito e va ad aprire, ma giusto uno spiraglio, ché quella riesce a infilare nella porta solo la faccia, tutta ingiallita.",
+          "chi": "修女又敲了一次门，于是妈妈放下手中的针线活去开门，只开了一条缝，那修女只把她一张发黄的脸塞了进来。"
+        },
+        {
+          "ita": "La capa ’e pezza chiede se può entrare, mia mamma fa sí con la testa, ma si vede che non tiene proprio genio.",
+          "chi": "那“破布头”问能不能进来，妈妈点了点头，但明显不怎么情愿。"
+        },
+        {
+          "ita": "La suora dice che mia mamma è una buona cristiana, che Dio vede tutti e ogni cosa e che le creature non appartengono né alle madri né ai padri, sono figlie di Dio.",
+          "chi": "修女说我妈妈是个好基督徒，说上帝看到一切，每个孩子都不是父母的，而是上帝的儿女。"
+        },
+        {
+          "ita": "Quelle comuniste invece vogliono che partiamo col treno per andare in Russia, dove ci tagliano le mani e i piedi e non ci fanno tornare piú.",
+          "chi": "而那些共产党人却要我们坐火车去俄罗斯，那边会把我们的手脚砍掉，让我们再也回不来。"
+        },
+        {
+          "ita": "Mia mamma non risponde. È molto brava a stare zitta.",
+          "chi": "妈妈没说话，她最擅长的就是保持沉默。"
+        },
+        {
+          "ita": "Cosí alla fine la capa ’e pezza si scoccia e se ne va.",
+          "chi": "于是那“破布头”终于烦了，离开了。"
+        },
+        {
+          "ita": "Io allora chiedo: – Ma tu veramente mi vuoi mandare in Russia?",
+          "chi": "我就问：“你真的想把我送到俄罗斯去？”"
+        },
+        {
+          "ita": "Lei riprende il cucito e si mette a parlare da sola: – Ma quale Russia e Russia… Io non conosco né i fascisti né i comunisti. Non conosco nemmeno i preti e i vescovi –.",
+          "chi": "她又拿起针线，自言自语起来：“什么俄罗斯……我既不认识法西斯，也不认识共产党，神父和主教我也不认识。”"
+        },
+        {
+          "ita": "Mia mamma con gli altri parla poco, ma da sola di piú.",
+          "chi": "我妈妈和别人话少，但自己说话挺多。"
+        },
+        {
+          "ita": "– Fino a mo ho conosciuto solamente fame e fatica…",
+          "chi": "“到现在我只认识饥饿和辛苦……”"
+        },
+        {
+          "ita": "La vorrei vedere a quella capa ’e pezza, senza un uomo vicino e con un figlio… è facile parlare, quando figli non se ne tengono.",
+          "chi": "“我倒想看看那‘破布头’，没男人只有孩子，她还不就光说不练。说起来容易，自己没孩子当然不心疼。”"
+        },
+        {
+          "ita": "Ma dove stava lei quando Luigino mio cadde malato?",
+          "chi": "“可我小卢吉诺生病时，她人在哪？”"
+        },
+        {
+          "ita": "Luigi era mio fratello maggiore e, se non aveva la cattiva idea di prendersi l’asma bronchiale da piccolo, mo teneva tre anni piú di me.",
+          "chi": "卢吉是我哥哥，如果小时候没得哮喘，现在比我大三岁。"
+        },
+        {
+          "ita": "Cosí, quando sono nato, ero già figlio unico.",
+          "chi": "所以我出生时，已经成了独生子。"
+        },
+        {
+          "ita": "Mia mamma non lo nomina quasi mai, però tiene una foto sopra al comò con un lumino davanti.",
+          "chi": "妈妈几乎从不提他，但梳妆台上一直放着他的照片，前面点着一盏小灯。"
+        },
+        {
+          "ita": "Il fatto me lo ha raccontato la Zandragliona, che abita nel basso di fronte al mio ed è una brava femmina.",
+          "chi": "这事是住在我家对面的赞德拉格里奥娜告诉我的，她是个好女人。"
+        },
+        {
+          "ita": "Mia mamma ci soffrí talmente che tutti pensavano che non si riprendeva.",
+          "chi": "妈妈当时伤心得不得了，大家都以为她再也缓不过来。"
+        },
+        {
+          "ita": "E invece poi nacqui io e lei è stata contenta.",
+          "chi": "结果我出生了，她也挺高兴的。"
+        },
+        {
+          "ita": "Anche se io non la faccio stare contenta come lui.",
+          "chi": "虽然我没他那样让她高兴。"
+        },
+        {
+          "ita": "Altrimenti a me mica mi mandava in Russia.",
+          "chi": "不然她也不会要把我送去俄罗斯。"
+        },
+        {
+          "ita": "Esco di casa e vado nel basso della Zandragliona, che sa sempre tutto e, quello che non sa, se lo fa raccontare.",
+          "chi": "我出门去了赞德拉格里奥娜家，她什么都知道，自己不知道的也会打听来听。"
+        },
+        {
+          "ita": "Lei dice che non è vero che mi porteranno in Russia, che conosce Maddalena Criscuolo e le altre: loro ci vogliono aiutare, ci vogliono dare una speranza.",
+          "chi": "她说不是真的要送我去俄罗斯，她认识玛达莱娜·克里斯库洛和其他人，她们是想帮我们，给我们希望。"
+        },
+        {
+          "ita": "Ma che me ne faccio io della speranza?",
+          "chi": "可我能拿希望干嘛？"
+        },
+        {
+          "ita": "Io la speranza la tengo già nel cognome, perché faccio Speranza pure io, come mia mamma Antonietta.",
+          "chi": "我早就有“希望”了，我姓斯佩兰萨，就像我妈安东涅塔一样。"
+        },
+        {
+          "ita": "Di nome invece faccio Amerigo.",
+          "chi": "我的名字叫阿梅里戈。"
+        },
+        {
+          "ita": "Il nome me l’ha dato mio padre.",
+          "chi": "这名字是我爸起的。"
+        },
+        {
+          "ita": "Io non l’ho mai conosciuto e, ogni volta che chiedo, mia mamma alza gli occhi al cielo come quando viene a piovere e lei non ha fatto in tempo a entrare i panni stesi.",
+          "chi": "我从没见过他，每次问起，妈妈就抬头望天，就像要下雨却还没收衣服时那样。"
+        },
+        {
+          "ita": "Dice che è proprio un grand’uomo.",
+          "chi": "她说他是个了不起的人。"
+        },
+        {
+          "ita": "È partito per l’America per fare fortuna.",
+          "chi": "他去美国闯荡去了。"
+        },
+        {
+          "ita": "Tornerà?, ho chiesto.",
+          "chi": "我问：“他会回来吗？”"
+        },
+        {
+          "ita": "Prima o poi, ha risposto.",
+          "chi": "她说：“迟早会的。”"
+        },
+        {
+          "ita": "Non mi ha lasciato niente, solo il nome. Sempre qualcosa è.",
+          "chi": "他没留给我什么，只有一个名字。那也算是点什么吧。"
+        },
+        {
+          "ita": "Da quando si è saputo il fatto dei treni, dentro al vicolo abbiamo perso la pace.",
+          "chi": "自从大家都知道了火车那件事，我们巷子里就不再平静了。"
+        },
+        {
+          "ita": "Ognuno dice una cosa diversa: chi sa che ci venderanno e ci manderanno all’America per faticare, chi dice che andremo in Russia e ci metteranno nei forni, chi ha sentito che partono solo le creature malamenti e quelle buone se le tengono le mamme, chi non se ne fotte proprio e continua come se niente fosse, perché è ignorante assai.",
+          "chi": "每个人说的都不一样：有人说我们会被卖了，被送到美国去干活；有人说去俄罗斯会被送进炉子里；有人听说只有身体不好的人才能走，好孩子都被妈妈留下；也有人根本不在乎，像啥都没发生，继续过他日子，因为实在太无知了。"
+        },
+        {
+          "ita": "Io pure sono ignorante, anche se dentro al vicolo mi chiamano Nobèl perché so un sacco di cose, nonostante che a scuola non ci sono piú voluto andare.",
+          "chi": "我也自认无知，尽管巷子里的人叫我“诺贝尔”，因为我知道很多事，虽然我再也不想去学校了。"
+        },
+        {
+          "ita": "Imparo in mezzo alla via: vado girando, sento le storie, mi faccio i fatti degli altri. Nessuno nasce imparato.",
+          "chi": "我在大街上学：到处走走，听别人讲故事，关心别人的事。没人一出生就什么都懂。"
+        },
+        {
+          "ita": "Mia mamma Antonietta non vuole che vado raccontando i fatti suoi.",
+          "chi": "我妈安东涅塔不想让我把她的事到处说。"
+        },
+        {
+          "ita": "E io non lo dico mai a nessuno, che sotto al letto nostro ci stanno i pacchi di caffè di Capa ’e fierro.",
+          "chi": "我从来不告诉别人，床底下放着“铁头老板”送的咖啡包。"
+        },
+        {
+          "ita": "E manco che Capa ’e fierro il pomeriggio viene a casa nostra e si chiude dentro con mia mamma.",
+          "chi": "也没说“铁头老板”每天下午来我家，和妈妈关在房里。"
+        },
+        {
+          "ita": "Chissà alla moglie che le racconta, forse che va al biliardo.",
+          "chi": "不知道他回家会跟他妻子说什么，可能说自己去打桌球了。"
+        },
+        {
+          "ita": "A me mi manda fuori, dice che devono faticare, lui e lei.",
+          "chi": "他总是让我出去，说他和我妈要“工作”。"
+        },
+        {
+          "ita": "Allora io esco e vado a cercare le pezze.",
+          "chi": "于是我就出门去找破布。"
+        },
+        {
+          "ita": "Stracci, scarti, vestiti usati dei soldati americani, roba sporca e piena di pulci.",
+          "chi": "破布、碎料、美军的旧衣服，那些又脏又多跳蚤的东西。"
+        },
+        {
+          "ita": "All’inizio, quando veniva lui, io non me ne volevo andare: non ci potevo pensare che Capa ’e fierro veniva a fare il padrone in casa mia.",
+          "chi": "一开始他来的时候，我不想离开：我想都不敢想“铁头老板”会来我家当“主人”。"
+        },
+        {
+          "ita": "Poi mia mamma ha detto che gli devo portare rispetto perché lui è uno che tiene amicizie importanti e perché ci dà a mangiare.",
+          "chi": "后来我妈说我必须尊敬他，因为他有些厉害的朋友圈，还给我们吃的。"
+        },
+        {
+          "ita": "Ha detto che con il commercio ci sa fare e che da lui tengo solo da imparare, che mi può fare da guida.",
+          "chi": "她说他懂做买卖，我得向他学，他能当我的向导。"
+        },
+        {
+          "ita": "Non ho risposto, ma da quel giorno ogni volta che arriva lui me ne esco io.",
+          "chi": "我没回答，但从那天起，每次他来，我就跑掉。"
+        },
+        {
+          "ita": "Le pezze che raccolgo le porto a casa, mia mamma le deve pulire, strofinare, ricucire, così alla fine gliele diamo a Capa ’e fierro, che tiene il banco a piazza Mercato e riesce a venderle a quelli meno poveri di noi.",
+          "chi": "我收集的破布带回家，妈妈得洗、搓、补，最后我们把它们交给“铁头老板”，他在市场广场摆摊，卖给比我们稍微不那么穷的人。"
+        },
+        {
+          "ita": "Intanto guardo le scarpe e conto i punti sulle dita e quando farò dieci volte dieci succederà la cosa bella: mio padre ritornerà ricco dall’America e Capa ’e fierro lo chiuderò fuori, io a lui.",
+          "chi": "我看着鞋子，数鞋上的针脚数，想象着等我数到十乘十的那个时刻：爸爸从美国发财回来，我就把“铁头老板”赶出家门，让他闭嘴。"
+        },
+        {
+          "ita": "Una volta però il gioco veramente ha funzionato.",
+          "chi": "不过有一次，这个小戏码真的奏效了。"
+        },
+        {
+          "ita": "Davanti al teatro San Carlo ho visto un signore con le scarpe talmente nuove e splendenti che facevano cento punti tutti insieme.",
+          "chi": "在圣卡洛剧院前，我看到一位先生，鞋子新得闪亮，针脚多得能凑成一百。"
+        },
+        {
+          "ita": "E infatti, quando sono tornato a casa, Capa ’e fierro stava fuori la porta.",
+          "chi": "果然，我回家时，“铁头老板”被挡在门外。"
+        },
+        {
+          "ita": "Mia mamma aveva visto passare sua moglie al Rettifilo con una borsetta nuova sotto al braccio.",
+          "chi": "我妈看到他妻子从丽蒂菲洛路过，腋下挎着一个新手袋。"
+        },
+        {
+          "ita": "Capa ’e fierro ha detto: – Devi imparare ad aspettare. Aspetta e viene pure il tuo momento –.",
+          "chi": "“铁头老板”说：“你得学会等待。等着吧，该到你出头的那天。”"
+        },
+        {
+          "ita": "Mia mamma ha risposto: – Oggi però aspetti tu, – e quel giorno in casa non l’ha fatto entrare.",
+          "chi": "妈妈回答：“不过今天该你等一等。”那天她就没让他进屋。"
+        },
+        {
+          "ita": "Capa ’e fierro è rimasto fuori al basso, si è acceso una sigaretta e si è incamminato con le mani in tasca.",
+          "chi": "“铁头老板”呆坐在走廊外，点根烟，双手插兜，走掉了。"
+        },
+        {
+          "ita": "Io mi sono messo appresso a lui, solo per il gusto di vederlo amareggiato, e gli ho detto: – Oggi è festa, Capa ’e fierro? Non si fatica? –",
+          "chi": "我跟着他走，就为了看他不高兴。我说：“今天放假吗，‘铁头老板’？不干活了？”"
+        },
+        {
+          "ita": "Lui si è accovacciato davanti a me, ha fatto un tiro dalla sigaretta e, quando ha cacciato fuori l’aria, dalla bocca sono usciti tanti piccoli cerchi di fumo.",
+          "chi": "他蹲下来对着我，吸了口烟，呼出一团团小烟圈。"
+        },
+        {
+          "ita": "– Guagliò, – mi ha detto, – donne e vino sono la stessa cosa. O domini o ti fai dominare. Se ti fai dominare perdi i sensi, diventi schiavo, e io sono sempre stato un uomo libero e sempre lo sarò.",
+          "chi": "“孩子，”他说，“女人和酒一样，要么你驾驭，要么被驾驭。一旦被驾驭，你就丧失意识，变成奴隶。我一直是自由人，以后也会是。”"
+        },
+        {
+          "ita": "Vieni, andiamocene all’osteria, oggi ti faccio bere il vino rosso. Oggi Capa ’e fierro ti fa diventare uomo!",
+          "chi": "“来，咱去小酒馆，今天我让你喝红酒。今天‘铁头老板’让你长大成人！”"
+        },
+        {
+          "ita": "– Che peccato, Capa ’e fierro, non vi posso accontentare, tengo che fare.",
+          "chi": "“可惜啊‘铁头老板’，我可没空，我还有活儿要干。”"
+        },
+        {
+          "ita": "– E che tieni da fare, tu?",
+          "chi": "“你还有啥活干？”"
+        },
+        {
+          "ita": "– Devo andare a fare le pezze, come al solito. Valgono quattro soldi ma ci dànno a mangiare. Permettete.",
+          "chi": "“得去弄破布，跟往常一样。虽然值不了几个钱，但能糊口。请原谅。”"
+        },
+        {
+          "ita": "L’ho lasciato da solo, mentre gli anelli di fumo della sigaretta scomparivano nell’aria.",
+          "chi": "我就丢下他一个人，看着他吸的烟圈消散在空气中。"
+        },
+        {
+          "ita": "Le pezze che trovo le metto in una cesta che mi ha dato mia mamma.",
+          "chi": "我找到的破布都装在妈妈给我的一个篮子里。"
+        },
+        {
+          "ita": "Dato che la cesta quando si riempie diventa pesante, io ho iniziato a portarla sopra alla testa, come ho visto fare alle femmine dentro al mercato.",
+          "chi": "篮子一满就重，于是我学市场上那些女人，把篮子放在头顶顶着。"
+        },
+        {
+          "ita": "Ma poi, porta oggi e porta domani, mi sono caduti i capelli e sono rimasto col cocuzzolo pelato.",
+          "chi": "可天天顶篮子，我的头发都掉光了，顶上只剩秃顶。"
+        },
+        {
+          "ita": "E secondo me per questo mia mamma mi ha fatto fare il mellone, quali pidocchi!",
+          "chi": "我觉得就是因为这样，妈妈才给我剃头，省得虱子满头跑！"
+        },
+        {
+          "ita": "Durante il giro delle pezze chiedo torno torno del fatto del treno, ma niente.",
+          "chi": "找破布的时候，我每次都问那火车的事，但没人说。"
+        },
+        {
+          "ita": "Chi dice bianco, chi dice nero.",
+          "chi": "有人说是白的，有人说是黑的。"
+        },
+        {
+          "ita": "Tommasino continua a ripetere che lui non deve partire perché a casa sua non gli manca niente e sua madre, donna Armida, non si è mai ridotta a chiedere la carità.",
+          "chi": "托马西诺总说他不走，他家不缺东西，他妈阿米达太太从不靠乞讨。"
+        },
+        {
+          "ita": "La Pachiochia, che è la capa del vicolo nostro, dice che fino a quando ci stava il re certe cose non succedevano e le mamme i figli loro non se li vendevano.",
+          "chi": "我们的巷子头儿帕奇奥基娅说，只要有国王在这些事就不会发生，妈妈们也不会卖孩子。"
+        },
+        {
+          "ita": "Dice che non c’è piú di‑gni‑tà!",
+          "chi": "她说没有尊严了！"
+        },
+        {
+          "ita": "E, ogni volta che lo dice, fa vedere le gengive marroni, stringe quei pochi denti gialli che si ritrova e sputa dai buchi di quelli che non tiene piú.",
+          "chi": "每次她这么说，都露出褐色牙龈，用剩的不多的黄牙咬紧，然后从缺牙的洞里吐口水。"
+        },
+        {
+          "ita": "La Pachiochia è nata già brutta, credo io, e perciò un marito non ce l’ha mai avuto.",
+          "chi": "我觉得帕奇奥基娅天生就很难看，所以一直没结婚。"
+        },
+        {
+          "ita": "Ma di questa cosa non si può parlare perché è il suo punto debole.",
+          "chi": "但无人敢提这事，因为那是她的痛处。"
+        },
+        {
+          "ita": "E pure del fatto che non tiene figli.",
+          "chi": "还有她没有孩子这事也不能提。"
+        },
+        {
+          "ita": "Una volta teneva un cardellino, ma se ne fuggí.",
+          "chi": "她曾经养过一只金翅雀，但那鸟飞走了。"
+        },
+        {
+          "ita": "Manco del cardellino si può parlare, con la Pachiochia.",
+          "chi": "和帕奇奥基娅说起那只鸟事，她也不愿提。"
         }
       ]
     }

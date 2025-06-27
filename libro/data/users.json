@@ -2,19 +2,19 @@
   {
     "id": "Jonny",
     "name": "Jonny",
-    "avatar": "👨",
+    "avatar": "",
     "color": "#4A90E2"
   },
   {
     "id": "Lolo", 
     "name": "Lolo",
-    "avatar": "👩",
+    "avatar": "",
     "color": "#E24A90"
   },
   {
     "id": "Matteo",
     "name": "Matteo",
-    "avatar": "👶",
+    "avatar": "",
     "color": "#90E24A"
   }
 ] 
