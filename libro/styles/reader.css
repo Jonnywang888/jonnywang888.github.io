@@ -1,3 +1,7 @@
+:root {
+    --font-size: 16px;
+    --line-height: 1.6;
+}
 /* 阅读页面样式 */
 .reader-header {
     background: white;
@@ -64,7 +68,7 @@
 
 .sentence-pair {
     margin-bottom: 5px;
-    padding: 10px;
+    padding: 5px;
     background: transparent;
     border-radius: 0;
     box-shadow: none;
@@ -265,12 +269,6 @@
     .book-info {
         text-align: center;
     }
-}
-
-/* 自定义字体大小和行距 */
-.reader-content {
-    --font-size: 16px;
-    --line-height: 1.6;
 }
 
 .reader-content .italian-sentence,

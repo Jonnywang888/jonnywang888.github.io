@@ -267,7 +267,6 @@ class ReaderPage {
         if (fontSizeValue) {
             fontSizeValue.textContent = `${size}px`;
         }
-        
         document.documentElement.style.setProperty('--font-size', `${size}px`);
         storageManager.updateSetting('fontSize', parseInt(size));
     }
