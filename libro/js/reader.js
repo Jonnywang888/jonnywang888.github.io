@@ -286,10 +286,12 @@ class ReaderPage {
     toggleDarkMode(enabled) {
         if (enabled) {
             document.body.classList.add('dark-mode');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#2d2d2d');
         } else {
             document.body.classList.remove('dark-mode');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#4A90E2');
+
         }
-        
         storageManager.updateSetting('darkMode', enabled);
     }
 

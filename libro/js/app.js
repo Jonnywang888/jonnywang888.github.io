@@ -206,7 +206,6 @@ class BilingualReaderApp {
         const newDarkMode = !settings.darkMode;
         
         storageManager.updateSetting('darkMode', newDarkMode);
-        
         if (newDarkMode) {
             document.body.classList.add('dark-mode');
             // 如果需要，可以设置主题颜色
