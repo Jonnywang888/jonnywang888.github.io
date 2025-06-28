@@ -209,8 +209,12 @@ class BilingualReaderApp {
         
         if (newDarkMode) {
             document.body.classList.add('dark-mode');
+            // 如果需要，可以设置主题颜色
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#2d2d2d');
+            // <meta name="theme-color" content="#4A90E2"></meta>
         } else {
             document.body.classList.remove('dark-mode');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#4A90E2');
         }
     }
 
