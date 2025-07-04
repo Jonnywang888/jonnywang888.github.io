@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#4285f4">
+    <title>算账小程序</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="img/icons/icon-72x72.png">
+    <link rel="apple-touch-icon" href="img/icons/icon-192x192.png">
+</head>
+<body>
+    <header>
+        <div class="scanner-controls">
+            <div class="manual-input">
+                <input type="text" id="barcodeInput" placeholder="手动输入条形码">
+                <button id="checkoutBtn" class="primary-btn" disabled>结账</button>
+                <!-- <button id="scannerBtn" class="primary-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="7" y="7" width="10" height="10" rx="1"></rect></svg>
+                    扫码
+                </button> -->
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="cart-section">
+            <!-- 扫码视图 - 默认隐藏 -->
+            <div id="scanner-viewfinder" class="hidden">
+                <video id="scanner-video" playsinline></video>
+                <div class="scanner-overlay"></div>
+                <button id="closeScanner" class="close-scanner-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="cart-container">
+                <ul id="cart-items"></ul>
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>折扣金额:</span>
+                        <input type="number" id="discountInput" min="0" value="0">
+                    </div>
+                    <div class="summary-row total">
+                        <b>总计:</b>
+                        <b id="total">¥0.00</b>
+                    </div>
+                </div>
+                <button id="scannerBtn" class="primary-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="7" y="7" width="10" height="10" rx="1"></rect></svg>
+                    扫码
+                </button>
+                <!-- 添加悬浮+号按钮 -->
+                <button id="addItemBtn" class="add-item-btn">+</button>
+                <!-- <button id="checkoutBtn" class="primary-btn" disabled>结账</button> -->
+            </div>
+        </section>
+
+        <section id="history-section" class="hidden">
+            <h2>历史记录</h2>
+            <div class="date-filter">
+                <label for="historyDate">选择日期:</label>
+                <input type="date" id="historyDate">
+            </div>
+            <div class="history-list-container">
+                <ul id="history-list"></ul>
+            </div>
+        </section>
+
+        <section id="stats-section" class="hidden">
+            <h2>销售统计</h2>
+            <div class="date-filter">
+                <label for="statsDate">选择日期:</label>
+                <input type="date" id="statsDate">
+            </div>
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>销售总额</h3>
+                    <p id="totalSales">¥0.00</p>
+                </div>
+                <div class="stat-card">
+                    <h3>交易笔数</h3>
+                    <p id="transactionCount">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>平均交易额</h3>
+                    <p id="averageTransaction">¥0.00</p>
+                </div>
+            </div>
+            <div class="top-products">
+                <h3>畅销商品</h3>
+                <ul id="topProducts"></ul>
+            </div>
+        </section>
+
+        <section id="settings-section" class="hidden">
+            <h2>设置</h2>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label for="currencyFormat">货币格式:</label>
+                    <select id="currencyFormat">
+                        <option value="¥">人民币 (¥)</option>
+                        <option value="$">美元 ($)</option>
+                        <option value="€">欧元 (€)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="decimalPlaces">小数位数:</label>
+                    <select id="decimalPlaces">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="defaultDiscount">默认折扣金额:</label>
+                    <input type="number" id="defaultDiscount" min="0" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="roundingMethod">四舍五入方式:</label>
+                    <select id="roundingMethod">
+                        <option value="none">不四舍五入</option>
+                        <option value="round" selected>标准四舍五入</option>
+                        <option value="ceil">向上取整</option>
+                        <option value="floor">向下取整</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dataUrl">数据源URL:</label>
+                    <input type="url" id="dataUrl" value="https://raw.githubusercontent.com/Jonnywang888/cassadata/refs/heads/main/output.txt">
+                </div>
+                <button type="submit" class="primary-btn">保存设置</button>
+                <button type="button" id="syncDataBtn" class="primary-btn">同步数据</button>
+            </form>
+        </section>
+
+        <!-- 商品编辑模态框 -->
+        <div id="edit-item-modal" class="hidden modal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h3>编辑商品</h3>
+                <div class="form-group">
+                    <label for="editItemName">商品名称:</label>
+                    <input type="text" id="editItemName" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="editItemPrice">单价:</label>
+                    <input type="number" id="editItemPrice" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="editItemQuantity">数量:</label>
+                    <input type="number" id="editItemQuantity" min="1" step="1">
+                </div>
+                <div class="modal-actions">
+                    <button id="updateItemBtn" class="primary-btn">更新</button>
+                    <button id="deleteItemBtn" class="delete-btn">删除商品</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav>
+        <button class="nav-btn active" data-target="cart-section">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            购物车
+        </button>
+        <button class="nav-btn" data-target="history-section">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            历史
+        </button>
+        <button class="nav-btn" data-target="stats-section">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            统计
+        </button>
+        <button class="nav-btn" data-target="settings-section" id="settingsBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            设置
+        </button>
+    </nav>
+
+    <div id="toast" class="hidden"></div>
+
+    <div id="loading-overlay" class="hidden">
+        <div class="spinner"></div>
+        <p id="loading-text">加载中...</p>
+    </div>
+    <script src="js/zxing0213.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/scanner.js?v=1.0"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/statistics.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/app.js"></script>
+    <script src="sw-register.js"></script>
+</body>
+</html>
