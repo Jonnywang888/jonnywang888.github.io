@@ -1,4 +1,4 @@
-const cache_name = 'app_cache_v1.7';
+const cache_name = 'app_cache_v1.8';
 const urls = [
   '/index.html',
   '/manifest.json',
@@ -11,7 +11,7 @@ const urls = [
 
 // 超时时间配置
 const FIRST_LOAD_TIMEOUT = 200; // 首次加载超时时间：200毫秒
-const NORMAL_TIMEOUT = 3000;    // 正常请求超时时间：3秒
+const NORMAL_TIMEOUT = 10000;    // 正常请求超时时间：3秒
 
 // 记录是否为首次加载
 let isFirstLoad = true;
