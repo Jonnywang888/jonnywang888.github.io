@@ -115,6 +115,26 @@ function Configurazione() {
         navigator.serviceWorker.controller.postMessage('reset-first-load');
     }
     }
+        // 监听 Service Worker 消息
+    navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data.type === 'CACHE_UPDATED') {
+        console.log('缓存已更新:', event.data.url);
+        // 可以显示更新提示
+    } else if (event.data.type === 'CACHE_CLEARED') {
+        console.log('缓存已清理');
+        // 可以刷新页面
+    }
+    });
+
+    // 应用加载完成后通知 Service Worker
+    window.addEventListener('load', () => {
+    navigator.serviceWorker.ready.then(registration => {
+        registration.active?.postMessage('app-loaded');
+    });
+    });
+
+
+
     // 导出函数以便在其他地方使用
     window.resetFirstLoadState = resetFirstLoadState;
     refresh();
