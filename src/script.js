@@ -85,52 +85,7 @@ function Configurazione() {
     buts.forEach(b=>{
         b.addEventListener('click', () => but_style(b))
     })
-    // 如果是单页应用，在页面切换时也可以重置首次加载状态
-    // 比如用户长时间离开后回到应用
-    document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        // 如果页面隐藏超过5分钟，重置为首次加载状态
-        const now = Date.now();
-        const lastVisible = localStorage.getItem('lastVisible');
-        
-        if (lastVisible && now - parseInt(lastVisible) > 5 * 60 * 1000) {
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage('reset-first-load');
-        }
-        }
-    } else {
-        // 记录页面隐藏时间
-        localStorage.setItem('lastVisible', Date.now().toString());
-    }
-    });
-    // 如果你想在特定情况下手动重置首次加载状态
-    function resetFirstLoadState() {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage('reset-first-load');
-    }
-    }
-    // 监听 Service Worker 消息
-    navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data.type === 'CACHE_UPDATED') {
-        console.log('缓存已更新:', event.data.url);
-        // 可以显示更新提示
-    } else if (event.data.type === 'CACHE_CLEARED') {
-        console.log('缓存已清理');
-        // 可以刷新页面
-    }
-    });
 
-    // 应用加载完成后通知 Service Worker
-    window.addEventListener('load', () => {
-    navigator.serviceWorker.ready.then(registration => {
-        registration.active?.postMessage('app-loaded');
-    });
-    });
-
-
-
-    // 导出函数以便在其他地方使用
-    window.resetFirstLoadState = resetFirstLoadState;
     refresh();
 }
 // 初始化
