@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cassa-app-v1.33';
+const CACHE_NAME = 'cassa-app-v1.34';
 const ASSETS = [
   '/index.html',
   '/manifest.json',
