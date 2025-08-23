@@ -153,6 +153,7 @@ async function init() {
     caricamovimentolist();
     set_memori_carica();
     updateCalendar();
+    init_biao();
     const body = {
         action:'attiva'
     }
