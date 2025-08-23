@@ -39,7 +39,7 @@ self.addEventListener('activate', event => {
 // 拦截网络请求
 self.addEventListener('fetch', event => {
     // 跳过不支持缓存的请求（如数据API）
-    if (event.request.url.includes('githubusercontent.com')) {
+    if (event.request.url.includes('asp')) {
         return;
     }
 
