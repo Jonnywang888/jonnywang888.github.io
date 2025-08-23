@@ -85,12 +85,6 @@ function Configurazione() {
     buts.forEach(b=>{
         b.addEventListener('click', () => but_style(b))
     })
-        // 应用加载完成后通知Service Worker
-    window.addEventListener('load', () => {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage('app-loaded');
-    }
-    });
     // 如果是单页应用，在页面切换时也可以重置首次加载状态
     // 比如用户长时间离开后回到应用
     document.addEventListener('visibilitychange', () => {
@@ -115,7 +109,7 @@ function Configurazione() {
         navigator.serviceWorker.controller.postMessage('reset-first-load');
     }
     }
-        // 监听 Service Worker 消息
+    // 监听 Service Worker 消息
     navigator.serviceWorker.addEventListener('message', event => {
     if (event.data.type === 'CACHE_UPDATED') {
         console.log('缓存已更新:', event.data.url);
