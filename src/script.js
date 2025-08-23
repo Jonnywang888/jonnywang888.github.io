@@ -586,6 +586,7 @@ function key_home() {
 }
 // 切换报表页面
 function key_biao() {
+    console.log(databiao);
     if (databiao === undefined) {
         init_biao();
     }
