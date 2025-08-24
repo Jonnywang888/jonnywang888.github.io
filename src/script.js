@@ -146,6 +146,7 @@ async function init() {
         changepage('logpage')
         return
     } 
+    changepage('mainpage')
     await createDB();
     await createlocalstorage();
     get_memori();
