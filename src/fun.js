@@ -3,49 +3,15 @@
 function registraserviceWorker() {
     // 主页面中的Service Worker注册代码
     if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('src/service-worker.js')
-        .then(registration => {
-            console.log('Service Worker 注册成功:', registration.scope);
-            
-            // 监听Service Worker状态变化
-            registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed') {
-                if (navigator.serviceWorker.controller) {
-                    console.log('新的Service Worker已安装，页面将刷新');
-                    window.location.reload();
-                } else {
-                    console.log('Service Worker已安装并激活');
-                }
-                }
-            });
-            });
-        })
-        .catch(error => {
-            console.error('Service Worker 注册失败:', error);
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('Service Worker 注册成功:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('Service Worker 注册失败:', error);
+                });
         });
-        
-        // 监听来自Service Worker的消息
-        navigator.serviceWorker.addEventListener('message', event => {
-        console.log('收到Service Worker消息:', event.data);
-        if (event.data.type === 'CACHE_CLEARED') {
-            console.log('缓存清理完成');
-        }
-        });
-    });
-    
-    // 清理缓存的函数
-    window.clearServiceWorkerCache = () => {
-        if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'CLEAR_CACHE'
-        });
-        } else {
-        console.warn('Service Worker未激活');
-        }
-    };
     }
 }
 // 切换页面
