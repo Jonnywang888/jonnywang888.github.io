@@ -1,112 +1,60 @@
 // -------------------------------功能函数--------------------------------------------
 // 注册serviceWorker事件
 function registraserviceWorker() {
+    // 主页面中的Service Worker注册代码
     if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
         navigator.serviceWorker.register('src/service-worker.js')
-        .then(function(registration) {return})
+        .then(registration => {
+            console.log('Service Worker 注册成功:', registration.scope);
+            
+            // 监听Service Worker状态变化
+            registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                    console.log('新的Service Worker已安装，页面将刷新');
+                    window.location.reload();
+                } else {
+                    console.log('Service Worker已安装并激活');
+                }
+                }
+            });
+            });
+        })
+        .catch(error => {
+            console.error('Service Worker 注册失败:', error);
+        });
+        
+        // 监听来自Service Worker的消息
+        navigator.serviceWorker.addEventListener('message', event => {
+        console.log('收到Service Worker消息:', event.data);
+        if (event.data.type === 'CACHE_CLEARED') {
+            console.log('缓存清理完成');
+        }
+        });
+    });
+    
+    // 清理缓存的函数
+    window.clearServiceWorkerCache = () => {
+        if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: 'CLEAR_CACHE'
+        });
+        } else {
+        console.warn('Service Worker未激活');
+        }
+    };
     }
 }
-// 添加数据到appDB数据库内（数据）-promise
-function addData(dataArray) {
-    return new Promise((resolve, reject) => {
-        // 打开数据库
-        const request = indexedDB.open("appDB", 1);
-        const storeName = "movimento"; // 表名
-        request.onsuccess = function(event) {
-            const db = event.target.result;
-            // 开启一个事务
-            const transaction = db.transaction([storeName], "readwrite");
-            const objectStore = transaction.objectStore(storeName);
-            let pendingRequests = dataArray.length;
-            let hasError = false;
-            
-            // 处理数据数组中的每个数据对象
-            dataArray.forEach(data => {
-                // 确保 data 对象中包含主键字段 ID
-                if (!data.ID) {
-                    console.error("Data object must contain an 'ID' field");
-                    hasError = true;
-                    return;
-                }
-                // 使用 put 方法插入数据，并显式提供主键
-                const addRequest = objectStore.put(data); // 使用 put 以插入或更新数据
-                
-                addRequest.onsuccess = function() {
-                    pendingRequests--;
-                    if (pendingRequests === 0 && !hasError) {
-                        resolve(true); // 所有操作成功
-                    }
-                };
-                
-                addRequest.onerror = function(event) {
-                    hasError = true;
-                    console.error("Error inserting data: ", event.target.errorCode);
-                    reject(new Error("Error inserting data: " + event.target.errorCode));
-                };
-            });
-            
-            // 事务完成时
-            transaction.oncomplete = function() {
-                if (!hasError && pendingRequests === 0) {
-                    resolve(true); // 所有操作成功
-                }
-            };
-            
-            // 事务出错时
-            transaction.onerror = function(event) {
-                reject(new Error("Transaction error: " + event.target.errorCode));
-            };
-        };
-        
-        // 数据库打开失败
-        request.onerror = function(event) {
-            reject(new Error("Database error: " + event.target.errorCode));
-        };
+// 切换页面
+function changepage(id) {
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(page => {
+        page.classList.add('hidden');
     });
-}
-// 获取appDB内的数据(最小，最大)-promise
-function getDbData(minId, maxId, getdel = false) {
-    minId = parseInt(minId);
-    maxId = parseInt(maxId);
-    return new Promise((resolve, reject) => {
-        // 打开数据库连接
-        let request = indexedDB.open("appDB");
-        let storeName = "movimento"; 
-
-        request.onsuccess = function(event) {
-            let db = event.target.result;
-            
-            // 开启一个事务
-            let transaction = db.transaction(storeName, "readonly");
-            
-            // 获取对象存储
-            let store = transaction.objectStore(storeName);
-            
-            // 创建一个 ID 范围
-            let keyRange = IDBKeyRange.bound(minId, maxId, true, true);
-            
-            // 获取数据
-            let query = store.openCursor(keyRange);
-            let results = [];
-            
-            query.onsuccess = function(event) {
-                let cursor = event.target.result;
-                if (cursor) {
-                    let value = cursor.value;
-                    // 检查 DEL 和 UPLOAD 的条件
-                    if (getdel || value.DEL === 0) {
-                        results.push(value);
-                    }
-                    cursor.continue(); // 继续下一个数据
-                } else {
-                    resolve(results); // 查询结束，返回结果数组
-                }
-            };
-            query.onerror = function(event) {
-                reject("查询失败: " + event.target.errorCode);
-            };
-        };
-    });
+    document.getElementById(id).classList.remove('hidden');
 }
 // 获取内容名称
 function getnomemotivo(num) {

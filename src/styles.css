@@ -8,6 +8,10 @@
     --hong: #FF0000;
     --qianhui: #8a949e;
 }
+/* 辅助类 */
+.hidden {
+    display: none !important;
+}
 body, html {
     margin: 0;
     padding: 0;
@@ -90,9 +94,6 @@ body, html {
 #head-tot-in{
     font-size: 1.2em;
     line-height: 2.2;
-    /* font-weight: bold; */
-    /* color: #3f3f3f; */
-    /* color: var(--lan); */
 }
 #but-tianjia{
     position: fixed;
@@ -157,7 +158,6 @@ body, html {
 }
 .page{
     height: 100%;
-    display: none;
     background-color: var(--beijinghui);
 }
 #listmovimento {
@@ -917,7 +917,7 @@ input[type="submit"] {
     background-color: var(--beijinghui);
 }
 .set-memori{
-    display: none;
+    /* display: none; */
     margin-top: 85px;
 }
 .set-memori-item{

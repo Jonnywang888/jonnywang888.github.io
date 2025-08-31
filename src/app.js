@@ -1,0 +1,1917 @@
+class Database {
+    constructor() {
+        this.DB_NAME = 'DB';
+        this.DB_STORE = 'movimento';
+        this.DB_VERSION = 1;
+        this.db = null;
+        this.initPromise = this.init();
+    }
+    // 初始化数据库
+    async init() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+
+            // 数据库升级或创建时触发
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+
+                // 创建数据库表
+                if (!db.objectStoreNames.contains(this.DB_STORE)) {
+                    const movimentoStore = db.createObjectStore(this.DB_STORE, { keyPath: "ID", autoIncrement: false });
+                    movimentoStore.createIndex("MOTIVO", "MOTIVO", { unique: false });
+                    movimentoStore.createIndex("SPESA", "SPESA", { unique: false });
+                    movimentoStore.createIndex("NOTA", "NOTA", { unique: false });
+                    movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
+                    movimentoStore.createIndex("DEL", "DEL", { unique: false });
+                }
+            };
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                console.log('数据库初始化成功');
+                resolve();
+            };
+
+            request.onerror = (event) => {
+                console.error('数据库初始化失败:', event.target.error);
+                reject(event.target.error);
+            };
+        });
+    }
+    // 确保数据库已初始化
+    async ensureDb() {
+        if (!this.db) {
+            await this.initPromise;
+        }
+        return this.db;
+    }
+    // 添加数据到appDB数据库内（数据）-promise
+    async addData(dataArray) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE);
+
+            let completed = 0;
+            let errors = [];
+
+            dataArray.forEach(data => {
+                const request = store.put(data);
+                
+                request.onsuccess = () => {
+                    completed++;
+                    if (completed === dataArray.length) {
+                        if (errors.length > 0) {
+                            reject(errors);
+                        } else {
+                            resolve(dataArray);
+                        }
+                    }
+                };
+                
+                request.onerror = (event) => {
+                    errors.push(event.target.error);
+                    completed++;
+                    if (completed === dataArray.length) {
+                        reject(errors);
+                    }
+                };
+            });
+
+            transaction.oncomplete = () => {
+                console.log(`成功导入${dataArray.length}个商品`);
+            };
+
+            transaction.onerror = (event) => {
+                reject(event.target.error);
+            };
+        });
+    }
+    // 获取appDB内的数据(最小，最大)-promise
+    async getDbData(minId, maxId, getdel = false) {
+        const db = await this.ensureDb();
+        minId = parseInt(minId);
+        maxId = parseInt(maxId);
+        return new Promise((resolve, reject) => {
+            // 打开数据库连接
+            const transaction = db.transaction([this.DB_STORE], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE);
+
+            // 创建一个 ID 范围
+            let keyRange = IDBKeyRange.bound(minId, maxId, true, true);
+            
+            // 获取数据
+            let request = store.openCursor(keyRange);
+            const results = [];
+
+            request.onsuccess = function(event) {
+                let cursor = event.target.result;
+                if (cursor) {
+                    let value = cursor.value;
+                    // 检查 DEL 和 UPLOAD 的条件
+                    if (getdel || value.DEL === 0) {
+                        results.push(value);
+                    }
+                    cursor.continue(); // 继续下一个数据
+                } else {
+                    resolve(results); // 查询结束，返回结果数组
+                }
+            };
+            request.onerror = function(event) {
+                reject("查询失败: " + event.target.errorCode);
+            };
+        });
+    }
+}
+class Fetchapi {
+    constructor() {
+        this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
+    }
+    // 获取备忘
+    getmemori() {
+        const body = {
+            action: 'getmemori'
+        };
+        return this.fetchdata(body);
+    }
+    // 获取卡片
+    getcarte() {
+        const body = {
+            action: 'getcarte'
+        };
+        return this.fetchdata(body);
+    }
+    // 获取理由
+    getmotivi() {
+        const body = {
+            action: 'getmotivi'
+        };
+        return this.fetchdata(body);
+    }
+    getmovimento() {
+        const body = {
+            action: 'getmovimento'
+        };
+        return this.fetchdata(body);
+    }
+    // 更新movimento到服务器
+    uploadmovimento(dati) {
+        const body = {
+            action:'uploadmovimento',
+            dati:dati
+        }
+        return this.fetchdata(body);
+    }
+    // 登录
+    login(username, password) {
+        const body = {
+            'action':'login',
+            'id': username,
+            'pin': password
+        };
+        return this.fetchdata(body);    
+    }
+    // 激活
+    attiva() {
+        const body = {
+            action: 'attiva'
+        };
+        return this.fetchdata(body);
+    }
+    addmemori (dati) {
+        const body = {
+            action: 'addmemori',
+            dati:dati
+        };
+        return this.fetchdata(body);
+    }
+    delmemori (id) {
+        const body = {
+            action: 'delmemori',
+            dati:id
+        };
+        return this.fetchdata(body);
+    }
+    updatememori (dati) {
+        const body = {
+            action: 'updatememori',
+            dati:dati
+        };
+        return this.fetchdata(body);
+    }
+    fetchdata(body) {
+        const user = JSON.parse(localStorage.getItem('user'));
+        let token = '';
+        if (user) {
+            token = 'Basic ' + user.mi;
+        }
+        body['token'] = token;
+        const options = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams(body).toString()
+        };
+        return fetch(this.url, options);
+    }
+    carteinfo() {
+        const body = {
+            action: 'carteinfo',
+        };
+        return this.fetchdata(body);
+    }
+}
+class Calendario {
+    constructor() {
+        document.querySelector('.prev-year').addEventListener('click', function() {
+            currentDate.setFullYear(currentDate.getFullYear() - 1);
+            this.update();
+        });
+        document.querySelector('.next-year').addEventListener('click', function() {
+            currentDate.setFullYear(currentDate.getFullYear() + 1);
+            this.update();
+        });
+        document.querySelector('.prev-month').addEventListener('click', function() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            this.update();
+        });
+        document.querySelector('.next-month').addEventListener('click', function() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            this.update();
+        });
+    }
+    // 更新日历
+    update() {
+        const currentDate = new Date();
+        const calendarDaysElement = document.querySelector('.calendar-days');
+        const yearDisplayElement = document.querySelector('.year-display');
+        const monthDisplayElement = document.querySelector('.month-display');
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        // 设置年份和月份显示
+        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+        yearDisplayElement.textContent = `${year}年`;
+        monthDisplayElement.textContent = monthNames[month];
+
+        // 清空之前的天数
+        calendarDaysElement.innerHTML = '';
+
+        // 获取当前月的第一天和最后一天
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+
+        // 上一个月的最后几天（用于填充前面的空白）
+        const prevMonthLastDate = new Date(year, month, 0).getDate();
+        for (let i = firstDay; i > 0; i--) {
+            const dayElement = document.createElement('span');
+            dayElement.classList.add('day', 'disabled');
+            dayElement.textContent = prevMonthLastDate - i + 1;
+            calendarDaysElement.appendChild(dayElement);
+        }
+
+        // 当前月的天数
+        for (let i = 1; i <= lastDate; i++) {
+            const dayElement = document.createElement('span');
+            dayElement.classList.add('day');
+            dayElement.textContent = i;
+
+            // 如果是今天，则选中
+            if (i === currentDate.getDate() && new Date().getMonth() === month && new Date().getFullYear() === year) {
+                dayElement.classList.add('selected');
+            }
+
+            dayElement.addEventListener('click', function() {
+                document.querySelectorAll('.calendar-days .day').forEach(d => d.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+
+            calendarDaysElement.appendChild(dayElement);
+        }
+
+        // 下一个月的前几天（用于填充后面的空白）
+        const totalDays = firstDay + lastDate;
+        const nextMonthDays = totalDays % 7 === 0 ? 0 : 7 - (totalDays % 7);
+        for (let i = 1; i <= nextMonthDays; i++) {
+            const dayElement = document.createElement('span');
+            dayElement.classList.add('day', 'disabled');
+            dayElement.textContent = i;
+            calendarDaysElement.appendChild(dayElement);
+        }
+    }
+    // 日历按钮
+    show() {
+        const calendar = document.querySelector('#calendar')
+        calendar.classList.remove('hidden')
+    }
+    hidden() {
+        const calendar = document.querySelector('#calendar')
+        calendar.classList.add('hidden')
+    }
+    // 日历选择事件
+    setdata() {
+        const day = String('0'+document.querySelector('.calendar-days .day.selected').innerText).slice(-2)
+        const month = String('0'+document.querySelector('.month-display').innerText.replace('月', '')).slice(-2)
+        const year = document.querySelector('.year-display').innerText.slice(2,4)
+        const currentdata = document.querySelector('#tas-data')
+        currentdata.innerText = `20${year}年 ${document.querySelector('.month-display').innerText}${Number(day)}日`
+        currentdata.setAttribute('id-data',`${year}${month}${day}`)
+    }
+}
+class App {
+    constructor() {
+        registraserviceWorker();
+        // 禁止logpage页面触摸滚动
+        document.getElementById('logpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
+        document.getElementById('setpage').addEventListener('touchmove', (e)=>{e.preventDefault();}, { passive: false });
+        //禁用双击
+        document.addEventListener('dblclick', (event) => event.preventDefault(), { passive: false });
+        const feet = document.querySelectorAll('.foot-item');
+        feet.forEach(x => x.addEventListener('click', () => this.footbut(x))); 
+        this.initlocalstorage();
+        this.init();
+    }
+    init() {
+        api.attiva()
+        const user = JSON.parse(localStorage.getItem('user'))
+        if (!user) {
+            changepage('logpage')
+            return
+        }
+        const checked = user.checked
+        if (checked !== true) {
+            changepage('logpage')
+            return
+        }
+        api.getmotivi()
+            .then(response => response.text())
+            .then(response => {
+                localStorage.setItem('motivi', response);
+            })
+        // 加载备忘
+        api.getmemori()
+            .then(response => response.json())
+            .then(dataArray => {
+                localStorage.setItem('memori', JSON.stringify(dataArray));
+            })
+        // 加载卡片
+        api.getcarte()
+            .then(response => response.json())
+            .then(dataArray => {
+                localStorage.setItem('carte', JSON.stringify(dataArray));
+            })
+        main.init();
+    }
+    // 初始化localstorage
+    initlocalstorage() {
+        if (localStorage.getItem('upload') === null) {
+            localStorage.setItem('upload', '[]')
+        }
+        if (localStorage.getItem('memori') === null) {
+            localStorage.setItem('memori', '[]')
+        }
+        if (localStorage.getItem('motivi') === null) {
+            api.getmotivi().then(response => response.text())
+                .then(response => {
+                    localStorage.setItem('motivi', response);
+                })
+        }
+    }
+    // 底部按钮效果
+    footbut(element) {
+        const items = document.querySelectorAll('.foot-item');
+        items.forEach(item => {
+            const firstchild = item.children[0];
+            const secondchild = item.children[1];
+            firstchild.src = firstchild.src.replace('-active', '');
+            secondchild.style.color = '#86888B'
+            if (item === element) {
+                firstchild.src = firstchild.src.replace('.png', '-active.png');
+                secondchild.style.color = '#0A84FF'
+                firstchild.style.width = '30px'
+                firstchild.style.height = '30px'
+                const page = item.getAttribute('page');
+                changepage(page);
+            } else {
+                firstchild.style.width = '25px'
+                firstchild.style.height = '25px'
+            }
+        })
+    }
+    azzeramento() {
+        localStorage.removeItem('user');
+        indexedDB.deleteDatabase('appDB');
+    }
+}
+class Main {
+    constructor() {
+        this.listmovimento = [];
+        this.needload = true;
+        this.groupdata = {};
+        this.groupmese = {};
+        this.distance = 0;
+        this.startPosition = 0; 
+        window.addEventListener('scroll', () => this.scrolling());
+        window.addEventListener('scroll', () => this.refresh())
+        document.getElementById('but-tianjia').addEventListener('click', add.init);
+    }
+    init() {
+        changepage('mainpage')
+        this.aggiornamento();
+        this.caricamovimentolist();
+        set.memori_carica();
+        this.loading();
+        setTimeout(set.notifica_memori,300);
+    }
+    // 滚动设置
+    scrolling() {
+        const mainpage = document.getElementById('mainpage').style.display;
+        if (mainpage === 'none') return;
+        // 获取所有楼层
+        const floors = document.querySelectorAll('.li-floor');
+        let floorH = document.documentElement.scrollTop;
+        for (let i = 0; i < floors.length; i++) {
+            const floorTop = floors[i].offsetTop - 90;
+            const nextFloorTop = i < floors.length - 1 ? floors[i + 1].offsetTop - 90 : Infinity;
+            if (floorH >= floorTop && floorH < nextFloorTop) {
+                const headanno = document.querySelector('#head-anno');
+                const headmese = document.querySelector('#head-mese');
+                const headtot = document.querySelector('#head-tot');
+                const headtotin = document.querySelector('#head-tot-in');
+                const strmese = floors[i].getAttribute('data-floor').toString();
+                headtotin.innerHTML = '+' + main.groupmese[strmese].in.toFixed(2);
+                headtot.innerHTML = main.groupmese[strmese].out.toFixed(2);
+                headanno.innerHTML = '20' + strmese.slice(0, 2) + '年';
+                headmese.innerHTML = parseInt(strmese.slice(2, 4)) + '月';
+                break;
+            }
+        }
+    };
+    // 刷新内容
+    async refresh() {
+        const maincontainer = document.getElementById('maincontainer');
+        maincontainer.addEventListener('touchstart', (e) => {
+            const refreshtext = document.getElementById('refresh-text');
+            refreshtext.textContent = '下拉刷新';
+            maincontainer.startPosition = e.touches[0].pageY;
+        });
+        maincontainer.addEventListener('touchmove', (e) => {
+            const refreshtext = document.getElementById('refresh-text');
+            const currentPosition = e.touches[0].pageY;
+            this.distance = currentPosition - this.startPosition;
+            if (this.distance > 150) {
+                refreshtext.textContent = '释放刷新';
+            }
+            if (this.distance < 100) {
+                maincontainer.style.transition = 'transform 0s';
+            }
+        })
+        maincontainer.addEventListener('touchend', async (e) => {
+            const refreshtext = document.getElementById('refresh-text');
+            maincontainer.style.transition = 'transform 0.5s';
+            if (this.distance > 0 && this.distance < 100) {
+                maincontainer.style.transform = `translateY(0px)`
+                return;
+            }
+            if (this.distance > 150) {
+                maincontainer.style.transform = `translateY(100px)`;
+                refreshtext.textContent = '刷新中';
+                await this.aggiornamento();
+                setTimeout(() => {
+                    refreshtext.textContent = '刷新成功';
+                    maincontainer.style.transform = `translateY(0px)`
+                },750)
+            }
+            this.distance = 0;
+        })
+    };
+    async uploadmovimento() {
+        const data = JSON.parse(localStorage.getItem('upload'));
+        for (let i = 0; i < data.length; i++) {
+            const item = data[i];
+            const dati = item.ID + "," + item.MOTIVO + "," + item.SPESA + ",'" + String(item.NOTA).replace(","," ") + "','" + item.UTENTE + "'," + item.DEL;
+            const res = await api.uploadmovimento(dati).then(response => response.text());
+            if (res == 'True') {
+                data.splice(i, 1);
+                i--;
+            }
+        }
+        localStorage.setItem('upload', JSON.stringify(data));
+    }
+    // 更新数据
+    async aggiornamento() {
+        // 上传缓存数据
+        await this.uploadmovimento();
+        api.getmotivi().then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.text();
+        })
+        .then((response)=>localStorage.setItem('motivi', response))
+        .catch(error => console.error('There was a problem with the fetch operation:', error));
+
+        api.getmovimento().then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            // 等待 response.json() 解析
+            return response.json();
+        })
+        .then(responseData => {
+            // 获取数据库数据并处理
+            return db.getDbData(0, 999999999999999, true).then(res => {
+                // 比较从接口获取的响应和数据库中的数据
+                const check = JSON.stringify(responseData) === JSON.stringify(res);
+                if (!check) {
+                    db.addData(responseData).then(() => {
+                        this.listmovimento = [];
+                        this.caricamovimentolist();
+                    });
+                } 
+            });
+        })
+        .catch(error => {
+            console.error('Fetch error: ', error);
+        });
+    }
+    // 从数据库获取数据，加载页面
+    async caricamovimentolist() {
+        await this.loadnewlist();
+        this.showlist()
+    }
+    // 添加新的显示页面（日期数字-2个月）
+    async loadnewlist() {
+        const numlist = this.listmovimento.length
+        if (this.needload === false) return
+        this.needload = false;
+        const id = minmaxid(numlist)
+        const minid = id[0]
+        const maxid = id[1]
+        const dataArray = await db.getDbData(minid, maxid)
+        const newdata = this.ord_data(dataArray)
+        this.listmovimento.push(newdata)
+    }
+    // 整理数据（数组数据）
+    ord_data(dataArray) {
+        var result = [];
+        var gdata = {};
+        var gmese = {};
+        // 按ID降序排序
+        dataArray.sort((a, b) => a.ID - b.ID);
+        // 变量用于跟踪当前前6位数字
+        let current6DigitPrefix = null;
+        let current6DigitSum = {
+            'in': 0,
+            'out': 0
+        };
+        let current4DigitPrefix = null;
+        for (let i = 0; i < dataArray.length; i++) {
+            const item = dataArray[i];
+            const idStr = String(item.ID);
+            const prefix6 = idStr.slice(0, 6);
+            const prefix4 = idStr.slice(0, 4);
+            
+            // 检查前6位是否变化
+            if (current6DigitPrefix !== null && prefix6 !== current6DigitPrefix) {
+                const newdata = {}
+                if (prefix4 !== current4DigitPrefix) {
+                    newdata.ID = current4DigitPrefix;
+                } else {
+                    newdata.ID = 0;
+                }
+                newdata.DATE = istoday(current6DigitPrefix);
+                newdata.MOTIVO = getDayOfWeek(current6DigitPrefix);
+                newdata.SPESA = current6DigitSum;
+                result.push(newdata);
+                current6DigitSum = {
+                    'in': 0,
+                    'out': 0
+                };
+            }
+
+            // 更新当前前6位的前缀和总和
+            current6DigitPrefix = prefix6;
+            if (item.SPESA < 0) {
+                current6DigitSum.out += Number(item.SPESA);
+            } else {
+                current6DigitSum.in += Number(item.SPESA);
+            }
+            current4DigitPrefix = prefix4;
+            item.IMG = 'icons/' + getimgmotivo(item.MOTIVO) + '.png';
+            item.MOTIVO = getnomemotivo(item.MOTIVO);
+            item.SPESA = Number(item.SPESA).toFixed(2);
+            result.push(item);
+            // 按前6位更新 groupdata
+            if (!gdata[prefix6]) {
+                gdata[prefix6] = {
+                    'in': 0,
+                    'out': 0
+                };
+            }
+            // 按前4位更新 groupmese
+            if (!gmese[prefix4]) {
+                gmese[prefix4] = {
+                    'in': 0,
+                    'out': 0
+                };
+            }
+            if (item.SPESA < 0) {
+                gdata[prefix6].out += Number(item.SPESA);
+                gmese[prefix4].out += Number(item.SPESA);
+            } else {
+                gdata[prefix6].in += Number(item.SPESA);
+                gmese[prefix4].in += Number(item.SPESA);
+            }
+
+            this.groupdata[prefix6] = gdata[prefix6];
+            this.groupmese[prefix4] = gmese[prefix4];
+            // 检查是否位最后一个
+            if (i === dataArray.length - 1) {
+                const newdata = {}
+                newdata.ID = current4DigitPrefix;
+                newdata.DATE = istoday(current6DigitPrefix);
+                newdata.MOTIVO = getDayOfWeek(current6DigitPrefix);
+                newdata.SPESA = current6DigitSum;
+                result.push(newdata);
+                current6DigitSum = 0;
+            }
+        }
+        // showyear = false
+        return result
+    }
+    // 显示movimentolist
+    showlist() {
+        const list = document.getElementById("listmovimento");
+        list.innerHTML = "";
+        for (let i = 0; i < this.listmovimento.length; i++) {
+            const element = this.listmovimento[i];
+            this.addnewlist(element);
+        }
+    }
+    // 添加新的显示页面
+    addnewlist(dataArray) {
+        if (dataArray?.length) {
+            const list = document.getElementById("listmovimento");
+            for (let j = dataArray.length - 1; j >= 0; j--) {
+                const item = dataArray[j];
+                const isTot = item.ID < 10000;
+                const isFloor = isTot && item.ID !== 0;
+                const userText = (item.UTENTE && item.UTENTE.startsWith("j")) ? item.UTENTE.slice(0, 2) : "";
+                const li = document.createElement("li");
+                li.classList.add(`${isTot ? "li-tot" : "li-movi"}`)
+                if (isFloor) {
+                    li.setAttribute("data-floor", item.ID);
+                    li.classList.add("li-floor");
+                }
+                li.innerHTML = 
+                        `<div class="li ${isTot ? "" : "movili"}">
+                            <div class="li-date">
+                                ${isTot ? item.DATE : `<img class="li-icon" src="${item.IMG}" />`}
+                            </div>
+                            <div class="li-motivo">
+                                ${item.MOTIVO}
+                                ${!isTot ? `<div class="li-nota">${item.NOTA}</div>` : ""}
+                            </div>
+                            ${isTot ? `<div class="li-valuein">${item.SPESA.in === 0 ? "": "+" + item.SPESA.in.toFixed(2)}</div>
+                                    <div class="li-value">${item.SPESA.out.toFixed(2)}</div>`
+                                :`<div class="li-nome">${userText}</div>
+                                    <div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
+                        </div>
+                        ${isTot ? "" : `<button class="li-but" data-id="${item.ID}">删除</button>`}`
+                list.appendChild(li);
+            }
+            const buts = document.querySelectorAll(".li-but");
+            buts.forEach(btn => {
+                btn.onclick = null; // 清除之前的点击事件
+                btn.addEventListener("click", () => this.del(btn))
+            });
+            const items = document.querySelectorAll(".movili")
+            items.forEach(item => this.setdelete(item));
+        }
+        this.scrolling();
+        this.needload = true;    
+    }
+    // 设置滑动删除事件
+    setdelete(item) {
+        var startX, currentX,diffX;
+        const maxSlide = -85; // 最大滑动距离（负值表示向左滑动）
+        const lis = document.querySelectorAll('.movili');
+        item.addEventListener('touchstart', function(e) {
+            lis.forEach((e) => {
+            if (item !== e) {
+                    e.style.transform = `translateX(${0}px)`
+            } 
+            });
+            startX = e.touches[0].clientX;
+        });
+        item.addEventListener('touchmove', function(e) {
+            currentX = e.touches[0].clientX;
+            diffX = currentX - startX;
+            if (diffX < 0) { // 只处理左滑动
+                // 限制向左滑动的位移量不超过最大滑动距离
+                if (diffX < maxSlide) {
+                    diffX = maxSlide;
+                }
+                item.style.transform = `translateX(${diffX}px)`
+            };
+        });
+        item.addEventListener('touchend', function() {
+            const viewportWidth = window.innerWidth;
+            const moviwidth = viewportWidth * 0.03 + 75;
+            if (diffX < -80) {
+                item.style.transform = `translateX(-${moviwidth}px)`
+            } else {
+                item.style.transform = `translateX(${0}px)`
+            }
+            startX = 0;
+            currentX = 0;
+            diffX = 0;
+        });
+    }
+    // 加载新内容
+    async loading() {
+        const load = document.querySelector('#load'); // 加载动画元素
+        // 加载数据
+        async function loadMoreData() {
+            await main.loadnewlist()
+            const dataArray = main.listmovimento[main.listmovimento.length-1];
+            main.addnewlist(dataArray)
+        }
+        // 观察器：检测 load 图片是否进入视口
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && main.needload) {
+                setTimeout(() => {
+                    loadMoreData();
+                }, 100);
+            }
+        });
+        observer.observe(load); // 监听 load 图片
+    }
+    // 删除按钮
+    del(item) {
+        var userConfirmed = confirm("是否确认要删除这条记录？");
+        if (userConfirmed) {
+            const id = Number(item.getAttribute('data-id'))
+            db.getDbData(id-1,id+1).then(data => {
+                data[0].DEL = 1
+                db.addData(data).then(() => {
+                    const parent = item.parentElement;
+                    this.delelement(parent)
+                })
+                add.toupload(data);
+                this.uploadmovimento()
+            });
+        }
+    }
+    async delelement(element) {
+        const list = document.getElementById('listmovimento')
+        const value = Number(element.querySelector('.li-value').innerText)
+        const children = list.children;
+        let check = false;
+        for (let i = children.length - 1; i >= 0; i--) {
+            const child = children[i];
+            if (child === element) {
+                check = true
+            }
+            if (check) {
+                const classlist = child.classList
+                if (classlist.contains('li-tot')) {
+                    if (value < 0) {
+                        const tot = child.querySelector('.li-value');
+                        tot.innerText = (Number(tot.innerText) - value).toFixed(2);
+                        const headtot = document.querySelector('#head-tot');
+                        headtot.innerText = (Number(headtot.innerText) - value).toFixed(2);
+                    } else {
+                        const tot = child.querySelector('.li-valuein');
+                        tot.innerText = '+' + (Number(tot.innerText) - value).toFixed(2);
+                        const headtot = document.querySelector('#head-tot-in');
+                        headtot.innerText = '+' + (Number(headtot.innerText) - value).toFixed(2);
+                    }
+                    break;
+                }
+            }
+        }
+        list.removeChild(element)
+        const len = listmovimento.length;
+        this.listmovimento = []
+        for (let i = 0; i < len; i++) {
+            const id = minmaxid(i)
+            const minid = id[0]
+            const maxid = id[1]
+            const dataArray = await db.getDbData(minid, maxid)
+            const newdata = this.ord_data(dataArray)
+            this.listmovimento.push(newdata)
+        }
+    }
+    changepage(page) {
+        const pages = document.querySelectorAll('.page');
+        pages.forEach(p => p.classList.add('hidden'));
+        document.getElementById(page).classList.remove('hidden');
+    }
+}
+class Addpage {
+    constructor() {
+        document.getElementById('add-back').addEventListener('click', this.backtomain)
+        document.querySelector('.addhead-out').addEventListener('click', (e) => this.setinout(e));
+        document.querySelector('.addhead-in').addEventListener('click', (e) => this.    setinout(e));
+        document.querySelectorAll('.key').forEach(k => k.addEventListener('click', () => this.tastiera(k)));
+        document.addEventListener('keydown',(e) => this.tastiera_key(e));
+        document.getElementById('tas-butnota').addEventListener('click', this.nota);
+        document.getElementById('tas-data').addEventListener('click', calen.show);
+        document.querySelector('.calendar-ok').addEventListener('click', calen.setdata);
+        document.querySelector('.calendar-ok').addEventListener('click', calen.hidden);
+    }
+    init() {
+        api.attiva();
+        calen.hidden();
+        calen.update();
+        calen.setdata();
+        changepage('addpage');
+        add.caricamotivilist();
+        add.init_newmovimento();
+    }
+    // 加载消费原因列表
+    caricamotivilist() {
+        const motivi = JSON.parse(localStorage.getItem('motivi'));
+        const tabmotivi = document.getElementById('tabmotivi');
+        tabmotivi.innerHTML = '';
+        const heads = document.querySelectorAll('.addhead-title .text');
+        let inout = ''
+        heads.forEach(head => {
+            const classList = head.classList;
+            if (classList.contains('dixian')) {
+                const sign = document.querySelector('.current-sign')
+                if (head.innerText === '支出') {
+                    inout = 'out';
+                    sign.innerHTML = '-'
+                } else if (head.innerText === '收入') {
+                    inout = 'in';
+                    sign.innerHTML = '+'
+                }
+            }
+        })
+        for (let i = 0; i < motivi.length; i++) {
+            const item = motivi[i];
+            if (inout === 'out') {
+                if (item.ID > 100) continue;
+            } else if (inout === 'in') {
+                if (item.ID < 100) continue;
+            }
+            const motiviitem = document.createElement('div');
+            motiviitem.setAttribute('idmotivo',item.ID)
+            motiviitem.addEventListener('click', () => this.scegliemotivo(motiviitem));
+            motiviitem.classList.add('motivi-item');
+            const html = `<img src="icons/${item.IMG}.png"><span>${item.MOTIVONAME}</span>`
+            motiviitem.innerHTML = html;
+            tabmotivi.appendChild(motiviitem);
+        }
+    }
+    // 初始化新建消费记录属性
+    init_newmovimento() {
+        const tabmotivi = document.getElementById('tabmotivi');
+        const child = tabmotivi.children[0];
+        const motivo = child.querySelector('span').innerText;
+        const id = child.getAttribute('idmotivo');
+        const img = child.querySelector('img').src;
+        document.getElementById('current-motivo').innerText = motivo;
+        document.getElementById('current-motivo').setAttribute('idmotivo',id);
+        document.getElementById('current-img').src = img;
+        document.getElementById('tas-nota').value = '';
+        document.getElementById('current-value').innerText = '0.00';
+        document.getElementById('current-value').setAttribute('num','')
+        document.querySelector('.nota').style.display = 'none';
+    }
+    backtomain() {
+        changepage('mainpage');
+    }
+    //添加消费页 点击收入-支出
+    setinout(event) {
+        const heads = document.querySelectorAll('.addhead-title .text');
+        const inout = event.target;
+        heads.forEach(head => {
+            const classList = head.classList;
+            if (inout === head) {
+                classList.add('dixian');
+            } else {
+                classList.remove('dixian');
+            }
+        })
+        this.caricamotivilist();
+    }
+    // 选择消费原因
+    scegliemotivo(element) {
+        const img = element.querySelector('img');
+        const imgSrc = img ? img.src : 'No image found';
+        const text = element.querySelector('span').innerText;
+        const motivo = document.getElementById('current-motivo');
+        const currentimg = document.getElementById('current-img');
+        setTimeout(() => {
+            motivo.innerText = text;
+            motivo.setAttribute('idmotivo',element.getAttribute('idmotivo'));
+            currentimg.src = imgSrc;
+        }, 400);
+        const clonedImg = img.cloneNode(true);
+        clonedImg.classList.add('moving-image'); 
+
+        const originalRect = img.getBoundingClientRect();
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
+        // 设置克隆图片的初始位置和大小
+        clonedImg.style.top = `${originalRect.top + scrollTop}px`;
+        clonedImg.style.left = `${originalRect.left}px`;
+        clonedImg.style.width = `${originalRect.width}px`;
+        clonedImg.style.height = `${originalRect.height}px`;
+
+        // 将克隆图片添加到 body 中
+        document.body.appendChild(clonedImg);
+
+        // 获取目标元素的位置
+        const alRect = currentimg.getBoundingClientRect();
+
+        // 计算移动的距离
+        const deltaX = alRect.left - originalRect.left;
+        const deltaY = alRect.top - originalRect.top;
+
+        // 触发重绘以确保动画生效
+        requestAnimationFrame(() => {
+            // 移动克隆图片到目标位置
+            clonedImg.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        });
+
+        // 在动画结束后删除克隆图片
+        clonedImg.addEventListener('transitionend', () => {
+            clonedImg.remove();
+        });
+    }
+    // 键盘函数
+    tastiera(button) {
+        const display = document.getElementById('current-value');
+        const displaystr = display.innerText;
+        const check = displaystr.slice(-1) == '0';
+        let displaynum = display.getAttribute('num');
+        const key = button.innerText;
+        switch (key) {
+            case '.':
+                if (!displaynum.includes('.')) {
+                    displaynum = displaynum + key;
+                    display.setAttribute('num',displaynum);
+                }
+                break;
+            case '⌫':
+                displaynum = displaynum.slice(0, -1);
+                display.setAttribute('num',displaynum);
+                display.innerText = Number(displaynum).toFixed(2).toString();
+                break;
+            case 'C':
+                display.innerText = '0.00';
+                display.setAttribute('num','');
+                break;
+            case '确定':
+                this.add();
+                break;
+            default:
+                if (check && displaynum < 100000) {
+                    displaynum = displaynum + key;
+                    display.setAttribute('num',displaynum);
+                    display.innerText = Number(displaynum).toFixed(2).toString();
+                }
+        }
+    }
+    // 按键函数
+    tastiera_key(event) {
+        const page = document.getElementById('addpage')
+        if (page.style.display === 'none') return;
+        const key = event.key;
+        const display = document.getElementById('current-value');
+        const displaystr = display.innerText;
+        const check = displaystr.slice(-1) == '0';
+        let displaynum = display.getAttribute('num');
+        switch (key) {
+            case '.':
+                if (!displaynum.includes('.')) {
+                    displaynum = displaynum + key;
+                    display.setAttribute('num',displaynum);
+                }
+                break;
+            case 'Backspace':
+                displaynum = displaynum.slice(0, -1);
+                display.setAttribute('num',displaynum);
+                break;
+            default:
+                if (key >= '0' && key <= '9' && displaynum < 100000 && check) {
+                    displaynum = displaynum + key;
+                    display.setAttribute('num',displaynum);
+                }
+        }
+        display.innerText = Number(displaynum).toFixed(2).toString();
+    }
+    // 备注按钮
+    nota() {
+        const nota = document.querySelector('.nota')
+        if (nota.style.display !== 'block') {
+            nota.style.display = 'block'
+            const input = nota.querySelector('input')
+            input.focus();
+        } else {
+            nota.style.display = 'none'
+        }
+    }
+    // 添加新的消费记录
+    add() {
+        let spesa = Number(document.getElementById('current-value').innerText);
+        if (spesa > 0) {
+            const id = Number(get_timeid());
+            const idmotivo = Number(document.getElementById('current-motivo').getAttribute('idmotivo'));
+            const nota = document.getElementById('tas-nota').value;
+            const sign = document.querySelector('.current-sign').innerText;
+            const utente = JSON.parse(localStorage.getItem('user')).utente;
+            if (sign === '-') {
+                spesa = 0 - spesa;
+            }
+            const data = [{
+                "ID": id,
+                "MOTIVO": idmotivo,
+                "SPESA": spesa,
+                "NOTA": nota,
+                "UTENTE": utente,
+                "DEL": 0
+            }];
+            this.toupload(data);
+            db.addData(data).then(() => {
+                main.listmovimento = []
+                main.caricamovimentolist()
+            })
+            .catch(() => {
+                main.listmovimento = []
+                main.caricamovimentolist()
+            });
+            changepage('mainpage');
+            main.uploadmovimento()
+        } else {
+            showmsg('请输入消费金额');
+        }
+    }
+    // 添加数据到本地上传数据库(数组数据)
+    toupload(dataArray) {
+        const upload = JSON.parse(localStorage.getItem('upload'));
+        dataArray.forEach(data => {
+            upload.push(data)
+        });
+        localStorage.setItem('upload', JSON.stringify(upload));
+    }
+}
+class Biaopage {
+    constructor() {
+        this.data = [];
+        document.querySelector('.biao-month').addEventListener('click',() => this.init_month());
+        document.querySelector('.biao-year').addEventListener('click',() => this.init_year());
+        document.querySelector('.biao-diy').addEventListener('click',() => this.init_diy());
+        document.querySelector('.biao-head-year').addEventListener('change',(e) => this.changeyear(e))
+        document.querySelector('#but-baobiao').addEventListener('click', () => this.init());
+        document.querySelector('#biao-diy-year-dal').addEventListener('change',() => this.key_diy())
+        document.querySelector('#biao-diy-year-al').addEventListener('change',() => this.key_diy())
+        document.querySelector('#biao-diy-month-dal').addEventListener('change',() => this.key_diy())
+        document.querySelector('#biao-diy-month-al').addEventListener('change',() => this.key_diy())
+        this.init();
+    }
+    init() {
+        // 表页配置
+        const items = document.querySelectorAll('.biao-tongji div');
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                items.forEach(item => item.classList.remove('dixian'));
+                item.classList.add('dixian');
+                const page = item.getAttribute('page')
+                this.changepage(page);
+            })
+        })
+        this.init_month();
+        this.changepage('biao-month');
+    }
+    // 表-月份初始化
+    init_month() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const element = document.querySelector('.biao-head-year');
+        element.innerHTML = '';
+        for (let i = year; i >= 2019; i--) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.innerText = i + '年';
+            if (i === year) {
+                option.selected = true;
+            }
+            element.appendChild(option);
+        }
+        this.changeyear();
+    }
+    // 表-年份初始化
+    init_year() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const element = document.getElementById('biao-year');
+        element.innerHTML = '';
+        
+        for (let i = year; i >= 2019; i--) {
+            const div = document.createElement('div');
+            div.innerText = i + '年';
+            if (i === year) {
+                div.classList.add('dixian');
+            }
+            element.appendChild(div);
+        }
+        
+        const items = document.querySelectorAll('#biao-year div');
+        items.forEach(item => {
+            item.addEventListener('click', (event) => { // 使用箭头函数
+                items.forEach(item => item.classList.remove('dixian'));
+                item.classList.add('dixian');
+                this.selectyear(event); // 现在 this 指向正确的实例
+            });
+        });
+
+        items[0].click();
+    }
+    // 表-年报表选择年份事件
+    async selectyear(event) {
+        const year = event.target.textContent.replace('年', '').slice(2, 4);
+        const minid = Number(year + '00000000000');
+        const maxid = Number(year + '99999999999');
+        this.data = await db.getDbData(minid, maxid);
+        const datamonth = this.ord_data('month',this.data)
+        const datamotivi = this.ord_data('motivo',this.data)
+        this.create_lie(datamonth);
+        this.create_hang(datamotivi);
+    }
+    // 表，切换年份事件
+    changeyear() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const n = document.querySelector('.biao-head-year').value;
+        const months = document.querySelector('.biao-head-month');
+        months.innerHTML = '';
+        let m = 12;
+
+        if (n == year) {
+            m = now.getMonth() + 1;
+        }
+
+        for (let i = m; i > 0; i--) {
+            const month = document.createElement('div');
+            month.textContent = i + '月';
+            if (m === i) {
+                month.classList.add('dixian');
+            }
+            months.appendChild(month);
+        }
+
+        const items = document.querySelectorAll('.biao-head-month div');
+        items.forEach(month => {
+            month.addEventListener('click', (event) => {   // ✅ 改成箭头函数
+                items.forEach(month => month.classList.remove('dixian'));
+                month.classList.add('dixian');
+                this.monthselect(event);                   // ✅ 正确调用 class 方法
+            });
+        });
+
+        months.children[0].click();
+    }
+    // 表-月份点击事件
+    async monthselect(event) {
+        const year = document.querySelector('.biao-head-year').value.toString().slice(2, 4);
+        const month = event.target.textContent.replace('月', '').padStart(2, '0');
+        const minid = Number(year + month + '000000000');
+        const maxid = Number(year + month + '999999999');
+        this.data = await db.getDbData(minid, maxid);
+        const dataday = this.ord_data('day',this.data)
+        const datamotivi = this.ord_data('motivo',this.data)
+        this.create_lie(dataday);
+        this.create_hang(datamotivi);
+    }
+    // 创建视图表-列
+    create_lie(dataArray) {
+        const biao = document.getElementById("biao-lie");
+        const di = document.getElementById("biao-di");
+        biao.innerHTML = '';
+        di.innerHTML = '';
+        const num = dataArray.length;
+        const w = 100 - num * 1 - 2;
+        const maxh = 150;
+        const maxValue = Math.min(...dataArray.map(item => item[1].out));
+        const biaoFrag = document.createDocumentFragment();
+        const diFrag = document.createDocumentFragment();
+        const sum = {
+            'in':0,
+            'out':0
+        };
+        let maxElement = null;
+        dataArray.forEach((item, i) => {
+            const width = `${w / num}%`;
+            const lie = document.createElement("div");
+            lie.className = 'lie';
+            lie.style.width = width;
+            lie.style.height = `${(item[1].out / maxValue) * maxh}px`;
+            lie.dataset.value = item[1].out;
+            lie.addEventListener('click', () => setevent(lie));
+            biaoFrag.appendChild(lie);
+            const ndi = document.createElement("div");
+            ndi.className = 'di';
+            ndi.style.width = width;
+            ndi.innerText = num < 20 ? item[0] : i % 2 === 0 ? item[0] : '';
+            diFrag.appendChild(ndi);
+            if (item[1].out === maxValue) maxElement = lie;
+            sum.in += item[1].in;
+            sum.out += item[1].out;
+        });
+        biao.appendChild(biaoFrag);
+        di.appendChild(diFrag);
+        if (maxElement) setevent(maxElement);
+        document.querySelector('.biao-tot-in').textContent = '+' + sum.in.toFixed(2);
+        document.querySelector('.biao-tot-out').textContent = sum.out.toFixed(2);
+        function setevent(target) {
+            document.querySelectorAll('.lie').forEach(lie => {
+                lie.style.backgroundColor = lie === target ? 'rgb(146, 39, 0)' : 'orangered';
+            });
+            const biaoDisplay = document.getElementById('biao-display');
+            const rect = target.getBoundingClientRect();
+            const elementWidth = parseFloat(target.style.width) * window.innerWidth / 100;
+            const offset = (60 - elementWidth) / 2;
+            biaoDisplay.style.left = `${rect.left - offset}px`;
+            biaoDisplay.style.top = `${rect.top - 30}px`;
+            biaoDisplay.style.display = 'block';
+            biaoDisplay.innerText = Number(target.dataset.value).toFixed(2);
+        }    
+    }
+    // 创建视图表-行
+    create_hang(dataArray) {
+        const biao = document.getElementById("biao-hang");
+        biao.innerHTML = '';
+        dataArray.sort((a, b) => a[1].out - b[1].out);
+        const sum = dataArray.reduce((total, current) => total + Math.abs(current[1].in + current[1].out), 0);
+        const frag = document.createDocumentFragment();
+        dataArray.forEach(item => {
+            const percentage = (Math.abs(item[1].in + item[1].out) / sum * 100).toFixed(2);
+            const hang = document.createElement("div");
+            hang.className = "hang";
+            hang.addEventListener("click", () => this.showinfolist(Number(item[0])));
+            hang.innerHTML = `
+                <div class="hang-imgbox">
+                    <img class="hang-img" src="icons/${getimgmotivo(item[0])}.png">
+                </div>
+                <div class="hang-info">
+                    <div class="hang-box">
+                        <div class="hang-des">${getnomemotivo(item[0])} ${percentage}%</div>
+                        <div class="hang-tot">${item[1].in > 0 ? "+" + item[1].in.toFixed(2) : item[1].out.toFixed(2)}</div>
+                    </div>
+                    <div class="hang-tu" style="width:${percentage}%"></div>
+                </div>`;
+            frag.appendChild(hang);
+        });
+        biao.appendChild(frag);
+    }   
+    // 获取表数据(分类，dataArray)
+    ord_data(order,dataArray) {
+        const result = {}
+        if (order === 'day') {
+            for (let i = 1; i < 32; i++) {
+                result[i] = {
+                    'in':0,
+                    'out':0
+                };
+            }
+        } else if ( order === 'month') {
+            for (let i = 1; i < 13; i++) {
+                result[i] = {
+                    'in':0,
+                    'out':0
+                };
+            }
+        } else if (order === 'year') {
+            const dal = String(dataArray[0].ID).slice(0,2)
+            const al = String(dataArray[dataArray.length - 1].ID).slice(0,2)
+            for (let i = Number(al); i >= Number(dal); i--){
+                result[i] = {
+                    'in':0,
+                    'out':0
+                };
+            }
+        };
+        for (let i = 0; i < dataArray.length; i++) {
+            const item = dataArray[i];
+            let key = ''
+            if (order === 'day') {
+                key = Number(String(item.ID).slice(4,6));
+            } else if (order === 'month') {
+                key = Number(String(item.ID).slice(2,4));
+            } else if (order === 'year') {
+                key = Number(String(item.ID).slice(0,2));
+            } else if (order === 'motivo') {
+                key = item.MOTIVO;
+                if (!result[key]) {
+                    result[key] = {
+                        'in':0,
+                        'out':0
+                    };
+                }
+            }
+            item.SPESA > 0 ? result[key].in += item.SPESA : result[key].out += item.SPESA;
+        }
+        const res =  Object.entries(result)
+        return res;
+    }
+    // 显示详细统计信息
+    showinfolist(idmotivo) {
+        changepage('infopage');
+        document.querySelector('.info-motivo').textContent = getnomemotivo(idmotivo);
+        let sumspesa = 0;
+        let dataArray = []
+        for (let i = 0; i < this.data.length; i++) {
+            const element = this.data[i];
+            if (element.MOTIVO === idmotivo) {
+                dataArray.push(JSON.parse(JSON.stringify(element)));
+            }
+        }
+        const ndata = main.ord_data(dataArray);
+        if (ndata) {
+            const list = document.getElementById("info-list");
+            list.innerHTML = '';
+            for (let j = ndata.length - 1; j >= 0; j--) {
+                const item = ndata[j];
+                const isTot = item.ID < 10000;
+                !isTot ? sumspesa += parseFloat(item.SPESA):null;
+                const userText = (item.UTENTE && item.UTENTE.startsWith("j")) ? item.UTENTE.slice(0, 2) : "";
+                const li = document.createElement("li");
+                li.className = `${isTot ? "li-tot" : "li-movi"}`
+                const html = `
+                        <div class="li ${isTot ? "" : "movili"}">
+                            <div class="li-date">
+                                ${isTot ? item.DATE : `<img class="li-icon" src="${item.IMG}" />`}
+                            </div>
+                            <div class="li-motivo">
+                                ${item.MOTIVO}
+                                ${!isTot ? `<div class="li-nota">${item.NOTA}</div>` : ""}
+                            </div>
+                            <div class="li-nome">${userText}</div>
+                            ${isTot ? `<div class="li-value">${item.SPESA.in === 0 ? item.SPESA.out.toFixed(2): "+" + item.SPESA.in.toFixed(2)}</div>`
+                                :`<div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
+                        </div>`
+                li.innerHTML = html;
+                list.appendChild(li);
+            }
+        }
+        document.querySelector('.info-tot-spesa').textContent = sumspesa.toFixed(2);
+    }
+    // 切换表页事件
+    changepage(name) {
+        const pages = document.querySelectorAll('.biao-page');
+        pages.forEach(page => {
+            page.style.display = 'none';
+            if (page.id == name) {
+                page.style.display = 'flex';
+            }
+        })
+    }
+    // 表-diy初始化
+    init_diy() {
+        const yeardal = document.getElementById('biao-diy-year-dal')
+        const yearal = document.getElementById('biao-diy-year-al')
+        const monthdal = document.getElementById('biao-diy-month-dal')
+        const monthal = document.getElementById('biao-diy-month-al')
+        yeardal.innerHTML = '';
+        yearal.innerHTML = '';
+        monthdal.innerHTML = '';
+        monthal.innerHTML = '';
+        const now = new Date();
+        const year = now.getFullYear();
+        for (let i = 2019; i <= year; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.innerText = i + '年';
+            const option2 = option.cloneNode(true);
+            if (i === 2019) option.selected = true;
+            if (i === year) option2.selected = true;
+            yeardal.appendChild(option);
+            yearal.appendChild(option2);
+        }
+        for (let i = 1; i < 13; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.innerText = i + '月';
+            const option2 = option.cloneNode(true);
+            if (i === 1) option.selected = true;
+            if (i === 12) option2.selected = true;
+            monthdal.appendChild(option);
+            monthal.appendChild(option2);
+        }
+        this.key_diy();
+    }
+
+    // 表-自定义页
+    async key_diy() {
+        const yeardal = document.getElementById('biao-diy-year-dal')
+        const yearal = document.getElementById('biao-diy-year-al')
+        const monthdal = document.getElementById('biao-diy-month-dal')
+        const monthal = document.getElementById('biao-diy-month-al')
+        const dal = yeardal.value.slice(2, 4) + monthdal.value.padStart(2, '0') + '000000000';
+        const al = yearal.value.slice(2, 4) + monthal.value.padStart(2, '0') + '999999999';
+        const minid = Number(dal);
+        const maxid = Number(al);
+        if (minid >= maxid) {
+            showmsg('请选择正确的日期范围');
+            return;
+        }
+        this.data = await db.getDbData(minid, maxid);
+        const datayear = this.ord_data('year',this.data)
+        const datamotivi = this.ord_data('motivo',this.data)
+        this.create_lie(datayear);
+        this.create_hang(datamotivi);
+    }
+}
+class Logpage {
+    constructor() {
+        document.getElementById('login-form').addEventListener('submit', this.login);
+    }
+    init() {
+        changepage('logpage');
+    }
+    // 登录事件
+    login(event) {
+        event.preventDefault();
+        const username = String(document.getElementById('username').value).toLowerCase();
+        const password = document.getElementById('password').value;
+        api.login(username, password)
+        .then(response => response.json())
+        .then(data => {
+            if (data[0] === true) {
+                const user = {'checked': true,'utente': username,'mi': data[1]}
+                localStorage.setItem('user', JSON.stringify(user));
+                app.init();
+            } else {
+                alert('用户名或密码错误')
+            }
+        })
+    }
+}
+class Setpage {
+    constructor() {
+        document.getElementById('logout').addEventListener('click', () => this.logout());
+        document.getElementById('reload').addEventListener('click', () => this.reload());
+        document.querySelector('#memori-container .close').addEventListener('click',() => {
+            document.getElementById('memori-container').style.display = 'none';
+        });
+        document.getElementById('modifimemori').addEventListener('click', () => this.memori_modifica());
+        document.getElementById('addmemori').addEventListener('click', () => this.memori_add());
+        document.getElementById('set-back').addEventListener('click', () => this.changepage('sp-main'));
+        document.getElementById('mensile').addEventListener('click', () => {
+            this.memori_carica();
+            this.changepage('sp-memori');
+        });
+        document.getElementById('but-renwu').addEventListener('click', () => this.showunload());
+        this.changepage('sp-main');
+    }
+    init() {
+        
+    }
+    // 退出事件
+    logout() {
+        localStorage.clear();
+        window.location.reload();
+        changepage('logpage');
+    }
+    // 重新载入
+    async reload() {
+        const res = new Promise((resolve, reject) => {
+            let request = indexedDB.deleteDatabase('DB');
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject();
+            request.onblocked = () => resolve();
+        });
+        await res;
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then((registration) => {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage('clear-cache');
+                } else {
+                    console.warn('Service Worker 已注册，但当前页面未被控制');
+                }
+            }).catch(err => console.error('Service Worker 注册失败:', err));
+        }
+        window.location.reload(true); // 强制从服务器重新加载
+    }
+    // 设置页，编辑记忆模式
+    memori_modifica() {
+        const items = document.querySelectorAll('.set-memori-item');
+        const but = document.querySelector('#modifimemori');
+        const check = (but.innerHTML === '退出编辑')
+        if (check) {
+            but.innerHTML = '编辑事项'
+            but.style.backgroundColor = '#EDF6FF'
+        } else {
+            but.innerHTML = '退出编辑'
+            but.style.backgroundColor = '#FFF'
+        }
+        items.forEach(item => {
+            const select = item.querySelector('.set-memori-select');
+            const del = item.querySelector('.set-memori-del');
+            if (check) {
+                select.style.display = 'block'
+                del.style.display = 'none'
+            } else {
+                select.style.display = 'none'
+                del.style.display = 'block'
+            }
+        })
+    }
+    // 设置页，添加记忆事项
+    memori_add() {
+        this.changepage('sp-add')
+        const motivi = JSON.parse(localStorage.getItem('motivi'));
+        const tabmotivi = document.getElementById('settabmotivi');
+        tabmotivi.innerHTML = '';
+        for (let i = 0; i < motivi.length; i++) {
+            const item = motivi[i];
+            const motiviitem = document.createElement('div');
+            motiviitem.setAttribute('idmotivo',item.ID)
+            motiviitem.addEventListener('click', () => this.memori_add_click(motiviitem));
+            motiviitem.classList.add('motivi-item');
+            const img = document.createElement('img');
+            img.src = 'icons/'+ item.IMG +'.png';
+            const span = document.createElement('span');
+            span.textContent = item.MOTIVONAME;
+            motiviitem.appendChild(img);
+            motiviitem.appendChild(span);
+            tabmotivi.appendChild(motiviitem);
+        }
+    }
+    // 设置页，点击添加新的提醒事项
+    memori_add_click(element) {
+        const idmotivo = parseInt(element.getAttribute('idmotivo'));
+        const img = element.querySelector('img').src;
+        const name = element.querySelector('span').textContent;
+        const dati = `${idmotivo},'${name}',1,0`
+        api.addmemori(dati)
+            .then(response => response.json())
+            .then(dati => {
+                if (dati[0] === true) {
+                    const id = dati[1];
+                    const content = document.querySelector('.set-memori-content');
+                    const item = document.createElement('div');
+                    item.className = 'set-memori-item';
+                    item.setAttribute('idmotivo', idmotivo);
+                    item.setAttribute('n', id);
+                    item.innerHTML = `
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                        <img src="${img}">
+                        <span class="name">${name}</span>
+                        <select class="set-memori-select">
+                            <option value="1">1个月</option>
+                            <option value="2">2个月</option>
+                            <option value="3">3个月</option>
+                        </select>
+                        <button class="set-memori-del">删除</button>
+                    `;
+                    item.querySelector('.set-memori-del').addEventListener('click', () => this.memori_del(item.querySelector('.set-memori-del')));
+                    item.querySelector('.switch input').addEventListener('change', () => this.memori_update(item));
+                    item.querySelector('.set-memori-select').addEventListener('change', () => this.memori_update(item));
+                    content.appendChild(item);
+                    const memori = JSON.parse(localStorage.getItem('memori'));
+                    const obj = {
+                        MOTIVOID: idmotivo,
+                        MOTIVONAME: name,
+                        MESE: 1,
+                        ID: id,
+                        ATTIVA: 0
+                    }
+                    memori.push(obj);
+                    localStorage.setItem('memori', JSON.stringify(memori));
+                }  else {
+                    showmsg('无法连接服务器！请在服务器启动后重试！');
+                }
+            })
+        this.changepage('sp-memori');
+    }
+    // 设置页，删除提醒事项
+    memori_del(button) {
+        const item = button.parentElement;
+        const id = parseInt(item.getAttribute('n'));
+        api.delmemori(id)
+            .then(response => response.json())
+            .then(dati => {
+                if (dati === true) {
+                    const memori = JSON.parse(localStorage.getItem('memori'));
+                    const index = memori.findIndex(item => item.ID == id);
+                    memori.splice(index, 1);
+                    localStorage.setItem('memori', JSON.stringify(memori));
+                    item.remove();
+                }  else {
+                    showmsg('无法连接服务器！请在服务器启动后重试！');
+                }
+            })
+    }
+    // 设置页，加载提醒事项
+    memori_carica() {
+        const memori = JSON.parse(localStorage.getItem('memori'));
+        const content = document.querySelector('.set-memori-content');
+        content.innerHTML = '';
+        for (let i = 0; i < memori.length; i++) {
+            const item = memori[i];
+            const id = item.ID;
+            const idmotivo = item.MOTIVOID;
+            const img = getimgmotivo(idmotivo);
+            const name = getnomemotivo(idmotivo);
+            const mese = item.MESE;
+            const attiva = item.ATTIVA;
+            let checked = '';
+            attiva == 1? checked = 'checked' : checked = '';
+            const line = document.createElement('div');
+            line.className = 'set-memori-item';
+            line.setAttribute('idmotivo', idmotivo);
+            line.setAttribute('n', id);
+            line.innerHTML = `
+                <label class="switch">
+                    <input type="checkbox" ${checked}>
+                    <span class="slider"></span>
+                </label>
+                <img src="icons/${img}.png">
+                <span class="name">${name}</span>
+                <select class="set-memori-select">
+                    <option value="1">1个月</option>
+                    <option value="2">2个月</option>
+                    <option value="3">3个月</option>
+                </select>
+                <button class="set-memori-del">删除</button>
+            `;
+            line.querySelector('.set-memori-del').addEventListener('click', () => this.memori_del(line.querySelector('.set-memori-del')));
+            line.querySelector('input').addEventListener('change', () => this.memori_update(line));
+            line.querySelector('.set-memori-select').addEventListener('change', () => this.memori_update(line));
+            const options = line.querySelector('.set-memori-select').options;
+            options[mese - 1].selected = true;
+            content.appendChild(line);
+        };
+    }
+    // 设置页，更新提醒事项
+    memori_update(item) {
+        const id = parseInt(item.getAttribute('n'));
+        const attiva = item.querySelector('.switch input').checked? 1 : 0;
+        const mese = item.querySelector('.set-memori-select').value;
+        const dati = `${id}-${mese}-${attiva}`
+        api.updatememori(dati)
+            .then(response => response.json())
+            .then(dati => {
+                if (dati === true) {
+                    const memori = JSON.parse(localStorage.getItem('memori'));
+                    const index = memori.findIndex(item => item.ID == id);
+                    memori[index].MESE = parseInt(mese);
+                    memori[index].ATTIVA = attiva;
+                    localStorage.setItem('memori', JSON.stringify(memori));
+                } else {
+                    showmsg('无法连接服务器！请在服务器启动后重试！');
+                }
+            })
+    }
+    // 提醒事件
+    async notifica_memori() {
+        const container = document.querySelector('#memori-container');
+        container.style.display = 'none';
+        const box = container.querySelector('.memori-box');
+        box.innerHTML = '';
+        const memori = JSON.parse(localStorage.getItem('memori'));
+        const mindata = new Date();
+        // 先将日期设为1号，避免日期跳过
+        mindata.setDate(1);
+        mindata.setMonth(mindata.getMonth() - 4);
+        const minyear = String(mindata.getFullYear()).slice(-2);
+        const minmonth = String(mindata.getMonth() + 1).padStart(2, '0');
+        
+        const minid = `${minyear}${minmonth}000000000`;
+        const maxid = `9999000000000`;
+        const dati = await db.getDbData(minid, maxid);
+        
+        if (dati.length === 0) return;
+        const result = {};
+        for (const mem of memori) {
+            if (mem.ATTIVA !== 1) continue;
+            const snow = new Date();
+            const enow = new Date();
+            snow.setDate(1);
+            snow.setMonth(snow.getMonth() - mem.MESE);
+            enow.setDate(1);
+            const staryear = String(snow.getFullYear()).slice(-2);
+            const starmonth = String(snow.getMonth() + 1).padStart(2, '0');
+            const endyear = String(enow.getFullYear()).slice(-2);
+            const endmonth = String(enow.getMonth() + 1).padStart(2, '0');
+            const starid = parseInt(`${staryear}${starmonth}000000000`);
+            const endid = parseInt(`${endyear}${endmonth}000000000`);
+            result[mem.MOTIVONAME] = false;
+            for (const d of dati) {
+                const id = parseInt(d.ID);
+                if (id >= starid && id <= endid && d.MOTIVO == mem.MOTIVOID && mem.ATTIVA == 1) {
+                    result[mem.MOTIVONAME] = true;
+                    break;
+                };
+            }
+            if (!result[mem.MOTIVONAME]) {
+                this.showmemori(mem.MOTIVOID);
+            }
+        }
+    }
+    // 显示提醒message
+    showmemori(idmotivo) {
+        // 获取提示框容器，如果不存在则创建
+        const container = document.getElementById("memori-container");
+        container.style.display = "block";
+        const img = getimgmotivo(idmotivo);
+        const name = getnomemotivo(idmotivo);
+        const box = container.querySelector('.memori-box')
+        const item = document.createElement('div')
+        item.className = 'memori-item'
+        item.innerHTML = `
+            <img src="icons/${img}.png">
+            <div class="memori-item-name">${name}</div>`
+        item.addEventListener('click',() => {
+            currentDate = new Date();
+            calen.update();
+            calen.setdata();
+            document.getElementById('calendar').style.display = 'none';
+            changepage('addpage');
+            document.getElementById('current-motivo').innerText = name;
+            document.getElementById('current-motivo').setAttribute('idmotivo',idmotivo);
+            document.getElementById('current-img').src = `icons/${img}.png`;
+            document.getElementById('tas-nota').value = '';
+            document.getElementById('current-value').innerText = '0.00';
+            document.getElementById('current-value').setAttribute('num','')
+            document.querySelector('.nota').style.display = 'none';
+        })
+        box.appendChild(item)
+    }
+    // 设置页，切换页面
+    changepage(id) {
+        const pages = document.querySelectorAll('.set-page');
+        pages.forEach(page => {
+            page.classList.add('hidden');
+            if (page.id == id) {
+                page.classList.remove('hidden');
+            }
+        });
+    }
+    showunload() {
+        const utente = JSON.parse(localStorage.getItem('user')).utente;
+        const img = document.querySelector('.logo-utente');
+        img.src = `icons/${utente}.jpg`;
+        const idname = document.querySelector('.set-utente');
+        idname.innerText = `${utente}`
+        const unload = document.querySelector('.set-unload');
+        const datiunload = JSON.parse(localStorage.getItem('upload'));
+        const numunload = datiunload.length;
+        unload.innerText = `未上传数据：${numunload}条`
+    }
+}
+class Cartapage {
+    constructor() {
+        document.querySelector('#carta-mibox .carta-mibut').addEventListener('click', () => this.getinfo());
+        document.getElementById('carta-mipass').addEventListener('keypress', (e) => e.key === 'Enter' && this.getinfo())
+        document.querySelector('#carta-mibox .close').addEventListener('click', () =>{
+            const mibox = document.getElementById('carta-mibox');
+            mibox.style.display = 'none';
+        });
+        this.carica();
+    }
+    // 加载卡片
+    carica() {
+        const carte = JSON.parse(localStorage.getItem('carte'));
+        const cartalist = document.querySelector('#cartapage .carta-list');
+        cartalist.innerHTML = '';
+        if (!carte) {
+            return;
+        }
+        carte.sort((a, b) => a.ID - b.ID);
+        for (let i = 0; i < carte.length; i++) {
+            const carta = carte[i];
+            const cartaElement = document.createElement('div');
+            cartaElement.classList.add('carta-item');
+            cartaElement.innerHTML = carta.NAME;
+            cartaElement.setAttribute('tycode',carta.TPCODE);
+            cartaElement.setAttribute('code',carta.CODE);
+            cartaElement.style.backgroundColor = carta.COLORE;
+            cartaElement.addEventListener('click', ()=>this.showcode(cartaElement));
+            if (i === 0) {
+                this.showcode(cartaElement)
+            }
+            cartalist.appendChild(cartaElement);
+        }
+    }
+    // 显示条形码
+    showcode(element) {
+        element.classList.add('active')
+        setTimeout(() => {
+            element.classList.remove('active')
+        }, 200);
+        const codicetext = document.querySelector('#cartapage .codice-text');
+        const canvas = document.querySelector('#canvas-carta');
+        const cartainfo = document.getElementById('carta-info')
+        const mibox = document.getElementById('carta-mibox');
+        codicetext.style.display = 'flex';
+        canvas.style.display = '';
+        cartainfo.style.display = 'none';
+        mibox.style.display = 'none';
+        const type = element.getAttribute('tycode')
+        const text = element.getAttribute('code')
+        const name = element.innerHTML
+        const color = element.style.backgroundColor
+        const box = document.querySelector('#cartapage .carta-box')
+        box.style.backgroundColor = color
+        const head = document.querySelector('#cartapage .carta-name')
+        head.innerHTML = name
+        if (type === 'mi') {
+            codicetext.style.display = 'none';
+            canvas.style.display = 'none';
+            cartainfo.style.display = '';
+            mibox.style.display = 'block';
+            cartainfo.innerHTML = '';
+            mibox.querySelector('#carta-mipass').value = '';
+            mibox.querySelector('#carta-mipass').focus();
+            return
+        }
+        const codeobj = {
+            ean13:{
+                bcid: 'ean13',       // 条码类型
+                text: '5000204616439',     // 编码内容
+                scale: 5,              // 缩放比例（高清）
+                height: 13,            // 条码高度（像素）
+            },
+            code39:{
+                bcid: 'code39',       // 条码类型
+                text: 'WNGXYI86L06Z210Z',     // 编码内容
+                scale: 5,              // 缩放比例（高清）
+                height: 40,            // 条码高度（像素）
+            },
+            code128:{
+                bcid: 'code128',       // 条码类型
+                text: 'WNGXYI86L06Z210Z',     // 编码内容
+                scale: 5,              // 缩放比例（高清）
+                height: 30,            // 条码高度（像素）
+            },
+            qr:{
+                bcid: 'qrcode',       // 生成二维码
+                text: 'https://example.com',
+                scale: 5,             // 缩放比例
+                eclevel: 'M'          // 纠错级别 (L, M, Q, H)
+            }
+        }
+        let code = codeobj[type]
+        if (type === 'code128') {
+            /^[0-9]+$/.test(text) && text.length < 18 ? code.height = 20:code.height = 30;
+        }
+        code.text = text
+        bwipjs.toCanvas('#canvas-carta', code)
+        let html = ''
+        for (let i = 0; i < text.length; i++) {
+            const letter = text[i];
+            html += `<div>${letter}</div>`
+        }
+        codicetext.innerHTML = html
+    }
+    // 卡片页，获取信息
+    getinfo() {
+        const mibox = document.getElementById('carta-mibox');
+        mibox.style.display = 'none';
+        const key = document.querySelector('#carta-mipass').value
+        const cartainfo = document.getElementById('carta-info')
+        cartainfo.innerHTML = ''
+        const data = JSON.parse(localStorage.getItem('carteinfo'))
+        if (data) {
+            data.forEach(item => {
+                const info = $(item)(key)
+                cartainfo.innerHTML += `<div>${info}</div>`
+            });
+        }
+        api.carteinfo()
+            .then(response => response.json())
+            .then(data => {
+                cartainfo.innerHTML = ''
+                localStorage.setItem('carteinfo', JSON.stringify(data))
+                data.forEach(item => {
+                    const info = $(item)(key)
+                    cartainfo.innerHTML += `<div>${info}</div>`
+                })
+            })
+            .catch(e => {
+                console.log(e)
+            });
+    }
+}
+const calen = new Calendario();
+const db = new Database();
+const api = new Fetchapi();
+const carta = new Cartapage();
+const add = new Addpage();
+const set = new Setpage();
+const biao = new Biaopage();
+const log = new Logpage();
+const main = new Main();
+const app = new App();

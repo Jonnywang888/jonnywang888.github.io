@@ -8,11 +8,11 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icons/app.png">
     <meta name="theme-color" content="#f7f7f7"/>
-    <meta name="version" content="2.01"/>
-    <link rel="stylesheet" href="src/styles.css?v=1.62">
+    <meta name="version" content="2.0"/>
+    <link rel="stylesheet" href="src/styles.css?v=2.0">
 </head>
 <body>
-    <div class="page" id="biaopage">
+    <div class="page hidden" id="biaopage">
         <div class="head">
             <div class="biao-tongji">
                 <div class="dixian biao-month" page='biao-month'>月统计</div>
@@ -50,7 +50,7 @@
             <div id="biao-hang"></div>
         </div>
     </div>
-    <div class="page" id="infopage">
+    <div class="page hidden" id="infopage">
         <div class="info-head">
             <div class="info-title">
                 <div class="backup" id="backtobiao">
@@ -107,10 +107,10 @@
             <div class="memori-box"></div>
         </div>
     </div>
-    <div class="page" id="addpage">
+    <div class="page hidden" id="addpage">
         <div class="addhead">
             <div class="addhead-title">
-                <div class="backup" id="backtomain">
+                <div class="backup" id="add-back">
                     <img src="icons/back-nero.png" alt="">
                     <span>返回</span>
                 </div>
@@ -194,7 +194,7 @@
             </div>
         </div>
     </div>
-    <div class="page" id="cartapage">
+    <div class="page hidden" id="cartapage">
         <div class="carta-head">
             <div class="carta-box">
                 <div class="carta-name"></div>
@@ -216,7 +216,7 @@
             <button class="carta-mibut">确认</button>
         </div>
     </div>
-    <div class="page" id="setpage">
+    <div class="page hidden" id="setpage">
         <div class="head">
             <div class="head-title">记账簿</div>
             <div class="head-title">设置界面</div>
@@ -248,7 +248,7 @@
             <div id="settabmotivi"></div>
         </div>
     </div>
-    <div class="page center" id="logpage">
+    <div class="page center hidden" id="logpage">
         <div class="head-title">记账簿</div>
         <div class="head-title">记录生活每一天</div>
         <div class="avatar main">
@@ -261,25 +261,26 @@
         </form>
     </div>
     <div class="foot">
-        <div class="foot-item" id="but-baobiao">
+        <div class="foot-item" id="but-baobiao" page="biaopage">
             <img src="icons/baobiao.png" alt="报表">
             <div>报表</div>
         </div>
-        <div class="foot-item" id="but-home">
+        <div class="foot-item" id="but-home" page="mainpage">
             <img src="icons/home-active.png" alt="主页">
             <div>主页</div>
         </div>
-        <div class="foot-item" id="but-carta">
+        <div class="foot-item" id="but-carta" page="cartapage">
             <img src="icons/carta.png" alt="卡">
             <div>卡包</div>
         </div>
-        <div class="foot-item" id="but-renwu">
+        <div class="foot-item" id="but-renwu" page="setpage">
             <img src="icons/renwu.png" alt="人物">
             <div>设置</div>
         </div>
     </div>
     <script src="src/bwip-js-min.js"></script>
-    <script src="src/fun.js?v=1.6"></script>
-    <script src="src/script.js?v=1.71"></script>
+    <script src="src/fun.js?v=2.0"></script>
+    <!-- <script src="src/script.js?v=1.71"></script> -->
+    <script src="src/app.js?v=2.0"></script>
 </body>
 </html>

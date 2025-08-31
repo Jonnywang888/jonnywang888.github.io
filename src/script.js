@@ -145,8 +145,9 @@ async function init() {
     if (checked !== true) {
         changepage('logpage')
         return
-    } 
-    changepage('mainpage')
+    } else {
+        changepage('mainpage')
+    }
     await createDB();
     await createlocalstorage();
     get_memori();
@@ -154,7 +155,6 @@ async function init() {
     caricamovimentolist();
     set_memori_carica();
     updateCalendar();
-    init_biao();
     const body = {
         action:'attiva'
     }
@@ -1290,6 +1290,7 @@ function changeselectyear() {
         })
     })
     months.children[0].click();
+    changepage('biaopage');
 }
 // 表-月份点击事件
 async function key_month(event) {
@@ -1839,10 +1840,9 @@ function but_style(element) {
 // 切换页面动画效果
 function move_page(page,pages) {
     // 找到当前显示的页面
-    const currentPage = Array.from(pages).find(p => p.style.display === 'block' ||  p.style.display === 'inline' || p.style.display === '');
+    const currentPage = Array.from(pages).find(p => p.style.display !== 'none');
     // 找到目标页面
     const targetPage = document.getElementById(page);
-    
     if (!currentPage || currentPage === targetPage) return; // 如果没有当前页面或点击当前页面，不执行任何操作
     
     // 获取页面在DOM中的位置来判断方向
