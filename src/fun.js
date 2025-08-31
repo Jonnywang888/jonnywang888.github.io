@@ -4,7 +4,7 @@ function registraserviceWorker() {
     // 主页面中的Service Worker注册代码
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
+            navigator.serviceWorker.register('./src/service-worker.js')
                 .then(registration => {
                     console.log('Service Worker 注册成功:', registration.scope);
                 })
