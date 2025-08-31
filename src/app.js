@@ -554,7 +554,7 @@ class Main {
         this.listmovimento.push(newdata)
     }
     // 整理数据（数组数据）
-    ord_data(dataArray) {
+    ord_data(dataArray, mp = true) {
         var result = [];
         var gdata = {};
         var gmese = {};
@@ -624,9 +624,10 @@ class Main {
                 gdata[prefix6].in += Number(item.SPESA);
                 gmese[prefix4].in += Number(item.SPESA);
             }
-
-            this.groupdata[prefix6] = gdata[prefix6];
-            this.groupmese[prefix4] = gmese[prefix4];
+            if (mp === true) {
+                this.groupdata[prefix6] = gdata[prefix6];
+                this.groupmese[prefix4] = gmese[prefix4];
+            }
             // 检查是否位最后一个
             if (i === dataArray.length - 1) {
                 const newdata = {}
@@ -1318,7 +1319,7 @@ class Biaopage {
             }
             item.SPESA > 0 ? result[key].in += item.SPESA : result[key].out += item.SPESA;
         }
-        const res =  Object.entries(result)
+        const res = Object.entries(result)
         return res;
     }
     // 显示详细统计信息
@@ -1333,7 +1334,7 @@ class Biaopage {
                 dataArray.push(JSON.parse(JSON.stringify(element)));
             }
         }
-        const ndata = main.ord_data(dataArray);
+        const ndata = main.ord_data(dataArray,false);
         if (ndata) {
             const list = document.getElementById("info-list");
             list.innerHTML = '';
@@ -1427,6 +1428,11 @@ class Biaopage {
         const datamotivi = this.ord_data('motivo',this.data)
         this.create_lie(datayear);
         this.create_hang(datamotivi);
+    }
+}
+class Infopage {
+    constructor() {
+        document.getElementById('backtobiao').addEventListener('click', () => changepage('biaopage'));
     }
 }
 class Logpage {
@@ -1912,6 +1918,7 @@ const carta = new Cartapage();
 const add = new Addpage();
 const set = new Setpage();
 const biao = new Biaopage();
+const info = new Infopage();
 const log = new Logpage();
 const main = new Main();
 const app = new App();

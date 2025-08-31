@@ -790,7 +790,7 @@ input[type="submit"] {
     top: 0;
     width: 100%;
     z-index: 1000;
-    background-color: var(--qianlan);
+    /* background-color: var(--qianlan); */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 .info-title {
@@ -801,6 +801,7 @@ input[type="submit"] {
     vertical-align: middle;
     box-sizing: border-box;
     border-bottom: 0.5px solid #ccc;
+    background-color: var(--beijinghui);
 }
 .backup{
     display: flex;
@@ -811,15 +812,9 @@ input[type="submit"] {
     box-sizing: border-box;
     margin-left: 3%;
 }
-#backtobiao span{
+.backup span{
     display: inline-block;
-    font-size: 14px;
-    vertical-align: middle;
-    color: #fff;
-}
-#backtomain span{
-    display: inline-block;
-    font-size: 14px;
+    font-size: 16px;
     vertical-align: middle;
 }
 .backup img{
@@ -832,7 +827,7 @@ input[type="submit"] {
     width: 54%;
     box-sizing: border-box;
     text-align: center;
-    color: #fff;
+    /* color: #fff; */
 }
 .info-title div{
     font-size: 20px;
@@ -843,10 +838,15 @@ input[type="submit"] {
 .info-tot {
     display: flex;
     justify-content: space-between;
-    margin: 0 3%;
-    padding: 15px 0;
+    margin: 0 1%;
     font-size: 20px;
     align-items: center;
+    background-color: var(--qianlan);
+    /* margin-top: 10px; */
+    /* margin-bottom: 10px; */
+    border-radius: 5px;
+    padding: 15px;
+    height: 30px;
 }
 .info-tot div{
     font-size: 20px;
