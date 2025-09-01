@@ -122,6 +122,29 @@ class Database {
             };
         });
     }
+    async getIdData(id) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            // 打开数据库连接
+            const transaction = db.transaction([this.DB_STORE], 'readonly');
+            const store = transaction.objectStore(this.DB_STORE);
+
+            // 获取数据
+            let request = store.get(id);
+
+            request.onsuccess = function (event) {
+                if (request.result !== undefined) {
+                    resolve(request.result);
+                } else {
+                    resolve(null); // 没找到返回 null
+                }
+            };
+
+            request.onerror = function (event) {
+                reject(event.target.error);
+            };
+        });
+    }
 }
 class Fetchapi {
     constructor() {
@@ -344,11 +367,6 @@ class App {
             changepage('logpage')
             return
         }
-        api.getmotivi()
-            .then(response => response.text())
-            .then(response => {
-                localStorage.setItem('motivi', response);
-            })
         // 加载备忘
         api.getmemori()
             .then(response => response.json())
@@ -361,6 +379,8 @@ class App {
             .then(dataArray => {
                 localStorage.setItem('carte', JSON.stringify(dataArray));
             })
+        const but = document.getElementById('but-home')
+        this.footbut(but);
         main.init();
     }
     // 初始化localstorage
@@ -546,9 +566,11 @@ class Main {
         const numlist = this.listmovimento.length
         if (this.needload === false) return
         this.needload = false;
-        const id = minmaxid(numlist)
+        // const id = minmaxid(numlist)
+        const id = minmaxid(2)
         const minid = id[0]
         const maxid = id[1]
+        // 从数据库获取数据
         const dataArray = await db.getDbData(minid, maxid)
         const newdata = this.ord_data(dataArray)
         this.listmovimento.push(newdata)
@@ -882,6 +904,22 @@ class Addpage {
         document.getElementById('tas-nota').value = '';
         document.getElementById('current-value').innerText = '0.00';
         document.getElementById('current-value').setAttribute('num','')
+        document.querySelector('.nota').style.display = 'none';
+    }
+    async modifica_movimento(id) {
+        calen.hidden();
+        calen.update();
+        calen.setdata();
+        changepage('addpage');
+        add.caricamotivilist();
+        let movimento = await db.getIdData(id);
+        const motivo = getnomemotivo(movimento.MOTIVO)
+        document.getElementById('current-motivo').innerText = motivo;
+        document.getElementById('current-motivo').setAttribute('idmotivo',movimento.MOTIVO);
+        document.getElementById('current-img').src = img;
+        document.getElementById('tas-nota').value = movimento.NOTA;
+        document.getElementById('current-value').innerText = '0.00';
+        document.getElementById('current-value').setAttribute('num',0 - movimento.SPESA)
         document.querySelector('.nota').style.display = 'none';
     }
     backtomain() {
@@ -1739,7 +1777,7 @@ class Setpage {
         item.addEventListener('click',() => {
             calen.update();
             calen.setdata();
-            document.getElementById('calendar').style.display = 'none';
+            calen.hidden();
             changepage('addpage');
             document.getElementById('current-motivo').innerText = name;
             document.getElementById('current-motivo').setAttribute('idmotivo',idmotivo);
