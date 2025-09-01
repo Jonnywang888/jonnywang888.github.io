@@ -1,6 +1,5 @@
 const CACHE_NAME = 'cassa-app-v1.33';
 const ASSETS = [
-    './',
     './index.html'
 ];
 
