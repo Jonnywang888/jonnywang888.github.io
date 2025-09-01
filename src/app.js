@@ -382,6 +382,7 @@ class App {
         const but = document.getElementById('but-home')
         this.footbut(but);
         main.init();
+        // main.aggiornamento();
     }
     // 初始化localstorage
     initlocalstorage() {
@@ -435,13 +436,12 @@ class Main {
         window.addEventListener('scroll', () => this.scrolling());
         window.addEventListener('scroll', () => this.refresh())
         document.getElementById('but-tianjia').addEventListener('click', add.init);
+        this.loading();
     }
     init() {
         changepage('mainpage')
-        this.aggiornamento();
         this.caricamovimentolist();
         set.memori_carica();
-        this.loading();
         setTimeout(set.notifica_memori,300);
     }
     // 滚动设置
@@ -718,13 +718,13 @@ class Main {
     // 设置滑动删除事件
     setdelete(item) {
         var startX, currentX,diffX;
-        const maxSlide = -85; // 最大滑动距离（负值表示向左滑动）
+        const maxSlide = -175; // 最大滑动距离（负值表示向左滑动）
         const lis = document.querySelectorAll('.movili');
         item.addEventListener('touchstart', function(e) {
             lis.forEach((e) => {
-            if (item !== e) {
+                if (item !== e) {
                     e.style.transform = `translateX(${0}px)`
-            } 
+                } 
             });
             startX = e.touches[0].clientX;
         });
@@ -741,8 +741,8 @@ class Main {
         });
         item.addEventListener('touchend', function() {
             const viewportWidth = window.innerWidth;
-            const moviwidth = viewportWidth * 0.03 + 75;
-            if (diffX < -80) {
+            const moviwidth = viewportWidth * 0.03 + 140;
+            if (diffX < -170) {
                 item.style.transform = `translateX(-${moviwidth}px)`
             } else {
                 item.style.transform = `translateX(${0}px)`
@@ -763,11 +763,11 @@ class Main {
         }
         // 观察器：检测 load 图片是否进入视口
         const observer = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && main.needload) {
-                setTimeout(() => {
+            setTimeout(() => {
+                if (entries[0].isIntersecting && main.needload) {
                     loadMoreData();
-                }, 100);
-            }
+                }
+            },100)
         });
         observer.observe(load); // 监听 load 图片
     }
