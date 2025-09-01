@@ -1737,7 +1737,6 @@ class Setpage {
             <img src="icons/${img}.png">
             <div class="memori-item-name">${name}</div>`
         item.addEventListener('click',() => {
-            currentDate = new Date();
             calen.update();
             calen.setdata();
             document.getElementById('calendar').style.display = 'none';
