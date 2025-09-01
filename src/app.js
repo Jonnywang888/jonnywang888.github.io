@@ -382,7 +382,7 @@ class App {
         const but = document.getElementById('but-home')
         this.footbut(but);
         main.init();
-        // main.aggiornamento();
+        main.aggiornamento();
     }
     // 初始化localstorage
     initlocalstorage() {
