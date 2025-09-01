@@ -79,3 +79,33 @@ self.addEventListener('fetch', event => {
             })
     );
 });
+// 消息处理（用于与主线程通信）
+self.addEventListener('message', event => {
+    console.log('收到消息:', event.data);
+    
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    
+    if (event.data && event.data.type === 'CLEAR_CACHE') {
+        caches.delete(CACHE_NAME).then(() => {
+        console.log('缓存已清理');
+        // 检查是否有端口可用
+        if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ success: true });
+        } else {
+            // 使用postMessage回复
+            self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+                client.postMessage({ type: 'CACHE_CLEARED', success: true });
+            });
+            });
+        }
+        }).catch(error => {
+        console.error('清理缓存失败:', error);
+        if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ success: false, error: error.message });
+        }
+        });
+    }
+});
