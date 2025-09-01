@@ -503,38 +503,38 @@ class Main {
     async aggiornamento() {
         // 上传缓存数据
         await this.uploadmovimento();
-        api.getmotivi().then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            return response.text();
-        })
-        .then((response)=>localStorage.setItem('motivi', response))
-        .catch(error => console.error('There was a problem with the fetch operation:', error));
-
-        api.getmovimento().then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            // 等待 response.json() 解析
-            return response.json();
-        })
-        .then(responseData => {
-            // 获取数据库数据并处理
-            return db.getDbData(0, 999999999999999, true).then(res => {
-                // 比较从接口获取的响应和数据库中的数据
-                const check = JSON.stringify(responseData) === JSON.stringify(res);
-                if (!check) {
-                    db.addData(responseData).then(() => {
-                        this.listmovimento = [];
-                        this.caricamovimentolist();
-                    });
-                } 
+        api.getmotivi()
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.text();
+            })
+            .then((response)=>localStorage.setItem('motivi', response))
+            .catch(error => console.error('There was a problem with the fetch operation:', error));
+        api.getmovimento()
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                // 等待 response.json() 解析
+                return response.json();
+            })
+            .then(response => {
+                // 获取数据库数据并处理
+                return db.getDbData(0, 999999999999999, true).then(res => {
+                    // 比较从接口获取的响应和数据库中的数据
+                    const check = JSON.stringify(response) === JSON.stringify(res);
+                    if (!check) {
+                        db.addData(response).then(() => {
+                            this.caricamovimentolist();
+                        });
+                    } 
+                });
+            })
+            .catch(error => {
+                console.error('Fetch error: ', error);
             });
-        })
-        .catch(error => {
-            console.error('Fetch error: ', error);
-        });
     }
     // 从数据库获取数据，加载页面
     async caricamovimentolist() {
@@ -1477,9 +1477,6 @@ class Setpage {
         document.getElementById('but-renwu').addEventListener('click', () => this.showunload());
         this.changepage('sp-main');
     }
-    init() {
-        
-    }
     // 退出事件
     logout() {
         localStorage.clear();
@@ -1495,16 +1492,8 @@ class Setpage {
             request.onblocked = () => resolve();
         });
         await res;
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then((registration) => {
-                if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage('clear-cache');
-                } else {
-                    console.warn('Service Worker 已注册，但当前页面未被控制');
-                }
-            }).catch(err => console.error('Service Worker 注册失败:', err));
-        }
         window.location.reload(true); // 强制从服务器重新加载
+        showmsg('数据已清除，请重新登录');
     }
     // 设置页，编辑记忆模式
     memori_modifica() {
@@ -1722,7 +1711,7 @@ class Setpage {
                 };
             }
             if (!result[mem.MOTIVONAME]) {
-                this.showmemori(mem.MOTIVOID);
+                set.showmemori(mem.MOTIVOID);
             }
         }
     }
