@@ -741,7 +741,7 @@ class Main {
         });
         item.addEventListener('touchend', function() {
             const viewportWidth = window.innerWidth;
-            const moviwidth = viewportWidth * 0.03 + 140;
+            const moviwidth = viewportWidth * 0.03 + 130;
             if (diffX < -170) {
                 item.style.transform = `translateX(-${moviwidth}px)`
             } else {

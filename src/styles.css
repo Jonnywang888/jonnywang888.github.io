@@ -236,12 +236,28 @@ body, html {
     font-size: 12px;
     color: var(--qianhui);
 }
+.li-modi{
+    font-size: 14px;
+    background-color: #fff;
+    color: green;
+    margin-left: 5px;
+    width: 60px;
+    height: 30px;
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 5px;
+    border: 1px solid green;
+    position: absolute;
+    top: 6px; /* 定位到 movili 的底部 */
+    right: calc(3% + 65px); /* 按钮左对齐 */
+    box-sizing: border-box;
+}
 .li-but{
     font-size: 14px;
     background-color: #fff;
     color: red;
     margin-left: 5px;
-    width: 70px;
+    width: 60px;
     height: 30px;
     text-align: center;
     vertical-align: middle;
