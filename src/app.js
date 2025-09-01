@@ -431,10 +431,8 @@ class Main {
         this.needload = true;
         this.groupdata = {};
         this.groupmese = {};
-        this.distance = 0;
-        this.startPosition = 0; 
         window.addEventListener('scroll', () => this.scrolling());
-        window.addEventListener('scroll', () => this.refresh())
+        window.addEventListener('load', () => this.refresh());
         document.getElementById('but-tianjia').addEventListener('click', add.init);
         this.loading();
     }
@@ -471,41 +469,82 @@ class Main {
     // 刷新内容
     async refresh() {
         const maincontainer = document.getElementById('maincontainer');
+        
+        // 避免重复绑定事件
+        if (this.refreshBound) return;
+        this.refreshBound = true;
+        
+        // 初始化变量
+        this.startPosition = 0;
+        this.distance = 0;
+        this.isRefreshing = false;
+        
         maincontainer.addEventListener('touchstart', (e) => {
+            // 只有在页面顶部才允许下拉刷新
+            if (window.scrollY > 0) return;
+            
             const refreshtext = document.getElementById('refresh-text');
             refreshtext.textContent = '下拉刷新';
-            maincontainer.startPosition = e.touches[0].pageY;
+            this.startPosition = e.touches[0].pageY; // 修复：使用 this.startPosition
+            this.isRefreshing = false;
         });
+        
         maincontainer.addEventListener('touchmove', (e) => {
+            // 只有在页面顶部才允许下拉刷新
+            if (window.scrollY > 0 || this.isRefreshing) return;
+            
             const refreshtext = document.getElementById('refresh-text');
             const currentPosition = e.touches[0].pageY;
             this.distance = currentPosition - this.startPosition;
-            if (this.distance > 150) {
-                refreshtext.textContent = '释放刷新';
-            }
-            if (this.distance < 100) {
+            
+            // 只处理向下拉的情况，并且需要一定距离才触发
+            if (this.distance > 20) { // 增加最小触发距离
+                e.preventDefault(); // 防止页面滚动
+                
+                if (this.distance > 150) {
+                    refreshtext.textContent = '释放刷新';
+                    maincontainer.style.transform = `translateY(${Math.min(this.distance * 0.5, 100)}px)`;
+                } else if (this.distance > 50) { // 增加中间状态
+                    refreshtext.textContent = '继续下拉';
+                    maincontainer.style.transform = `translateY(${this.distance * 0.3}px)`;
+                }
+                
                 maincontainer.style.transition = 'transform 0s';
             }
-        })
+        });
+        
         maincontainer.addEventListener('touchend', async (e) => {
+            if (this.isRefreshing) return;
+            
             const refreshtext = document.getElementById('refresh-text');
             maincontainer.style.transition = 'transform 0.5s';
-            if (this.distance > 0 && this.distance < 100) {
-                maincontainer.style.transform = `translateY(0px)`
-                return;
-            }
+            
+            // 只有下拉距离足够才执行刷新
             if (this.distance > 150) {
+                this.isRefreshing = true;
                 maincontainer.style.transform = `translateY(100px)`;
                 refreshtext.textContent = '刷新中';
-                await this.aggiornamento();
-                setTimeout(() => {
-                    refreshtext.textContent = '刷新成功';
-                    maincontainer.style.transform = `translateY(0px)`
-                },750)
+                
+                try {
+                    await this.aggiornamento();
+                    setTimeout(() => {
+                        refreshtext.textContent = '刷新成功';
+                        maincontainer.style.transform = `translateY(0px)`;
+                        this.isRefreshing = false;
+                    }, 750);
+                } catch (error) {
+                    refreshtext.textContent = '刷新失败';
+                    maincontainer.style.transform = `translateY(0px)`;
+                    this.isRefreshing = false;
+                }
+            } else {
+                // 距离不够，直接回弹
+                maincontainer.style.transform = `translateY(0px)`;
             }
+            
             this.distance = 0;
-        })
-    };
+        });
+    }
     async uploadmovimento() {
         const data = JSON.parse(localStorage.getItem('upload'));
         for (let i = 0; i < data.length; i++) {
@@ -688,27 +727,27 @@ class Main {
                     li.classList.add("li-floor");
                 }
                 li.innerHTML = 
-                        `<div class="li ${isTot ? "" : "movili"}">
-                            <div class="li-date">
-                                ${isTot ? item.DATE : `<img class="li-icon" src="${item.IMG}" />`}
-                            </div>
-                            <div class="li-motivo">
-                                ${item.MOTIVO}
-                                ${!isTot ? `<div class="li-nota">${item.NOTA}</div>` : ""}
-                            </div>
-                            ${isTot ? `<div class="li-valuein">${item.SPESA.in === 0 ? "": "+" + item.SPESA.in.toFixed(2)}</div>
-                                    <div class="li-value">${item.SPESA.out.toFixed(2)}</div>`
-                                :`<div class="li-nome">${userText}</div>
-                                    <div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
+                    `<div class="li ${isTot ? "" : "movili"}">
+                        <div class="li-date">
+                            ${isTot ? item.DATE : `<img class="li-icon" src="${item.IMG}" />`}
                         </div>
-                        ${isTot ? "" : `<button class="li-modi" data-id="${item.ID}">编辑</button><button class="li-but" data-id="${item.ID}">删除</button>`}`
+                        <div class="li-motivo">
+                            ${item.MOTIVO}
+                            ${!isTot ? `<div class="li-nota">${item.NOTA}</div>` : ""}
+                        </div>
+                        ${isTot ? `<div class="li-valuein">${item.SPESA.in === 0 ? "": "+" + item.SPESA.in.toFixed(2)}</div>
+                                <div class="li-value">${item.SPESA.out.toFixed(2)}</div>`
+                            :`<div class="li-nome">${userText}</div>
+                                <div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
+                    </div>
+                    ${isTot ? "" : `<button class="li-modi" data-id="${item.ID}">编辑</button><button class="li-but" data-id="${item.ID}">删除</button>`}`
+                const butdel = li.querySelector(".li-but");
+                if (butdel) {
+                    butdel.addEventListener("click", () => this.del(butdel));
+                    // this.setdelete(li)
+                };
                 list.appendChild(li);
             }
-            const buts = document.querySelectorAll(".li-but");
-            buts.forEach(btn => {
-                btn.onclick = null; // 清除之前的点击事件
-                btn.addEventListener("click", () => this.del(btn))
-            });
             const items = document.querySelectorAll(".movili")
             items.forEach(item => this.setdelete(item));
         }
@@ -718,7 +757,7 @@ class Main {
     // 设置滑动删除事件
     setdelete(item) {
         var startX, currentX,diffX;
-        const maxSlide = -175; // 最大滑动距离（负值表示向左滑动）
+        const maxSlide = -135; // 最大滑动距离（负值表示向左滑动）
         const lis = document.querySelectorAll('.movili');
         item.addEventListener('touchstart', function(e) {
             lis.forEach((e) => {
@@ -742,7 +781,7 @@ class Main {
         item.addEventListener('touchend', function() {
             const viewportWidth = window.innerWidth;
             const moviwidth = viewportWidth * 0.03 + 130;
-            if (diffX < -170) {
+            if (diffX < -70) {
                 item.style.transform = `translateX(-${moviwidth}px)`
             } else {
                 item.style.transform = `translateX(${0}px)`
