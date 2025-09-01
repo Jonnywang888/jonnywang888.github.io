@@ -566,8 +566,7 @@ class Main {
         const numlist = this.listmovimento.length
         if (this.needload === false) return
         this.needload = false;
-        // const id = minmaxid(numlist)
-        const id = minmaxid(2)
+        const id = minmaxid(numlist)
         const minid = id[0]
         const maxid = id[1]
         // 从数据库获取数据
@@ -702,7 +701,7 @@ class Main {
                                 :`<div class="li-nome">${userText}</div>
                                     <div class="li-value">${item.SPESA > 0 ? "+" : ""}${item.SPESA}</div>`}
                         </div>
-                        ${isTot ? "" : `<button class="li-but" data-id="${item.ID}">删除</button>`}`
+                        ${isTot ? "" : `<button class="li-modi" data-id="${item.ID}">编辑</button><button class="li-but" data-id="${item.ID}">删除</button>`}`
                 list.appendChild(li);
             }
             const buts = document.querySelectorAll(".li-but");
@@ -914,11 +913,12 @@ class Addpage {
         add.caricamotivilist();
         let movimento = await db.getIdData(id);
         const motivo = getnomemotivo(movimento.MOTIVO)
+        const img = getimgmotivo(movimento.MOTIVO)
         document.getElementById('current-motivo').innerText = motivo;
         document.getElementById('current-motivo').setAttribute('idmotivo',movimento.MOTIVO);
-        document.getElementById('current-img').src = img;
+        document.getElementById('current-img').src = `icons/${img}.png`
         document.getElementById('tas-nota').value = movimento.NOTA;
-        document.getElementById('current-value').innerText = '0.00';
+        document.getElementById('current-value').innerText = (0 - movimento.SPESA).toFixed(2);
         document.getElementById('current-value').setAttribute('num',0 - movimento.SPESA)
         document.querySelector('.nota').style.display = 'none';
     }
