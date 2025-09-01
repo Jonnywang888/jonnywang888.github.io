@@ -1492,8 +1492,16 @@ class Setpage {
             request.onblocked = () => resolve();
         });
         await res;
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then((registration) => {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage('clear-cache');
+                } else {
+                    console.warn('Service Worker 已注册，但当前页面未被控制');
+                }
+            }).catch(err => console.error('Service Worker 注册失败:', err));
+        }
         window.location.reload(true); // 强制从服务器重新加载
-        showmsg('数据已清除，请重新登录');
     }
     // 设置页，编辑记忆模式
     memori_modifica() {
