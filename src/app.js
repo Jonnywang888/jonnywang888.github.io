@@ -145,6 +145,36 @@ class Database {
             };
         });
     }
+    async delIdData(id) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE);
+
+            const getRequest = store.get(id);
+
+            getRequest.onsuccess = function (event) {
+                const data = event.target.result;
+                if (data) {
+                    data.DEL = 1; // 逻辑删除
+                    const updateRequest = store.put(data);
+                    updateRequest.onsuccess = function () {
+                        resolve(true);
+                    };
+                    updateRequest.onerror = function (event) {
+                        reject(event.target.error);
+                    };
+                } else {
+                    resolve(false); // 没找到该 id
+                }
+            };
+
+            getRequest.onerror = function (event) {
+                reject(event.target.error);
+            };
+        });
+    }
+
 }
 class Fetchapi {
     constructor() {
@@ -247,31 +277,62 @@ class Fetchapi {
 }
 class Calendario {
     constructor() {
-        document.querySelector('.prev-year').addEventListener('click', function() {
-            currentDate.setFullYear(currentDate.getFullYear() - 1);
+        this.currentDate = new Date();
+        this.timeid = 0;
+        document.querySelector('.prev-year').addEventListener('click', () => {
+            this.currentDate.setFullYear(this.currentDate.getFullYear() - 1);
             this.update();
         });
-        document.querySelector('.next-year').addEventListener('click', function() {
-            currentDate.setFullYear(currentDate.getFullYear() + 1);
+        document.querySelector('.next-year').addEventListener('click', () => {
+            this.currentDate.setFullYear(this.currentDate.getFullYear() + 1);
             this.update();
         });
-        document.querySelector('.prev-month').addEventListener('click', function() {
-            currentDate.setMonth(currentDate.getMonth() - 1);
+        document.querySelector('.prev-month').addEventListener('click', () => {
+            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
             this.update();
         });
-        document.querySelector('.next-month').addEventListener('click', function() {
-            currentDate.setMonth(currentDate.getMonth() + 1);
+        document.querySelector('.next-month').addEventListener('click', () => {
+            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
             this.update();
         });
     }
     // 更新日历
-    update() {
-        const currentDate = new Date();
+    update(dateString) {
+        // 格式化函数，把 Date 转换为 "2509021055055"
+        const formatDateId = (date) => {
+            const yy = String(date.getFullYear()).slice(-2); // 2025 → "25"
+            const MM = String(date.getMonth() + 1).padStart(2, '0'); 
+            const dd = String(date.getDate()).padStart(2, '0');
+            const hh = String(date.getHours()).padStart(2, '0');
+            const mm = String(date.getMinutes()).padStart(2, '0');
+            const ss = String(date.getSeconds()).padStart(2, '0');
+            const d = Math.floor(date.getMilliseconds() / 100); // 转成 0-9
+            return yy + MM + dd + hh + mm + ss + d;
+        };
+
+        if (dateString) {
+            const year = 2000 + parseInt(dateString.slice(0, 2), 10);
+            const month = parseInt(dateString.slice(2, 4), 10) - 1;
+            const day = parseInt(dateString.slice(4, 6), 10);
+            const hour = parseInt(dateString.slice(6, 8), 10);
+            const minute = parseInt(dateString.slice(8, 10), 10);
+            const second = parseInt(dateString.slice(10, 12), 10);
+            const ms = parseInt(dateString.slice(12, 13), 10) * 100;
+
+            this.currentDate = new Date(year, month, day, hour, minute, second, ms);
+        }
+
+        // 设置 this.timeid
+        const timeid = formatDateId(this.currentDate);
+        this.timeid = Number(timeid);
+        const currentdata = document.querySelector('#tas-data')
+        currentdata.innerText = `20${timeid.slice(0, 2)}年 ${timeid.slice(2, 4)}月 ${timeid.slice(4, 6)}日`
+
         const calendarDaysElement = document.querySelector('.calendar-days');
         const yearDisplayElement = document.querySelector('.year-display');
         const monthDisplayElement = document.querySelector('.month-display');
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
 
         // 设置年份和月份显示
         const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -300,14 +361,21 @@ class Calendario {
             dayElement.classList.add('day');
             dayElement.textContent = i;
 
-            // 如果是今天，则选中
-            if (i === currentDate.getDate() && new Date().getMonth() === month && new Date().getFullYear() === year) {
+            if (i === this.currentDate.getDate()) {
                 dayElement.classList.add('selected');
             }
 
-            dayElement.addEventListener('click', function() {
+            dayElement.addEventListener('click', () => {
                 document.querySelectorAll('.calendar-days .day').forEach(d => d.classList.remove('selected'));
-                this.classList.add('selected');
+                dayElement.classList.add('selected');
+
+                // 点击时更新 this.timeid（保持时分秒不变，只改日期）
+                const newDate = new Date(this.currentDate);
+                newDate.setDate(i);
+                const timeid = formatDateId(newDate);
+                this.timeid = Number(timeid);
+                const currentdata = document.querySelector('#tas-data')
+                currentdata.innerText = `20${timeid.slice(0, 2)}年 ${timeid.slice(2, 4)}月 ${timeid.slice(4, 6)}日`
             });
 
             calendarDaysElement.appendChild(dayElement);
@@ -331,15 +399,6 @@ class Calendario {
     hidden() {
         const calendar = document.querySelector('#calendar')
         calendar.classList.add('hidden')
-    }
-    // 日历选择事件
-    setdata() {
-        const day = String('0'+document.querySelector('.calendar-days .day.selected').innerText).slice(-2)
-        const month = String('0'+document.querySelector('.month-display').innerText.replace('月', '')).slice(-2)
-        const year = document.querySelector('.year-display').innerText.slice(2,4)
-        const currentdata = document.querySelector('#tas-data')
-        currentdata.innerText = `20${year}年 ${document.querySelector('.month-display').innerText}${Number(day)}日`
-        currentdata.setAttribute('id-data',`${year}${month}${day}`)
     }
 }
 class App {
@@ -469,58 +528,42 @@ class Main {
     // 刷新内容
     async refresh() {
         const maincontainer = document.getElementById('maincontainer');
-        
+        const refreshtext = document.getElementById('refresh-text');
         // 避免重复绑定事件
-        if (this.refreshBound) return;
-        this.refreshBound = true;
-        
-        // 初始化变量
-        this.startPosition = 0;
-        this.distance = 0;
+        if (this.isRefreshing) return;
         this.isRefreshing = false;
         
         maincontainer.addEventListener('touchstart', (e) => {
+            const top = maincontainer.getBoundingClientRect().top;
             // 只有在页面顶部才允许下拉刷新
-            if (window.scrollY > 0) return;
-            
+            if (top < 0) return;
             const refreshtext = document.getElementById('refresh-text');
             refreshtext.textContent = '下拉刷新';
-            this.startPosition = e.touches[0].pageY; // 修复：使用 this.startPosition
             this.isRefreshing = false;
         });
         
         maincontainer.addEventListener('touchmove', (e) => {
-            // 只有在页面顶部才允许下拉刷新
-            if (window.scrollY > 0 || this.isRefreshing) return;
-            
-            const refreshtext = document.getElementById('refresh-text');
-            const currentPosition = e.touches[0].pageY;
-            this.distance = currentPosition - this.startPosition;
-            
-            // 只处理向下拉的情况，并且需要一定距离才触发
-            if (this.distance > 20) { // 增加最小触发距离
-                e.preventDefault(); // 防止页面滚动
-                
-                if (this.distance > 150) {
-                    refreshtext.textContent = '释放刷新';
-                    maincontainer.style.transform = `translateY(${Math.min(this.distance * 0.5, 100)}px)`;
-                } else if (this.distance > 50) { // 增加中间状态
-                    refreshtext.textContent = '继续下拉';
-                    maincontainer.style.transform = `translateY(${this.distance * 0.3}px)`;
-                }
-                
-                maincontainer.style.transition = 'transform 0s';
+            const top = maincontainer.getBoundingClientRect().top;
+            if (top > 120) {
+                console.log(top);
+                refreshtext.textContent = '释放刷新';
+                // maincontainer.style.transform = `translateY(${Math.min(top * 0.5, 100)}px)`;
+            } else if (top > 50) { // 增加中间状态
+                refreshtext.textContent = '继续下拉';
+                maincontainer.style.transform = `translateY(${top * 0.3}px)`;
             }
+            maincontainer.style.transition = 'transform 0s';
         });
         
         maincontainer.addEventListener('touchend', async (e) => {
             if (this.isRefreshing) return;
-            
+            const top = maincontainer.getBoundingClientRect().top;
+
             const refreshtext = document.getElementById('refresh-text');
             maincontainer.style.transition = 'transform 0.5s';
             
             // 只有下拉距离足够才执行刷新
-            if (this.distance > 150) {
+            if (top > 120) {
                 this.isRefreshing = true;
                 maincontainer.style.transform = `translateY(100px)`;
                 refreshtext.textContent = '刷新中';
@@ -538,11 +581,8 @@ class Main {
                     this.isRefreshing = false;
                 }
             } else {
-                // 距离不够，直接回弹
                 maincontainer.style.transform = `translateY(0px)`;
             }
-            
-            this.distance = 0;
         });
     }
     async uploadmovimento() {
@@ -576,27 +616,27 @@ class Main {
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
-                // 等待 response.json() 解析
                 return response.json();
             })
-            .then(response => {
-                // 获取数据库数据并处理
-                return db.getDbData(0, 999999999999999, true).then(res => {
-                    // 比较从接口获取的响应和数据库中的数据
-                    const check = JSON.stringify(response) === JSON.stringify(res);
-                    if (!check) {
-                        db.addData(response).then(() => {
+            .then(jsonData => {
+                db.getDbData(0, 9999999999999, true).then(dbData => {
+                    const isSame = JSON.stringify(jsonData) === JSON.stringify(dbData);
+                    if (!isSame) {
+                        db.addData(jsonData).then(() => {
+                            this.listmovimento = [];
                             this.caricamovimentolist();
                         });
-                    } 
+                    }
                 });
             })
-            .catch(error => {
-                console.error('Fetch error: ', error);
+            .catch(err => {
+                console.error("Error in getmovimento flow:", err);
             });
     }
     // 从数据库获取数据，加载页面
     async caricamovimentolist() {
+        await this.loadnewlist();
+        this.showlist()
         await this.loadnewlist();
         this.showlist()
     }
@@ -742,9 +782,10 @@ class Main {
                     </div>
                     ${isTot ? "" : `<button class="li-modi" data-id="${item.ID}">编辑</button><button class="li-but" data-id="${item.ID}">删除</button>`}`
                 const butdel = li.querySelector(".li-but");
+                const butmodi = li.querySelector(".li-modi");
                 if (butdel) {
                     butdel.addEventListener("click", () => this.del(butdel));
-                    // this.setdelete(li)
+                    butmodi.addEventListener("click", () => add.modifica_movimento(item.ID));
                 };
                 list.appendChild(li);
             }
@@ -810,7 +851,6 @@ class Main {
         });
         observer.observe(load); // 监听 load 图片
     }
-    // 删除按钮
     del(item) {
         var userConfirmed = confirm("是否确认要删除这条记录？");
         if (userConfirmed) {
@@ -866,14 +906,10 @@ class Main {
             this.listmovimento.push(newdata)
         }
     }
-    changepage(page) {
-        const pages = document.querySelectorAll('.page');
-        pages.forEach(p => p.classList.add('hidden'));
-        document.getElementById(page).classList.remove('hidden');
-    }
 }
 class Addpage {
     constructor() {
+        this.oldid = false;
         document.getElementById('add-back').addEventListener('click', this.backtomain)
         document.querySelector('.addhead-out').addEventListener('click', (e) => this.setinout(e));
         document.querySelector('.addhead-in').addEventListener('click', (e) => this.    setinout(e));
@@ -881,14 +917,12 @@ class Addpage {
         document.addEventListener('keydown',(e) => this.tastiera_key(e));
         document.getElementById('tas-butnota').addEventListener('click', this.nota);
         document.getElementById('tas-data').addEventListener('click', calen.show);
-        document.querySelector('.calendar-ok').addEventListener('click', calen.setdata);
         document.querySelector('.calendar-ok').addEventListener('click', calen.hidden);
     }
     init() {
         api.attiva();
         calen.hidden();
         calen.update();
-        calen.setdata();
         changepage('addpage');
         add.caricamotivilist();
         add.init_newmovimento();
@@ -931,6 +965,7 @@ class Addpage {
     }
     // 初始化新建消费记录属性
     init_newmovimento() {
+        this.oldid = false;
         const tabmotivi = document.getElementById('tabmotivi');
         const child = tabmotivi.children[0];
         const motivo = child.querySelector('span').innerText;
@@ -945,9 +980,9 @@ class Addpage {
         document.querySelector('.nota').style.display = 'none';
     }
     async modifica_movimento(id) {
+        this.oldid = id;
         calen.hidden();
-        calen.update();
-        calen.setdata();
+        calen.update(String(id));
         changepage('addpage');
         add.caricamotivilist();
         let movimento = await db.getIdData(id);
@@ -1098,9 +1133,12 @@ class Addpage {
     }
     // 添加新的消费记录
     add() {
+        if (this.oldid && this.oldid != calen.timeid) {
+            db.delIdData(this.oldid)
+        }
         let spesa = Number(document.getElementById('current-value').innerText);
         if (spesa > 0) {
-            const id = Number(get_timeid());
+            const id = calen.timeid;
             const idmotivo = Number(document.getElementById('current-motivo').getAttribute('idmotivo'));
             const nota = document.getElementById('tas-nota').value;
             const sign = document.querySelector('.current-sign').innerText;
@@ -1815,7 +1853,6 @@ class Setpage {
             <div class="memori-item-name">${name}</div>`
         item.addEventListener('click',() => {
             calen.update();
-            calen.setdata();
             calen.hidden();
             changepage('addpage');
             document.getElementById('current-motivo').innerText = name;
