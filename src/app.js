@@ -320,6 +320,8 @@ class Calendario {
             const ms = parseInt(dateString.slice(12, 13), 10) * 100;
 
             this.currentDate = new Date(year, month, day, hour, minute, second, ms);
+        } else {
+            this.currentDate = new Date();
         }
 
         // 设置 this.timeid
