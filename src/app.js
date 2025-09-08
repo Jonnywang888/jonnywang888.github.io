@@ -921,6 +921,7 @@ class Addpage {
     }
     init() {
         api.attiva();
+        calen.currentDate = new Date();
         calen.hidden();
         calen.update();
         changepage('addpage');
