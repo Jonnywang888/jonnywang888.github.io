@@ -1,281 +1,116 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" />
-  <title>zxing-wasm 实时条码扫描示例（后置摄像头，横/竖兼容）</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>高效 EAN-13 条码扫描</title>
   <style>
-    body { font-family: system-ui, -apple-system, "Helvetica Neue", Arial; margin:0; padding:12px; background:#f7f7f8; color:#111; }
-    .app { max-width:880px; margin:0 auto; }
-    header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-    h1 { font-size:1.05rem; margin:0; }
-    #videoWrap { position:relative; width:100%; padding-top:56.25%; background:#000; border-radius:8px; overflow:hidden; }
-    video { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); } /* flip so preview feels natural — decode not affected */
-    canvas { display:none; }
-    .overlay { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); pointer-events:none; border:2px dashed rgba(255,255,255,0.25); width:60%; height:40%; box-sizing:border-box; border-radius:8px; }
-    .controls { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-    button { padding:8px 12px; border:0; background:#0b84ff; color:white; border-radius:6px; font-weight:600; }
-    button.secondary { background:#666; }
-    #result { margin-top:10px; padding:10px; background:white; border-radius:8px; min-height:44px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-    #log { margin-top:8px; font-size:0.85rem; color:#444; }
-    .small { font-size:0.85rem; color:#666; }
+    body { margin:0; font-family:sans-serif; background:#111; color:#fff; }
+    #video { width:100%; height:auto; background:#000; }
+    #overlay { position:absolute; border:2px dashed rgba(0,255,0,.5); width:60%; height:40%; 
+               left:20%; top:30%; pointer-events:none; }
+    #result { padding:10px; background:#222; text-align:center; font-size:1.2em; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>zxing-wasm 实时条码扫描（后置摄像头）</h1>
-    </header>
-
-    <div id="videoWrap">
-      <video id="video" autoplay playsinline></video>
-      <div class="overlay" title="扫描区域（程序只在此区域尝试解码，提高速度）"></div>
-    </div>
-
-    <div class="controls">
-      <button id="startBtn">启动摄像头并开始扫描</button>
-      <button id="stopBtn" class="secondary" disabled>停止</button>
-      <button id="toggleRotate" class="secondary">尝试旋转自动识别：开</button>
-      <div class="small" style="margin-left:auto">每次解析限制帧率： <span id="fpsLabel">8</span> FPS</div>
-    </div>
-
-    <div id="result">结果：<span id="resultText">——</span></div>
-    <div id="log" class="small">日志：初始化中…</div>
-
-    <!-- hidden canvases -->
-    <canvas id="capture"></canvas>
-    <canvas id="rotated"></canvas>
+  <div style="position:relative">
+    <video id="video" autoplay playsinline></video>
+    <div id="overlay"></div>
   </div>
+  <div id="result">等待扫描...</div>
 
-  <!-- zxing-wasm IIFE (reader only). 使用 CDN 的 IIFE 包，它会在 window.ZXingWASM 下导出函数。 -->
+  <canvas id="capture" style="display:none"></canvas>
+  <canvas id="rotated" style="display:none"></canvas>
+
   <script src="https://cdn.jsdelivr.net/npm/zxing-wasm/dist/iife/reader/index.js"></script>
-
   <script>
     (async () => {
-      const video = document.getElementById('video');
-      const startBtn = document.getElementById('startBtn');
-      const stopBtn = document.getElementById('stopBtn');
-      const resultText = document.getElementById('resultText');
-      const log = document.getElementById('log');
-      const capture = document.getElementById('capture');
-      const rotated = document.getElementById('rotated');
-      const toggleRotate = document.getElementById('toggleRotate');
-      const fpsLabel = document.getElementById('fpsLabel');
+      const video = document.getElementById("video");
+      const capture = document.getElementById("capture");
+      const rotated = document.getElementById("rotated");
+      const resultBox = document.getElementById("result");
 
-      let stream = null;
+      let lastText = "";
+      let lastTime = 0;
       let scanning = false;
-      let tryRotate = true;
-      let workerReady = false;
-      let frameIntervalMs = Math.round(1000 / 8); // 默认 8 FPS
-      let lastProcess = 0;
 
-      // readerOptions：可根据需要调整 formats、tryHarder 等
-      const readerOptions = {
+      const options = {
         tryHarder: true,
-        maxNumberOfSymbols: 5,
-        formats: ["EAN_13"]
-        // formats: ["QRCode","Code128","EAN_13", ...] // 可以限定格式以提高速度（不指定则尝试多种格式）
+        formats: ["EAN_13"],   // 只识别 EAN-13
       };
 
-      // 检查 ZXingWASM 是否就绪（IIFE 已载入）
-      function logMsg(...args){ log.textContent = '日志：' + args.join(' '); console.debug(...args); }
-
-      if (!window.ZXingWASM) {
-        logMsg('错误：zxing-wasm IIFE 未加载，请检查 CDN 链接。');
-        return;
-      } else {
-        logMsg('zxing-wasm 已加载，准备就绪。');
-        workerReady = true;
-      }
-
-      // 为移动设备选择后置摄像头（尽量用 exact / ideal）
       async function startCamera() {
-        const constraintsPreferred = {
-          audio: false,
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: { exact: "environment" } // 尝试强制后置
-          }
+        const constraints = {
+          video: { facingMode: { ideal: "environment" }, width:{ideal:1280}, height:{ideal:720} }
         };
-        const constraintsFallback = {
-          audio: false,
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: { ideal: "environment" }
-          }
-        };
-
-        try {
-          stream = await navigator.mediaDevices.getUserMedia(constraintsPreferred);
-        } catch (e) {
-          // 有些手机/浏览器不支持 exact：回退到 ideal
-          try {
-            stream = await navigator.mediaDevices.getUserMedia(constraintsFallback);
-          } catch (err) {
-            throw err;
-          }
-        }
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
-        await video.play();
-        // video 标签显示通常镜像（为了用户体验），但解码使用画布原始像素，不受镜像影响
-        return;
+        return new Promise(res => video.onloadedmetadata = res);
       }
 
-      // 从视频中截取指定中心区域 ImageData（缩小尺寸以加快解码）
-      function captureCenterImageData(scaleDown = 0.6) {
-        const vw = video.videoWidth;
-        const vh = video.videoHeight;
-        if (!vw || !vh) return null;
+      function getImageData() {
+        const w = video.videoWidth;
+        const h = video.videoHeight;
+        if (!w || !h) return null;
 
-        // 取中心区域（覆盖 overlay 大小比例）
-        const boxW = Math.round(vw * 0.6);
-        const boxH = Math.round(vh * 0.4);
+        // 裁剪中央区域
+        const cropW = Math.round(w * 0.6);
+        const cropH = Math.round(h * 0.4);
+        const sx = (w - cropW) / 2;
+        const sy = (h - cropH) / 2;
 
-        // 将其缩放到更小的尺寸再送去解码（平衡速度和读码率）
-        const targetW = Math.round(boxW * scaleDown);
-        const targetH = Math.round(boxH * scaleDown);
-
-        capture.width = targetW;
-        capture.height = targetH;
-        const ctx = capture.getContext('2d');
-        // 计算中心裁剪起点（注意 video 有可能旋转/镜像，但像素数据稳定）
-        const sx = Math.round((vw - boxW) / 2);
-        const sy = Math.round((vh - boxH) / 2);
-        try {
-          ctx.drawImage(video, sx, sy, boxW, boxH, 0, 0, targetW, targetH);
-        } catch (e) {
-          console.warn('drawImage error', e);
-          return null;
-        }
-        return ctx.getImageData(0, 0, targetW, targetH);
+        // 缩小到一半尺寸，加快解码
+        capture.width = cropW / 2;
+        capture.height = cropH / 2;
+        const ctx = capture.getContext("2d");
+        ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, capture.width, capture.height);
+        return ctx.getImageData(0, 0, capture.width, capture.height);
       }
 
-      // 把 ImageData 旋转 90°（用于竖向条码的检测）
-      function rotateImageData90(imageData) {
+      function rotateImageData(imageData) {
         const w = imageData.width, h = imageData.height;
-        rotated.width = h;
-        rotated.height = w;
-        const ctx = rotated.getContext('2d');
-        // create temporary canvas and put original pixels
-        const tmp = document.createElement('canvas');
+        rotated.width = h; rotated.height = w;
+        const ctx = rotated.getContext("2d");
+        const tmp = document.createElement("canvas");
         tmp.width = w; tmp.height = h;
-        tmp.getContext('2d').putImageData(imageData, 0, 0);
-        // rotate and draw
+        tmp.getContext("2d").putImageData(imageData,0,0);
         ctx.save();
-        ctx.translate(rotated.width / 2, rotated.height / 2);
-        ctx.rotate(Math.PI / 2);
-        ctx.drawImage(tmp, -w / 2, -h / 2);
+        ctx.translate(h/2, w/2);
+        ctx.rotate(Math.PI/2);
+        ctx.drawImage(tmp,-w/2,-h/2);
         ctx.restore();
-        return ctx.getImageData(0, 0, rotated.width, rotated.height);
+        return ctx.getImageData(0,0,h,w);
       }
 
-      // 调用 zxing-wasm 解码（ImageData -> 读码结果数组）
-      async function decodeImageData(imageData) {
-        if (!imageData) return [];
-        // ZXingWASM 提供 readBarcodesFromImageData(imageData, readerOptions)
-        try {
-          const results = await window.ZXingWASM.readBarcodesFromImageData(imageData, readerOptions);
-          // 返回结果数组（每项含 text, format, ...）
-          return results || [];
-        } catch (e) {
-          console.warn('decode error', e);
-          return [];
-        }
-      }
-
-      // 主循环：限频处理 + 先原图再（可选）旋转图尝试
       async function scanLoop() {
         if (!scanning) return;
-        const now = performance.now();
-        if (now - lastProcess < frameIntervalMs) {
-          requestAnimationFrame(scanLoop);
-          return;
+        const img = getImageData();
+        if (img) {
+          let results = await ZXingWASM.readBarcodesFromImageData(img, options);
+
+          if ((!results || results.length===0)) {
+            const rotatedImg = rotateImageData(img);
+            results = await ZXingWASM.readBarcodesFromImageData(rotatedImg, options);
+          }
+
+          if (results && results.length > 0) {
+            const text = results[0].text;
+            const now = Date.now();
+            // 去抖动：1秒内重复结果不触发
+            if (text !== lastText || now - lastTime > 1000) {
+              lastText = text;
+              lastTime = now;
+              resultBox.textContent = "识别结果: " + text;
+              console.log("条码格式:", results[0].format, " 内容:", text);
+            }
+          }
         }
-        lastProcess = now;
-
-        const img = captureCenterImageData(0.6);
-        if (!img) {
-          requestAnimationFrame(scanLoop);
-          return;
-        }
-
-        // 优先在原图上解码
-        let results = await decodeImageData(img);
-
-        // 如果没结果并允许旋转尝试，则对旋转图片再试一次（提高竖条码识别率）
-        if ((results.length === 0) && tryRotate) {
-          const rotatedImg = rotateImageData90(img);
-          results = await decodeImageData(rotatedImg);
-        }
-
-        if (results.length > 0) {
-          // 取第一个（或合并多个）
-          const r = results[0];
-          resultText.textContent = `${r.text}  （格式: ${r.format || r.symbology || 'unknown'}）`;
-          logMsg('解码成功：', r.text, '全部结果数量：' + results.length);
-          // 若要连续多次触发，可不停止扫描；此处短暂抑制重复结果
-          // 暂停 600ms 再继续（去抖）
-          await new Promise(res => setTimeout(res, 600));
-        }
-
-        requestAnimationFrame(scanLoop);
+        setTimeout(scanLoop, 150); // ~6FPS
       }
 
-      // 启动 / 停止事件
-      startBtn.addEventListener('click', async () => {
-        startBtn.disabled = true;
-        logMsg('请求摄像头权限...');
-        try {
-          await startCamera();
-          scanning = true;
-          stopBtn.disabled = false;
-          startBtn.disabled = true;
-          logMsg('摄像头已启动，开始扫描...');
-          // 启动主循环
-          requestAnimationFrame(scanLoop);
-        } catch (e) {
-          logMsg('启动摄像头失败：', e && e.message ? e.message : e);
-          startBtn.disabled = false;
-        }
-      });
-
-      stopBtn.addEventListener('click', () => {
-        scanning = false;
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-        resultText.textContent = '——';
-        logMsg('停止扫描');
-        if (stream) {
-          stream.getTracks().forEach(t => t.stop());
-          stream = null;
-          video.srcObject = null;
-        }
-      });
-
-      toggleRotate.addEventListener('click', () => {
-        tryRotate = !tryRotate;
-        toggleRotate.textContent = `尝试旋转自动识别：${tryRotate ? '开' : '关'}`;
-      });
-
-      // 允许用户通过点击页面增加/减少 FPS（可自行修改）
-      fpsLabel.addEventListener('click', () => {});
-      // 额外小功能：快速按键调整帧率（上/下）
-      window.addEventListener('keydown', (e) => {
-        if (e.key === '+') {
-          frameIntervalMs = Math.max(30, Math.round(frameIntervalMs * 0.85));
-        } else if (e.key === '-') {
-          frameIntervalMs = Math.min(500, Math.round(frameIntervalMs * 1.2));
-        }
-        fpsLabel.textContent = Math.round(1000 / frameIntervalMs);
-      });
-
-      // 显示初始 FPS 到界面
-      fpsLabel.textContent = Math.round(1000 / frameIntervalMs);
-
-      // 如果想在页面加载时自动启动（可选），可以在此处调用 startBtn.click()
-      // startBtn.click();
+      await startCamera();
+      scanning = true;
+      scanLoop();
     })();
   </script>
 </body>
