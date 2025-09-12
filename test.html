@@ -1,117 +1,520 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>高效 EAN-13 条码扫描</title>
-  <style>
-    body { margin:0; font-family:sans-serif; background:#111; color:#fff; }
-    #video { width:100%; height:auto; background:#000; }
-    #overlay { position:absolute; border:2px dashed rgba(0,255,0,.5); width:60%; height:40%; 
-               left:20%; top:30%; pointer-events:none; }
-    #result { padding:10px; background:#222; text-align:center; font-size:1.2em; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高效条码扫描器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .scanner-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .scan-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 180px;
+            border: 3px solid #00ff00;
+            border-radius: 8px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        }
+        
+        .scan-frame::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            border-radius: 12px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+        
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+            animation: scan 2s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(180px); }
+        }
+        
+        .result-panel {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-top: 1px solid #333;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .status {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .result {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff00;
+            text-align: center;
+            word-break: break-all;
+            min-height: 24px;
+        }
+        
+        .error {
+            color: #ff4444;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 10px;
+            color: #666;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-  <div style="position:relative">
-    <video id="video" autoplay playsinline></video>
-    <div id="overlay"></div>
-  </div>
-  <div id="result">等待扫描...</div>
+    <div class="scanner-container">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="scan-overlay">
+            <div class="scan-frame">
+                <div class="scan-line"></div>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="toggleBtn" class="btn">暂停</button>
+            <button id="switchBtn" class="btn">切换摄像头</button>
+        </div>
+        <div class="stats" id="stats">FPS: 0 | 尝试: 0</div>
+    </div>
+    
+    <div class="result-panel">
+        <div class="status" id="status">正在加载扫描引擎...</div>
+        <div class="result" id="result"></div>
+    </div>
 
-  <canvas id="capture" style="display:none"></canvas>
-  <canvas id="rotated" style="display:none"></canvas>
-
-  <script src="https://cdn.jsdelivr.net/npm/zxing-wasm/dist/iife/reader/index.js"></script>
-  <script>
-    (async () => {
-      const video = document.getElementById("video");
-      const capture = document.getElementById("capture");
-      const rotated = document.getElementById("rotated");
-      const resultBox = document.getElementById("result");
-
-      let lastText = "";
-      let lastTime = 0;
-      let scanning = false;
-
-      const options = {
-        tryHarder: true,
-        formats: ["EAN_13"],   // 只识别 EAN-13
-      };
-
-      async function startCamera() {
-        const constraints = {
-          video: { facingMode: { ideal: "environment" }, width:{ideal:1280}, height:{ideal:720} }
-        };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = stream;
-        return new Promise(res => video.onloadedmetadata = res);
-      }
-
-      function getImageData() {
-        const w = video.videoWidth;
-        const h = video.videoHeight;
-        if (!w || !h) return null;
-
-        // 裁剪中央区域
-        const cropW = Math.round(w * 0.6);
-        const cropH = Math.round(h * 0.4);
-        const sx = (w - cropW) / 2;
-        const sy = (h - cropH) / 2;
-
-        // 缩小到一半尺寸，加快解码
-        capture.width = cropW / 2;
-        capture.height = cropH / 2;
-        const ctx = capture.getContext("2d");
-        ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, capture.width, capture.height);
-        return ctx.getImageData(0, 0, capture.width, capture.height);
-      }
-
-      function rotateImageData(imageData) {
-        const w = imageData.width, h = imageData.height;
-        rotated.width = h; rotated.height = w;
-        const ctx = rotated.getContext("2d");
-        const tmp = document.createElement("canvas");
-        tmp.width = w; tmp.height = h;
-        tmp.getContext("2d").putImageData(imageData,0,0);
-        ctx.save();
-        ctx.translate(h/2, w/2);
-        ctx.rotate(Math.PI/2);
-        ctx.drawImage(tmp,-w/2,-h/2);
-        ctx.restore();
-        return ctx.getImageData(0,0,h,w);
-      }
-
-      async function scanLoop() {
-        if (!scanning) return;
-        const img = getImageData();
-        if (img) {
-          let results = await ZXingWASM.readBarcodesFromImageData(img, options);
-
-          if ((!results || results.length===0)) {
-            const rotatedImg = rotateImageData(img);
-            results = await ZXingWASM.readBarcodesFromImageData(rotatedImg, options);
-          }
-
-          if (results && results.length > 0) {
-            const text = results[0].text;
-            const now = Date.now();
-            // 去抖动：1秒内重复结果不触发
-            if (text !== lastText || now - lastTime > 1000) {
-              lastText = text;
-              lastTime = now;
-              resultBox.textContent = "识别结果: " + text;
-              console.log("条码格式:", results[0].format, " 内容:", text);
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-wasm/0.4.0/zxing_reader.js"></script>
+    <script>
+        class BarcodeScanner {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.reader = null;
+                this.scanning = false;
+                this.lastResult = null;
+                this.lastResultTime = 0;
+                this.debounceDelay = 2000; // 2秒去抖动
+                this.frameRate = 6; // 6 FPS
+                this.frameInterval = 1000 / this.frameRate;
+                this.lastFrameTime = 0;
+                this.currentCamera = 'environment'; // 后置摄像头
+                this.stream = null;
+                
+                // 统计信息
+                this.stats = {
+                    fps: 0,
+                    attempts: 0,
+                    lastStatsUpdate: Date.now(),
+                    frameCount: 0
+                };
+                
+                this.init();
             }
-          }
+            
+            async init() {
+                try {
+                    await this.initZXing();
+                    await this.initCamera();
+                    this.setupEventListeners();
+                    this.startScanning();
+                    this.updateStatus('准备就绪 - 将条码对准扫描框');
+                } catch (error) {
+                    this.showError('初始化失败: ' + error.message);
+                }
+            }
+            
+            async initZXing() {
+                this.reader = await ZXing();
+                // 只识别 EAN-13 格式
+                this.reader.setFormats(['EAN_13']);
+                // 启用 tryHarder 提高鲁棒性
+                this.reader.setTryHarder(true);
+            }
+            
+            async initCamera() {
+                const constraints = {
+                    video: {
+                        facingMode: this.currentCamera,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                
+                this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                this.video.srcObject = this.stream;
+                
+                return new Promise((resolve) => {
+                    this.video.onloadedmetadata = () => {
+                        resolve();
+                    };
+                });
+            }
+            
+            setupEventListeners() {
+                document.getElementById('toggleBtn').addEventListener('click', () => {
+                    this.toggleScanning();
+                });
+                
+                document.getElementById('switchBtn').addEventListener('click', () => {
+                    this.switchCamera();
+                });
+            }
+            
+            toggleScanning() {
+                const btn = document.getElementById('toggleBtn');
+                if (this.scanning) {
+                    this.stopScanning();
+                    btn.textContent = '开始';
+                    this.updateStatus('扫描已暂停');
+                } else {
+                    this.startScanning();
+                    btn.textContent = '暂停';
+                    this.updateStatus('正在扫描...');
+                }
+            }
+            
+            async switchCamera() {
+                this.currentCamera = this.currentCamera === 'environment' ? 'user' : 'environment';
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                }
+                await this.initCamera();
+                this.updateStatus('已切换摄像头');
+            }
+            
+            startScanning() {
+                this.scanning = true;
+                this.scanFrame();
+            }
+            
+            stopScanning() {
+                this.scanning = false;
+            }
+            
+            scanFrame() {
+                if (!this.scanning) return;
+                
+                const now = Date.now();
+                
+                // 控制帧率
+                if (now - this.lastFrameTime < this.frameInterval) {
+                    requestAnimationFrame(() => this.scanFrame());
+                    return;
+                }
+                
+                this.lastFrameTime = now;
+                this.stats.frameCount++;
+                
+                try {
+                    this.processFrame();
+                    this.updateStats();
+                } catch (error) {
+                    console.warn('扫描错误:', error);
+                }
+                
+                requestAnimationFrame(() => this.scanFrame());
+            }
+            
+            processFrame() {
+                const videoRect = this.video.getBoundingClientRect();
+                const videoWidth = this.video.videoWidth;
+                const videoHeight = this.video.videoHeight;
+                
+                if (!videoWidth || !videoHeight) return;
+                
+                // 计算中央区域（扫描框对应区域）
+                const scanWidth = 280;
+                const scanHeight = 180;
+                const scaleX = videoWidth / videoRect.width;
+                const scaleY = videoHeight / videoRect.height;
+                
+                const cropWidth = scanWidth * scaleX;
+                const cropHeight = scanHeight * scaleY;
+                const cropX = (videoWidth - cropWidth) / 2;
+                const cropY = (videoHeight - cropHeight) / 2;
+                
+                // 设置 canvas 尺寸为裁剪区域
+                this.canvas.width = cropWidth;
+                this.canvas.height = cropHeight;
+                
+                // 绘制裁剪的视频帧
+                this.ctx.drawImage(
+                    this.video,
+                    cropX, cropY, cropWidth, cropHeight,
+                    0, 0, cropWidth, cropHeight
+                );
+                
+                const imageData = this.ctx.getImageData(0, 0, cropWidth, cropHeight);
+                this.stats.attempts++;
+                
+                // 尝试解码
+                let result = this.tryDecode(imageData);
+                
+                // 如果解码失败，尝试旋转图像
+                if (!result) {
+                    result = this.tryDecodeWithRotation(imageData);
+                }
+                
+                if (result) {
+                    this.handleScanResult(result);
+                }
+            }
+            
+            tryDecode(imageData) {
+                try {
+                    const result = this.reader.readBarcodeFromImageData(
+                        imageData.data,
+                        imageData.width,
+                        imageData.height
+                    );
+                    return result;
+                } catch (error) {
+                    return null;
+                }
+            }
+            
+            tryDecodeWithRotation(imageData) {
+                const rotations = [90, 180, 270];
+                
+                for (const angle of rotations) {
+                    try {
+                        const rotatedImageData = this.rotateImageData(imageData, angle);
+                        const result = this.reader.readBarcodeFromImageData(
+                            rotatedImageData.data,
+                            rotatedImageData.width,
+                            rotatedImageData.height
+                        );
+                        if (result) {
+                            return result;
+                        }
+                    } catch (error) {
+                        continue;
+                    }
+                }
+                return null;
+            }
+            
+            rotateImageData(imageData, angle) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                if (angle === 90 || angle === 270) {
+                    canvas.width = imageData.height;
+                    canvas.height = imageData.width;
+                } else {
+                    canvas.width = imageData.width;
+                    canvas.height = imageData.height;
+                }
+                
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = imageData.width;
+                tempCanvas.height = imageData.height;
+                tempCtx.putImageData(imageData, 0, 0);
+                
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate((angle * Math.PI) / 180);
+                ctx.drawImage(tempCanvas, -imageData.width / 2, -imageData.height / 2);
+                
+                return ctx.getImageData(0, 0, canvas.width, canvas.height);
+            }
+            
+            handleScanResult(result) {
+                const now = Date.now();
+                const resultText = result.text;
+                
+                // 去抖动：同一结果在短时间内不重复触发
+                if (this.lastResult === resultText && 
+                    now - this.lastResultTime < this.debounceDelay) {
+                    return;
+                }
+                
+                this.lastResult = resultText;
+                this.lastResultTime = now;
+                
+                // 验证 EAN-13 格式
+                if (this.isValidEAN13(resultText)) {
+                    this.showResult(resultText);
+                    this.flashScanFrame();
+                }
+            }
+            
+            isValidEAN13(text) {
+                // EAN-13 应该是13位数字
+                return /^\d{13}$/.test(text);
+            }
+            
+            flashScanFrame() {
+                const frame = document.querySelector('.scan-frame');
+                frame.style.borderColor = '#fff';
+                frame.style.boxShadow = '0 0 0 9999px rgba(255, 255, 255, 0.1)';
+                
+                setTimeout(() => {
+                    frame.style.borderColor = '#00ff00';
+                    frame.style.boxShadow = '0 0 0 9999px rgba(0, 0, 0, 0.5)';
+                }, 200);
+            }
+            
+            showResult(text) {
+                document.getElementById('result').textContent = text;
+                this.updateStatus('扫描成功！');
+                
+                // 3秒后清除结果
+                setTimeout(() => {
+                    if (document.getElementById('result').textContent === text) {
+                        this.updateStatus('继续扫描...');
+                    }
+                }, 3000);
+            }
+            
+            updateStatus(message) {
+                document.getElementById('status').textContent = message;
+            }
+            
+            showError(message) {
+                const resultPanel = document.querySelector('.result-panel');
+                resultPanel.innerHTML = `<div class="error">${message}</div>`;
+            }
+            
+            updateStats() {
+                const now = Date.now();
+                if (now - this.stats.lastStatsUpdate >= 1000) {
+                    this.stats.fps = this.stats.frameCount;
+                    this.stats.frameCount = 0;
+                    this.stats.lastStatsUpdate = now;
+                    
+                    document.getElementById('stats').textContent = 
+                        `FPS: ${this.stats.fps} | 尝试: ${this.stats.attempts}`;
+                }
+            }
         }
-        setTimeout(scanLoop, 150); // ~6FPS
-      }
-
-      await startCamera();
-      scanning = true;
-      scanLoop();
-    })();
-  </script>
+        
+        // 启动应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new BarcodeScanner();
+        });
+        
+        // 防止页面缩放
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // 防止双击缩放
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
 </body>
 </html>
