@@ -1253,14 +1253,6 @@ button:active{
     color: white;
 }
 
-.date-input-hidden {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    z-index: -1;
-}
-
 .user-info {
     display: flex;
     align-items: center;
@@ -1272,7 +1264,6 @@ button:active{
     border-radius: 50%;
     align-items: center;
     justify-content: center;
-    object-fit: cover;
 }
 
 .todo-avatar {
