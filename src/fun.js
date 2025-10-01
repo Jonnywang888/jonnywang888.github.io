@@ -16,12 +16,12 @@ function registraserviceWorker() {
 }
 // 切换页面
 function changepage(id) {
-    let meta = document.querySelector('meta[name="theme-color"]');
-    if (id === "todopage") {
-        meta.setAttribute("content", "#49c2ef");
-    } else {
-        meta.setAttribute("content", "#f7f7f7");
-    }
+    // let meta = document.querySelector('meta[name="theme-color"]');
+    // if (id === "todopage") {
+    //     meta.setAttribute("content", "#49c2ef");
+    // } else {
+    //     meta.setAttribute("content", "#f7f7f7");
+    // }
     const pages = document.querySelectorAll('.page');
     pages.forEach(page => {
         page.classList.add('hidden');

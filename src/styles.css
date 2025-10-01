@@ -1902,3 +1902,12 @@ button:active{
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
 }
+.fake-statusbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top); /* iPhone 顶部安全区 */
+    background: var(--qianlan);
+    z-index: 9999;
+}
