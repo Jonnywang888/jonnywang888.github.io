@@ -9,7 +9,7 @@
     <link rel="icon" href="/icons/app.png">
     <meta name="theme-color" content="#f7f7f7"/>
     <meta name="version" content="2.0"/>
-    <link rel="stylesheet" href="src/styles.css?v=2.0">
+    <link rel="stylesheet" href="src/styles.css?v=3.0">
 </head>
 <body>
     <div class="page hidden" id="biaopage">
@@ -67,7 +67,7 @@
             <ul id="info-list"></ul>
         </div>
     </div>
-    <div class="page" id="mainpage">
+    <div class="page hidden" id="mainpage">
         <div class="head">
             <div class="head-title">
                 <div class="head-data">
@@ -222,7 +222,7 @@
             <div class="head-title">设置界面</div>
         </div>
         <div class="set-page main center" id="sp-main">
-            <div class="avatar main">
+            <div class="logo main">
                 <img class="famiglia logo-utente" src="icons/famiglia.jpg" alt="">
             </div>
             <div class="set-utente"></div>
@@ -260,6 +260,249 @@
             <input type="submit" value="登录">
         </form>
     </div>
+    <div class="page" id="todopage">
+        <header class="header">
+            <div class="header-content">
+                <div class="date-info">
+                    <h1 class="title">今日任务</h1>
+                </div>
+                <div class="user-info">
+                    <div class="todo-avatar">
+                        <img class="todo-avatar-img" src="icons/Matteo.jpg" alt="">
+                    </div>
+                    <div class="user-name">用户1</div>
+                    <div class="points">
+                        <span class="star">⭐</span>
+                        <span class="count">120</span>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-arrows">
+                <p class="date-display" id="date-display">2025年9月27日星期六</p>
+                <input type="date" id="date-input" class="date-input-hidden">
+                <button class="nav-btn prev">‹</button>
+                <button class="nav-btn next">›</button>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 待完成任务 -->
+            <section class="task-section">
+                <div class="section-header">
+                    <h2>待完成任务</h2>
+                    <span class="task-count">3项</span>
+                </div>
+                <div class="task-list" id="pending-tasks"></div>
+            </section>
+
+            <!-- 已完成任务 -->
+            <section class="task-section">
+                <div class="section-header">
+                    <h2>已完成任务</h2>
+                    <span class="task-count">2项</span>
+                </div>
+                <div class="task-list" id="completed-tasks"></div>
+            </section>
+        </main>
+
+        <!-- 添加任务按钮 -->
+        <button class="add-task-btn" id="add-task-btn">+</button>
+        <!-- 任务详情模态框 -->
+        <div class="modal" id="task-details-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>任务详情</h3>
+                    <button class="close-btn" id="close-details-modal">×</button>
+                </div>
+                <div class="task-details-content">
+                    <div class="detail-item">
+                        <label>任务标题</label>
+                        <div class="detail-value" id="detail-title"></div>
+                    </div>
+                    <div class="detail-item">
+                        <label>任务描述</label>
+                        <div class="detail-value" id="detail-desc"></div>
+                    </div>
+                    <div class="detail-item">
+                        <label>任务时间</label>
+                        <div class="detail-value" id="detail-time"></div>
+                    </div>
+                    <div class="detail-item">
+                        <label>积分值</label>
+                        <div class="detail-value" id="detail-points"></div>
+                    </div>
+                    <div class="detail-item">
+                        <label>任务类型</label>
+                        <div class="detail-value" id="detail-type"></div>
+                    </div>
+                    <div class="detail-item" id="detail-repeat-info" style="display: none;">
+                        <label>重复日期</label>
+                        <div class="detail-value" id="detail-repeat"></div>
+                    </div>
+                    <div class="detail-item" id="detail-date-info" style="display: none;">
+                        <label>任务日期</label>
+                        <div class="detail-value" id="detail-date"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 添加任务模态框 -->
+        <div class="modal" id="add-task-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>添加新任务</h3>
+                    <button class="close-btn" id="close-modal">×</button>
+                </div>
+                <form id="add-task-form">
+                    <div class="form-group">
+                        <label for="task-title">任务标题</label>
+                        <input type="text" id="task-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-desc">任务描述</label>
+                        <input type="text" id="task-desc">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group form-group-half">
+                            <label for="task-time">任务时间</label>
+                            <input type="time" id="task-time" value="09:00">
+                        </div>
+                        <div class="form-group form-group-half">
+                            <label for="task-point">积分值</label>
+                            <input type="number" id="task-point" min="1" value="10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-type">任务类型</label>
+                        <select id="task-type">
+                            <option value="once">一次性任务</option>
+                            <option value="repeat">重复任务</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="once-options">
+                        <label for="task-date">任务日期</label>
+                        <input type="date" id="task-date">
+                    </div>
+                    <div class="form-group" id="repeat-options" style="display: none;">
+                        <label>重复日期</label>
+                        <div class="weekday-selector">
+                            <label class="weekday-item">
+                                <input type="checkbox" value="1" id="monday">
+                                <span>一</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="2" id="tuesday">
+                                <span>二</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="3" id="wednesday">
+                                <span>三</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="4" id="thursday">
+                                <span>四</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="5" id="friday">
+                                <span>五</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="6" id="saturday">
+                                <span>六</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="0" id="sunday">
+                                <span>日</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="cancel-btn">取消</button>
+                        <button type="submit" class="btn-submit">添加</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 编辑任务模态框 -->
+        <div class="modal" id="edit-task-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>编辑任务</h3>
+                    <button class="close-btn" id="close-edit-modal">×</button>
+                </div>
+                <form id="edit-task-form">
+                    <div class="form-group">
+                        <label for="edit-task-title">任务标题</label>
+                        <input type="text" id="edit-task-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-desc">任务描述</label>
+                        <input type="text" id="edit-task-desc">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group form-group-half">
+                            <label for="edit-task-time">任务时间</label>
+                            <input type="time" id="edit-task-time" value="09:00">
+                        </div>
+                        <div class="form-group form-group-half">
+                            <label for="edit-task-point">积分值</label>
+                            <input type="number" id="edit-task-point" min="1" value="30">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-type">任务类型</label>
+                        <select id="edit-task-type">
+                            <option value="once">一次性任务</option>
+                            <option value="repeat">重复任务</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="edit-once-options">
+                        <label for="edit-task-date">任务日期</label>
+                        <input type="date" id="edit-task-date">
+                    </div>
+                    <div class="form-group" id="edit-repeat-options" style="display: none;">
+                        <label>重复日期</label>
+                        <div class="weekday-selector">
+                            <label class="weekday-item">
+                                <input type="checkbox" value="1" id="edit-monday">
+                                <span>一</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="2" id="edit-tuesday">
+                                <span>二</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="3" id="edit-wednesday">
+                                <span>三</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="4" id="edit-thursday">
+                                <span>四</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="5" id="edit-friday">
+                                <span>五</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="6" id="edit-saturday">
+                                <span>六</span>
+                            </label>
+                            <label class="weekday-item">
+                                <input type="checkbox" value="0" id="edit-sunday">
+                                <span>日</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="edit-cancel-btn">取消</button>
+                        <button type="button" class="btn-danger" id="delete-task-btn">删除</button>
+                        <button type="submit" class="btn-submit">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="foot">
         <div class="foot-item" id="but-baobiao" page="biaopage">
             <img src="icons/baobiao.png" alt="报表">
@@ -273,14 +516,17 @@
             <img src="icons/carta.png" alt="卡">
             <div>卡包</div>
         </div>
+        <div class="foot-item" id="but-todo" page="todopage">
+            <img src="icons/todo.png" alt="卡">
+        <div>任务</div>
+        </div>
         <div class="foot-item" id="but-renwu" page="setpage">
             <img src="icons/renwu.png" alt="人物">
             <div>设置</div>
         </div>
     </div>
     <script src="src/bwip-js-min.js"></script>
-    <script src="src/fun.js?v=2.0"></script>
-    <!-- <script src="src/script.js?v=1.71"></script> -->
-    <script src="src/app.js?v=2.0"></script>
+    <script src="src/fun.js?v=3.0"></script>
+    <script src="src/app.js?v=3.0"></script>
 </body>
 </html>

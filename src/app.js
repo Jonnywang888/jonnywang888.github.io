@@ -2,6 +2,8 @@ class Database {
     constructor() {
         this.DB_NAME = 'DB';
         this.DB_STORE = 'movimento';
+        this.DB_STORE_TASKS = 'tasks';
+        this.DB_STORE_REPEATS = 'repeats';
         this.DB_VERSION = 1;
         this.db = null;
         this.initPromise = this.init();
@@ -17,12 +19,19 @@ class Database {
 
                 // 创建数据库表
                 if (!db.objectStoreNames.contains(this.DB_STORE)) {
-                    const movimentoStore = db.createObjectStore(this.DB_STORE, { keyPath: "ID", autoIncrement: false });
-                    movimentoStore.createIndex("MOTIVO", "MOTIVO", { unique: false });
-                    movimentoStore.createIndex("SPESA", "SPESA", { unique: false });
-                    movimentoStore.createIndex("NOTA", "NOTA", { unique: false });
-                    movimentoStore.createIndex("UTENTE", "UTENTE", { unique: false });
-                    movimentoStore.createIndex("DEL", "DEL", { unique: false });
+                    const Store = db.createObjectStore(this.DB_STORE, { keyPath: "ID", autoIncrement: false });
+                    Store.createIndex("MOTIVO", "MOTIVO", { unique: false });
+                    Store.createIndex("SPESA", "SPESA", { unique: false });
+                    Store.createIndex("NOTA", "NOTA", { unique: false });
+                    Store.createIndex("UTENTE", "UTENTE", { unique: false });
+                    Store.createIndex("DEL", "DEL", { unique: false });
+                }
+                // 创建数据库表
+                if (!db.objectStoreNames.contains(this.DB_STORE_TASKS)) {
+                    db.createObjectStore(this.DB_STORE_TASKS, { keyPath: "id", autoIncrement: false });
+                }
+                if (!db.objectStoreNames.contains(this.DB_STORE_REPEATS)) {
+                    db.createObjectStore(this.DB_STORE_REPEATS, { keyPath: "id", autoIncrement: false });
                 }
             };
 
@@ -174,11 +183,196 @@ class Database {
             };
         });
     }
+    async addTodoTasks(dataArray) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_TASKS], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE_TASKS);
 
+            let completed = 0;
+            let errors = [];
+
+            dataArray.forEach(data => {
+                const request = store.put(data);
+                
+                request.onsuccess = () => {
+                    completed++;
+                    if (completed === dataArray.length) {
+                        if (errors.length > 0) {
+                            reject(errors);
+                        } else {
+                            resolve(dataArray);
+                        }
+                    }
+                };
+                
+                request.onerror = (event) => {
+                    errors.push(event.target.error);
+                    completed++;
+                    if (completed === dataArray.length) {
+                        reject(errors);
+                    }
+                };
+            });
+
+            transaction.oncomplete = () => {
+                console.log(`成功导入${dataArray.length}个任务`);
+            };
+
+            transaction.onerror = (event) => {
+                reject(event.target.error);
+            };
+        });
+    }
+    async getTodoTasks() {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_TASKS], 'readonly');
+            const store = transaction.objectStore(this.DB_STORE_TASKS);
+
+            const getRequest = store.getAll();
+
+            getRequest.onsuccess = function (event) {
+                resolve(event.target.result);
+            };
+
+            getRequest.onerror = function (event) {
+                reject(event.target.error);
+            };
+        });
+    }
+    async delTodoTask(id) {
+        id = parseInt(id);
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_TASKS], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE_TASKS);
+
+            const request = store.delete(id);
+
+            request.onsuccess = () => {
+                console.log(id)
+                resolve(true);
+            };
+
+            request.onerror = (event) => {
+                console.log(event.target.error)
+                
+                reject(event.target.error);
+            };
+        });
+    }
+    async getTodoRepeats() {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_REPEATS], 'readonly');
+            const store = transaction.objectStore(this.DB_STORE_REPEATS);
+
+            const getRequest = store.getAll();
+
+            getRequest.onsuccess = function (event) {
+                resolve(event.target.result);
+            };
+
+            getRequest.onerror = function (event) {
+                reject(event.target.error);
+            };
+        });
+    }
+    async getTodoRepeat(id,currentDateStr) {
+        id = parseInt(id);
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_REPEATS], 'readonly');
+            const store = transaction.objectStore(this.DB_STORE_REPEATS);
+            // 使用索引查询 TASKID 等于 id 且 DATE 等于 currentDateStr 的所有记录
+            const request = store.openCursor();
+
+            request.onsuccess = function (event) {
+                const cursor = event.target.result;
+
+                if (cursor) {
+                    if (cursor.value.taskid == id && cursor.value.date == currentDateStr) {
+                        resolve(cursor.value);
+                        return;
+                    }
+                    cursor.continue();
+                } else {
+                    resolve(null);
+                }
+            };
+
+            request.onerror = function (event) {
+                reject(event.target.error);
+            };
+        });
+    }
+    async addTodoRepeat(data) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_REPEATS], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE_REPEATS);
+            const request = store.put(data);
+            request.onsuccess = () => {
+                resolve(true);
+            };
+            request.onerror = (event) => {
+                reject(event.target.error);
+            };
+        });
+    }
+    async addTodoRepeats(dataArray) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_REPEATS], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE_REPEATS);
+            
+            // 先清空现有数据
+            const clearRequest = store.clear();
+            clearRequest.onsuccess = () => {
+                // 添加新数据
+                if (dataArray && dataArray.length > 0) {
+                    let completed = 0;
+                    let hasError = false;
+                    
+                    dataArray.forEach((item, index) => {
+                        // 确保数据有正确的 id 字段
+                        if (!item.id && item.ID) {
+                            item.id = item.ID;
+                        } else if (!item.id && !item.ID) {
+                            item.id = Date.now() + index; // 生成唯一 ID
+                        }
+                        
+                        const request = store.put(item);
+                        request.onsuccess = () => {
+                            completed++;
+                            if (completed === dataArray.length && !hasError) {
+                                resolve(true);
+                            }
+                        };
+                        request.onerror = (event) => {
+                            if (!hasError) {
+                                hasError = true;
+                                console.error('添加重复任务数据失败:', event.target.error, '数据:', item);
+                                reject(event.target.error);
+                            }
+                        };
+                    });
+                } else {
+                    resolve(true);
+                }
+            };
+            clearRequest.onerror = (event) => {
+                console.error('清空重复任务数据失败:', event.target.error);
+                reject(event.target.error);
+            };
+        });
+    }
 }
 class Fetchapi {
     constructor() {
-        this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
+        this.url = 'http://192.168.1.99/server/app.asp';
+        // this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
     }
     // 获取备忘
     getmemori() {
@@ -273,6 +467,294 @@ class Fetchapi {
             action: 'carteinfo',
         };
         return this.fetchdata(body);
+    }
+    todo_getuser() {
+        const body = {
+            action: 'todo_getuser',
+        };
+        return this.fetchdata(body);
+    }
+    todo_gettasks() {
+        const body = {
+            action: 'todo_gettasks',
+        };
+        return this.fetchdata(body);
+    }
+    todo_getrepeats() {
+        const body = {
+            action: 'todo_getrepeats',
+        };
+        return this.fetchdata(body);
+    }
+    async todo_addtask(task) {
+        const repeatdays = JSON.stringify(task.repeatdays || []);
+        const dati = `${task.id},'${task.title}','${task.description}',${task.point},'${task.time}','${task.type}','${task.completed}','${task.date || ''}','${repeatdays}',${task.del},${task.userid}`
+        const body = {
+            action: 'todo_addtask',
+            dati: dati
+        };
+        
+        try {
+            const response = await this.fetchdata(body);
+            const res = await response.json();
+            
+            if (res) {
+                console.log('添加任务到服务器成功:', res);
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const found = upload.addtasks.find(item => item.id === task.id);
+                if (found) {
+                    upload.addtasks = upload.addtasks.filter(t => t.id != task.id);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: true, data: res };
+            } else {
+                showmsg('添加任务到服务器失败');
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const found = upload.addtasks.find(item => item.id === task.id);
+                if (!found) {
+                    upload.addtasks.push(task);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: false, error: '服务器返回失败' };
+            }
+        } catch (err) {
+            console.error('添加任务到服务器失败:', err);
+            // 服务器请求失败时也应该保存到本地
+            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            const found = upload.addtasks.find(item => item.id === task.id);
+            if (!found) {
+                upload.addtasks.push(task);
+                localStorage.setItem('todoupload', JSON.stringify(upload));
+            }
+            return { success: false, error: err };
+        }
+    }
+    async todo_updatetask(id) {
+        const task = todo.tasks.find(task => task.id == id);
+        const repeatdays = JSON.stringify(task.repeatdays || []);
+        const dati = `${task.id}|${task.title}|${task.description}|${task.point}|${task.time}|${task.type}|${task.completed}|${task.date || ''}|${repeatdays}|${task.del}|${task.userid}`
+        const body = {
+            action: 'todo_updatetask',
+            dati: dati
+        };
+        
+        try {
+            const response = await this.fetchdata(body);
+            const res = await response.json();
+            
+            if (res) {
+                console.log('更新任务到服务器成功:', res);
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                
+                if (upload.updatetasks.includes(id)) {
+                    upload.updatetasks = upload.updatetasks.filter(t => t != id);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: true, data: res };
+            } else {
+                showmsg('更新任务到服务器失败');
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                // 检查是否已存在，避免重复添加
+                if (!upload.updatetasks.includes(id)) {
+                    upload.updatetasks.push(id);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: false, error: '服务器返回失败' };
+            }
+        } catch (err) {
+            console.error('更新任务到服务器失败:', err);
+            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            // 检查是否已存在，避免重复添加
+            if (!upload.updatetasks.includes(id)) {
+                upload.updatetasks.push(id);
+                localStorage.setItem('todoupload', JSON.stringify(upload));
+            }
+            return { success: false, error: err };
+        }
+    }
+    async todo_deltask(id) {
+        const body = {
+            action: 'todo_deltask',
+            dati: id
+        };
+        
+        try {
+            const response = await this.fetchdata(body);
+            const res = await response.json();
+            
+            if (res) {
+                // 删除成功
+                console.log('删除任务成功:', res);
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                if (upload.deltasks.includes(id)) {
+                    upload.deltasks = upload.deltasks.filter(t => t != id);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: true, data: res };
+            } else {
+                // 删除失败
+                showmsg('删除任务失败:', res);
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                if (!upload.deltasks.includes(id)) {
+                    upload.deltasks.push(id);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: false, error: '服务器返回失败' };
+            }
+        } catch (err) {
+            console.error('删除任务到服务器失败:', err);
+            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            // 检查是否已存在，避免重复添加
+            if (!upload.deltasks.includes(id)) {
+                upload.deltasks.push(id);
+                localStorage.setItem('todoupload', JSON.stringify(upload));
+            }
+            return { success: false, error: err };
+        }
+    }
+    async todo_addmovimento(task, istask = true) {
+        let dati
+        if (istask) {
+            let punti = task.point
+            if (!task.completed) {
+                punti = - task.point
+            }
+            const currentdate = todo.formatLocalDate(todo.currentDate);
+            const now = new Date();
+            const id = now.getTime();
+            const time = todo.getLocalISOString();
+            dati = `${id},'${task.title}','${task.description}',${punti},${todo.currentUser.ID},'${time}','${currentdate}'`;
+        } else {
+            dati = task
+        }
+        const body = {
+            action: 'todo_addmovimento',
+            dati: dati
+        };
+        
+        try {
+            const response = await this.fetchdata(body);
+            const res = await response.json();
+            
+            if (res) {
+                console.log('添加任务到服务器成功:', res);
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const found = upload.addmovimento.find(item => item == dati);
+                if (found) {
+                    upload.addmovimento = upload.addmovimento.filter(t => t != dati);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: true, data: res };
+            } else {
+                showmsg('添加任务到服务器失败');
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const found = upload.addmovimento.find(item => item == dati);
+                if (!found) {
+                    upload.addmovimento.push(dati);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: false, error: '服务器返回失败' };
+            }
+        } catch (err) {
+            console.error('添加任务到服务器失败:', err);
+            // 服务器请求失败时也应该保存到本地
+            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            const found = upload.addmovimento.find(item => item == dati);
+            if (!found) {
+                upload.addmovimento.push(dati);
+                localStorage.setItem('todoupload', JSON.stringify(upload));
+            }
+            return { success: false, error: err };
+        }
+    };
+    async todo_addrepeat(task) {
+        const dati = `${task.id},${task.taskid},'${task.date}','${task.completed}'`
+        const body = {
+            action: 'todo_addrepeat',
+            dati: dati
+        };
+        
+        try {
+            const response = await this.fetchdata(body);
+            const res = await response.json();
+            
+            if (res) {
+                console.log('添加任务到服务器成功:', res);
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const found = upload.addrepeat.find(item => item.id == task.id);
+                if (found) {
+                    upload.addrepeat = upload.addrepeat.filter(t => t.id != task.id);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: true, data: res };
+            } else {
+                showmsg('添加任务到服务器失败');
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const found = upload.addrepeat.find(item => item.id == task.id);
+                if (!found) {
+                    upload.addrepeat.push(task);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: false, error: '服务器返回失败' };
+            }
+        } catch (err) {
+            console.error('添加任务到服务器失败:', err);
+            // 服务器请求失败时也应该保存到本地
+            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            const found = upload.addrepeat.find(item => item.id == task.id);
+            if (!found) {
+                upload.addrepeat.push(task);
+                localStorage.setItem('todoupload', JSON.stringify(upload));
+            }
+            return { success: false, error: err };
+        }
+    }
+    async todo_updaterepeat(task) {
+        const dati = `${task.id}|'${task.completed}'`
+        const body = {
+            action: 'todo_updaterepeat',
+            dati: dati
+        };
+        
+        try {
+            const response = await this.fetchdata(body);
+            const res = await response.json();
+            
+            if (res) {
+                console.log('更新任务到服务器成功:', res);
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const found = upload.updaterepeat.find(item => item.id === task.id);
+                if (found) {
+                    upload.updaterepeat = upload.updaterepeat.filter(t => t.id != task.id);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: true, data: res };
+            } else {
+                showmsg('更新任务到服务器失败');
+                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const found = upload.updaterepeat.find(item => item.id === task.id);
+                if (!found) {
+                    upload.updaterepeat.push(task);
+                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                }
+                return { success: false, error: '服务器返回失败' };
+            }
+        } catch (err) {
+            console.error('更新任务到服务器失败:', err);
+            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            const found = upload.updaterepeat.find(item => item.id === task.id);
+            if (!found) {
+                upload.updaterepeat.push(task);
+                localStorage.setItem('todoupload', JSON.stringify(upload));
+            }
+            return { success: false, error: err };
+        }
+    }
+    todo_getpoints() {
+        const body = {
+            action: 'todo_getpoints'
+        };
+        return this.fetchdata(body)
     }
 }
 class Calendario {
@@ -439,19 +921,31 @@ class App {
                 localStorage.setItem('carte', JSON.stringify(dataArray));
             })
         const but = document.getElementById('but-home')
+        // const but = document.getElementById('but-todo')
         this.footbut(but);
         main.init();
         main.aggiornamento();
     }
     // 初始化localstorage
     initlocalstorage() {
-        if (localStorage.getItem('upload') === null) {
+        if (!localStorage.getItem('upload')) {
             localStorage.setItem('upload', '[]')
+        }        
+        if (!localStorage.getItem('todoupload')) {
+            const todoupload = {
+                addtasks: [],
+                updatetasks: [],
+                deltasks: [],
+                addrepeat: [],
+                updaterepeat: [],
+                addmovimento: []
+            }
+            localStorage.setItem('todoupload', JSON.stringify(todoupload))
         }
-        if (localStorage.getItem('memori') === null) {
+        if (!localStorage.getItem('memori')) {
             localStorage.setItem('memori', '[]')
         }
-        if (localStorage.getItem('motivi') === null) {
+        if (!localStorage.getItem('motivi')) {
             api.getmotivi().then(response => response.text())
                 .then(response => {
                     localStorage.setItem('motivi', response);
@@ -2022,6 +2516,1020 @@ class Cartapage {
             });
     }
 }
+class Todopage {
+    /**
+     * 构造函数 - 初始化应用实例
+     * 加载本地存储的任务数据，设置当前日期，并启动应用初始化
+     */
+    constructor() {
+        this.init(); // 启动应用初始化
+    }
+
+    /**
+     * 应用初始化方法
+     * 绑定事件监听器，更新界面显示，设置定时器
+     */
+    async init() {
+        // 先初始化用户数据
+        this.users = await this.loadUsers();
+        this.currentUser = this.loadCurrentUser();
+        this.tasks = await this.loadTasks(); // 从本地存储加载任务数据
+        // 确保应用启动时始终设置为今天的日期
+        const today = new Date();
+        // 重置时间为当天的开始时间（00:00:00）以确保日期比较的准确性
+        today.setHours(0, 0, 0, 0);
+        this.currentDate = today;
+
+        this.bindEvents(); // 绑定所有事件监听器
+        // 初始化用户显示
+        this.updateUserDisplay();
+        
+        // 立即更新日期时间显示，确保显示今天的日期
+        this.updateDateTime();
+        
+        // 确保DOM元素存在后再次更新时间显示（双重保险）
+        setTimeout(() => {
+            this.updateDateTime();
+            this.aggiornamento();
+        }, 100);
+        
+        this.renderTasks(); // 渲染任务列表
+        this.updateTaskCounts(); // 更新任务计数显示
+    }
+
+    /**
+     * 绑定所有事件监听器
+     * 为应用中的各种UI元素绑定相应的事件处理函数
+     */
+    bindEvents() {
+        try {
+            // 绑定头像点击事件
+            document.querySelector('.todo-avatar').addEventListener('click', () => {
+                this.showUserSwitchMenu();
+            });
+            // 添加任务按钮事件
+            const addTaskBtn = document.getElementById('add-task-btn');
+            if (addTaskBtn) {
+                addTaskBtn.addEventListener('click', () => {
+                    this.showAddTaskModal();
+                });
+            }
+
+            // 添加任务模态框关闭事件
+            const closeModal = document.getElementById('close-modal');
+            if (closeModal) {
+                closeModal.addEventListener('click', () => {
+                    this.hideAddTaskModal();
+                });
+            }
+
+            const cancelBtn = document.getElementById('cancel-btn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    this.hideAddTaskModal();
+                });
+            }
+
+            // 任务详情模态框关闭事件
+            const closeDetailsModal = document.getElementById('close-details-modal');
+            if (closeDetailsModal) {
+                closeDetailsModal.addEventListener('click', () => {
+                    this.hideTaskDetailsModal();
+                });
+            }
+
+            // 编辑任务模态框相关事件
+            const closeEditModal = document.getElementById('close-edit-modal');
+            if (closeEditModal) {
+                closeEditModal.addEventListener('click', () => {
+                    this.hideEditTaskModal();
+                });
+            }
+
+            const editCancelBtn = document.getElementById('edit-cancel-btn');
+            if (editCancelBtn) {
+                editCancelBtn.addEventListener('click', () => {
+                    this.hideEditTaskModal();
+                });
+            }
+
+            // 编辑任务表单提交事件
+            const editTaskForm = document.getElementById('edit-task-form');
+            if (editTaskForm) {
+                editTaskForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.updateTask();
+                });
+            }
+
+            // 编辑任务类型切换事件
+            const editTaskType = document.getElementById('edit-task-type');
+            if (editTaskType) {
+                editTaskType.addEventListener('change', (e) => {
+                    this.toggleEditRepeatOptions(e.target.value);
+                });
+            }
+
+            // 删除任务按钮事件
+            const deleteTaskBtn = document.getElementById('delete-task-btn');
+            if (deleteTaskBtn) {
+                deleteTaskBtn.addEventListener('click', () => {
+                    this.deleteCurrentTask();
+                });
+            }
+
+            // 点击模态框背景关闭模态框
+            const addTaskModal = document.getElementById('add-task-modal');
+            if (addTaskModal) {
+                addTaskModal.addEventListener('click', (e) => {
+                    if (e.target.id === 'add-task-modal') {
+                        this.hideAddTaskModal();
+                    }
+                });
+            }
+
+            // 添加任务表单提交事件
+            const addTaskForm = document.getElementById('add-task-form');
+            if (addTaskForm) {
+                addTaskForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addTask();
+                });
+            }
+
+            // 添加任务时的任务类型切换事件
+            const taskType = document.getElementById('task-type');
+            if (taskType) {
+                taskType.addEventListener('change', (e) => {
+                    this.toggleRepeatOptions(e.target.value);
+                });
+            }
+
+            // 日期输入框变化事件
+            const dateInput = document.getElementById('date-input');
+            if (dateInput) {
+                dateInput.addEventListener('change', (e) => {
+                    this.handleDateChange(e.target.value);
+                });
+            }
+
+            // 日期导航按钮事件（前一天/后一天）
+            const prevBtn = document.querySelector('.nav-btn.prev');
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    this.navigateDate(-1);
+                });
+            }
+
+            const nextBtn = document.querySelector('.nav-btn.next');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    this.navigateDate(1);
+                });
+            }
+
+            // 手动同步按钮事件
+            const syncBtn = document.getElementById('sync-btn');
+            if (syncBtn) {
+                syncBtn.addEventListener('click', () => {
+                    if (window.syncManager) {
+                        window.syncManager.manualSync();
+                    }
+                });
+            }   
+
+            // 任务列表点击事件委托（处理任务编辑和详情查看）
+            const taskList = document.getElementById('task-list');
+            if (taskList) {
+                taskList.addEventListener('click', (e) => {
+                    // 点击编辑按钮 - 优先处理
+                    if (e.target.closest('.task-edit')) {
+                        e.stopPropagation(); // 阻止事件冒泡
+                        const taskId = e.target.closest('.task-edit').dataset.taskId;
+                        if (taskId) {
+                            this.showEditTaskModal(taskId);
+                        }
+                        return;
+                    }
+                    
+                    // 点击任务主体显示详情
+                    if (e.target.closest('.task-main')) {
+                        const taskId = e.target.closest('.task-main').dataset.taskId;
+                        if (taskId) {
+                            this.showTaskDetails(taskId);
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('绑定事件时出错:', error);
+        }
+    }
+
+    /**
+     * 更新日期时间显示
+     * 更新页面顶部的日期显示和隐藏的日期输入框的值
+     * 显示格式包含任务数量信息
+     */
+    updateDateTime() {
+        // 设置日期显示格式选项
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            weekday: 'long' 
+        };
+        const dateStr = this.currentDate.toLocaleDateString('zh-CN', options);
+        
+        // 获取当天任务总数并构建显示文本
+        const displayText = dateStr;
+        
+        // 更新页面顶部的日期显示
+        const dateDisplay = document.getElementById('date-display');
+        if (dateDisplay) {
+            dateDisplay.textContent = displayText;
+        }
+        
+        // 设置隐藏日期输入框的值（用于日期选择器）
+        const dateInput = document.getElementById('date-input');
+        if (dateInput) {
+            const year = this.currentDate.getFullYear();
+            const month = String(this.currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(this.currentDate.getDate()).padStart(2, '0');
+            dateInput.value = `${year}-${month}-${day}`;
+        }
+    }
+
+    async aggiornamento() {
+        try {
+            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            // 依次上传待添加任务，上传成功后从数组中删除
+            for (const task of upload.addtasks) {
+                await api.todo_addtask(task);
+            }
+            for (const repeat of upload.addrepeat) {
+                await api.todo_addrepeat(repeat);
+            }
+            for (const movimento of upload.addmovimento) {
+                await api.todo_addmovimento(movimento, false);
+            }
+            // 依次上传待更新任务，上传成功后从数组中删除
+            for (const id of upload.updatetasks) {
+                await api.todo_updatetask(id);
+            }
+            for (const repeat of upload.updaterepeat) {
+                await api.todo_updaterepeat(repeat);
+            }
+            // 依次上传待删除任务，上传成功后从数组中删除
+            for (const id of upload.deltasks) {
+                await api.todo_deltask(id);
+            }
+
+            const res = await api.todo_gettasks();
+            const tasks = await res.json();
+            const resrepeats = await api.todo_getrepeats();
+            const repeats = await resrepeats.json();
+            const localetasks = await db.getTodoTasks();
+            const localrepeats = await db.getTodoRepeats();
+            this.updatePoints(); 
+            if (JSON.stringify(tasks) == JSON.stringify(localetasks) && JSON.stringify(repeats) == JSON.stringify(localrepeats)) {
+                return;
+            }
+            await db.addTodoTasks(tasks);
+            await db.addTodoRepeats(repeats);
+            this.tasks = await this.loadTasks();
+            this.renderTasks();
+            this.updateTaskCounts();
+        } catch (err) {
+            console.error('获取任务失败:', err);
+        }
+    }
+    /**
+     * 显示添加任务模态框
+     * 初始化表单默认值并聚焦到标题输入框
+     */
+    showAddTaskModal() {
+        document.getElementById('add-task-modal').classList.add('show');
+        document.getElementById('task-title').focus();
+        const today = this.formatLocalDate(new Date());
+        document.getElementById('task-date').value = today;
+        document.getElementById('task-point').value = '10';
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('task-time').value = time;
+    }
+
+    /**
+     * 隐藏添加任务模态框
+     * 重置表单并恢复默认状态
+     */
+    hideAddTaskModal() {
+        document.getElementById('add-task-modal').classList.remove('show');
+        document.getElementById('add-task-form').reset();
+        // 重置选项显示状态
+        document.getElementById('repeat-options').style.display = 'none';
+        document.getElementById('once-options').style.display = 'block';
+        // 重置日期为今天
+        const today = this.formatLocalDate(new Date());
+        document.getElementById('task-date').value = today;
+    }
+
+    /**
+     * 显示任务详情模态框
+     * @param {string} taskId - 任务ID
+     */
+    showTaskDetails(taskId) {
+        const task = this.tasks.find(t => t.id == taskId);
+        if (!task) return;
+
+        // 填充任务详情信息
+        document.getElementById('detail-title').textContent = task.title;
+        document.getElementById('detail-desc').textContent = task.description || '无描述';
+        document.getElementById('detail-time').textContent = task.time || '无时间';
+        document.getElementById('detail-points').textContent = `${task.point}积分`;
+        
+        // 根据任务类型显示相应信息
+        if (task.type === 'repeat') {
+            document.getElementById('detail-type').textContent = '重复任务';
+            document.getElementById('detail-repeat-info').style.display = 'block';
+            document.getElementById('detail-date-info').style.display = 'none';
+            document.getElementById('detail-repeat').textContent = task.repeatdays ? 
+                this.getrepeatdaysText(task.repeatdays) : '未设置';
+        } else {
+            document.getElementById('detail-type').textContent = '一次性任务';
+            document.getElementById('detail-repeat-info').style.display = 'none';
+            document.getElementById('detail-date-info').style.display = 'block';
+            document.getElementById('detail-date').textContent = task.date || '未设置';
+        }
+
+        // 显示模态框
+        document.getElementById('task-details-modal').classList.add('show');
+    }
+
+    /**
+     * 隐藏任务详情模态框
+     */
+    hideTaskDetailsModal() {
+        document.getElementById('task-details-modal').classList.remove('show');
+    }
+
+    /**
+     * 显示编辑任务模态框
+     * @param {string} taskId - 要编辑的任务ID
+     */
+    showEditTaskModal(taskId) {
+        const task = this.tasks.find(t => t.id == taskId);
+        if (!task) return;
+
+        // 存储当前编辑的任务ID
+        this.editingTaskId = taskId;
+        // 填充表单数据
+        document.getElementById('edit-task-title').value = task.title;
+        document.getElementById('edit-task-desc').value = task.description || '';
+        document.getElementById('edit-task-time').value = task.time || '09:00';
+        document.getElementById('edit-task-point').value = task.point;
+        document.getElementById('edit-task-type').value = task.type;
+
+        // 根据任务类型显示相应选项
+        this.toggleEditRepeatOptions(task.type);
+
+        if (task.type === 'repeat' && task.repeatdays) {
+            // 清除所有复选框
+            document.querySelectorAll('#edit-repeat-options input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            // 设置选中的日期
+            task.repeatdays.forEach(day => {
+                const checkbox = document.querySelector(`#edit-repeat-options input[value="${day}"]`);
+                if (checkbox) checkbox.checked = true;
+            });
+        } else if (task.type === 'once' && task.date) {
+            document.getElementById('edit-task-date').value = task.date;
+        }
+
+        // 显示模态框
+        document.getElementById('edit-task-modal').classList.add('show');
+    }
+
+    /**
+     * 隐藏编辑任务模态框
+     * 清除编辑状态
+     */
+    hideEditTaskModal() {
+        document.getElementById('edit-task-modal').classList.remove('show');
+        this.editingTaskId = null;
+    }
+
+    /**
+     * 切换编辑模态框中的重复选项显示
+     * @param {string} taskType - 任务类型（'once' 或 'repeat'）
+     */
+    toggleEditRepeatOptions(taskType) {
+        const repeatOptions = document.getElementById('edit-repeat-options');
+        const onceOptions = document.getElementById('edit-once-options');
+        
+        if (taskType === 'repeat') {
+            repeatOptions.style.display = 'block';
+            onceOptions.style.display = 'none';
+        } else {
+            repeatOptions.style.display = 'none';
+            onceOptions.style.display = 'block';
+            // 设置默认日期为今天
+            const today = this.formatLocalDate(new Date());
+            document.getElementById('edit-task-date').value = today;
+        }
+    }
+
+    /**
+     * 更新任务信息
+     * 从编辑模态框获取数据并更新对应任务
+     */
+    updateTask() {
+        if (!this.editingTaskId) return;
+
+        const title = document.getElementById('edit-task-title').value.trim();
+        const description = document.getElementById('edit-task-desc').value.trim();
+        const time = document.getElementById('edit-task-time').value;
+        const point = parseInt(document.getElementById('edit-task-point').value);
+        const taskType = document.getElementById('edit-task-type').value;
+
+        if (!title) {
+            alert('请输入任务标题');
+            return;
+        }
+        // 找到要更新的任务
+        const taskIndex = this.tasks.findIndex(t => t.id == this.editingTaskId);
+        if (taskIndex === -1) return;
+        // 更新任务数据
+        const updatedTask = {
+            ...this.tasks[taskIndex],
+            title,
+            description,
+            time,
+            point,
+            type: taskType,
+        };
+        if (taskType === 'repeat') {
+            const selectedDays = Array.from(document.querySelectorAll('#edit-repeat-options input[type="checkbox"]:checked'))
+                .map(cb => parseInt(cb.value));
+            
+            if (selectedDays.length === 0) {
+                alert('请选择重复的日期');
+                return;
+            }
+            
+            updatedTask.repeatdays = selectedDays;
+            delete updatedTask.date;
+        } else {
+            const taskDate = document.getElementById('edit-task-date').value;
+            updatedTask.date = taskDate;
+            delete updatedTask.repeatdays;
+        }
+        // 更新任务数组
+        this.tasks[taskIndex] = updatedTask;
+        db.addTodoTasks([updatedTask]);
+        api.todo_updatetask(this.editingTaskId);
+        // 刷新显示
+        this.renderTasks();
+        
+        // 关闭模态框
+        this.hideEditTaskModal();
+    }
+    /**
+     * 删除当前正在编辑的任务
+     * 需要用户确认后执行删除操作
+     */
+    deleteCurrentTask() {
+        if (!this.editingTaskId) return;
+
+        if (confirm('确定要删除这个任务吗？')) {
+            // 从任务数组中删除
+            this.tasks = this.tasks.filter(t => t.id != this.editingTaskId);
+            db.delTodoTask(this.editingTaskId);
+            api.todo_deltask(this.editingTaskId)
+            // 刷新显示
+            this.renderTasks();
+            
+            // 关闭模态框
+            this.hideEditTaskModal();
+        }
+    }
+
+    /**
+     * 切换添加任务模态框中的重复选项显示
+     * @param {string} taskType - 任务类型（'once' 或 'repeat'）
+     */
+    toggleRepeatOptions(taskType) {
+        const repeatOptions = document.getElementById('repeat-options');
+        const onceOptions = document.getElementById('once-options');
+        
+        if (taskType === 'repeat') {
+            repeatOptions.style.display = 'block';
+            onceOptions.style.display = 'none';
+        } else {
+            repeatOptions.style.display = 'none';
+            onceOptions.style.display = 'block';
+            // 设置默认日期为今天
+            const today = this.formatLocalDate(new Date());
+            document.getElementById('task-date').value = today;
+        }
+    }
+
+    /**
+     * 处理日期变更事件
+     * @param {string} dateValue - 新选择的日期值
+     */
+    handleDateChange(dateValue) {
+        if (dateValue) {
+            this.currentDate = new Date(dateValue);
+            this.updateDateTime();
+            this.renderTasks(); // 重新渲染当天的任务
+            this.updateTaskCounts(); // 更新任务计数
+        }
+    }
+
+    /**
+     * 添加新任务
+     * 从表单获取数据并创建新任务
+     */
+    async addTask() {
+        const title = document.getElementById('task-title').value.trim();
+        const desc = document.getElementById('task-desc').value.trim();
+        const point = parseInt(document.getElementById('task-point').value);
+        const time = document.getElementById('task-time').value;
+        const taskType = document.getElementById('task-type').value;
+
+        if (!title) return;
+
+        const task = {
+            id: Date.now(),
+            title,
+            description: desc,
+            point: point,
+            time,
+            type: taskType,
+            completed: false,
+            userid: this.currentUser.ID,
+            del: 0
+        };
+        // 如果是重复任务，获取选中的星期
+        if (taskType === 'repeat') {
+            const selectedDays = [];
+            const checkboxes = document.querySelectorAll('#repeat-options input[type="checkbox"]:checked');
+            checkboxes.forEach(checkbox => {
+                selectedDays.push(parseInt(checkbox.value));
+            });
+            task.repeatdays = selectedDays;
+        } else {
+            // 一次性任务从日期选择器获取日期
+            const taskDate = document.getElementById('task-date').value;
+            task.date = taskDate; // YYYY-MM-DD格式
+        }
+
+        this.tasks.unshift(task);
+        // 异步添加到数据库
+        await db.addTodoTasks([task]);
+        api.todo_addtask(task);
+        // 更新任务列表
+        this.renderTasks();
+        this.updateTaskCounts();
+        this.hideAddTaskModal();
+        
+        showmsg('任务添加成功！');
+    }
+
+    /**
+     * 切换任务完成状态
+     * @param {string} taskId - 任务ID
+     */
+    async toggleTask(taskId) {
+        const task = this.tasks.find(t => t.id == taskId);
+        if (task) {
+            const currentDateStr = this.formatLocalDate(this.currentDate);
+            
+            if (task.type === 'repeat') {
+                // 重复任务：按日期记录完成状态
+                const repeat = await db.getTodoRepeat(taskId,currentDateStr);
+                console.log(repeat)
+                let repeattask
+                if (repeat) {
+                    repeattask = repeat;
+                } else {
+                    repeattask = {
+                        id: Date.now(),
+                        taskid: taskId,
+                        date: currentDateStr,
+                        completed: false
+                    };
+                }
+                const isCompleted = !repeattask.completed;
+                repeattask.completed = isCompleted;
+                
+                if (repeat) {
+                    // 更新已存在记录
+                    db.addTodoRepeat(repeattask);
+                    api.todo_updaterepeat(repeattask);
+                } else {
+                    // 添加新记录
+                    db.addTodoRepeat(repeattask);
+                    api.todo_addrepeat(repeattask);
+                }
+                // 更新积分
+                if (isCompleted) {
+                    this.addPoints(task.point);
+                    showmsg(`任务完成！+${task.point}积分`);
+                } else {
+                    this.addPoints(-task.point);
+                    showmsg(`任务取消完成，-${task.point}积分`);
+                }
+                const taskCopy = { ...task };
+                taskCopy.completed = isCompleted;
+                api.todo_addmovimento(taskCopy);
+            } else {
+                // 一次性任务：使用原有逻辑
+                task.completed = !task.completed;
+                
+                // 更新积分
+                if (task.completed) {
+                    this.addPoints(task.point);
+                    showmsg(`任务完成！+${task.point}积分`);
+                } else {
+                    this.addPoints(-task.point);
+                    showmsg(`任务取消完成，-${task.point}积分`);
+                }
+                api.todo_addmovimento(task);
+            }
+            api.todo_updatetask(taskId);
+            // 更新同步字段     
+            this.renderTasks();
+            this.updateTaskCounts();
+        }
+    }
+
+    /**
+     * 渲染任务列表
+     * 根据当前日期过滤任务并分别显示待完成和已完成任务
+     */
+    async renderTasks() {
+        const pendingContainer = document.getElementById('pending-tasks');
+        const completedContainer = document.getElementById('completed-tasks');
+
+        // 过滤当天的任务
+        const todayTasks = await this.getTasksForDate(this.currentDate);
+        // 分离待完成和已完成任务
+        const pendingTasks = todayTasks.filter(t => !t.completed);
+        const completedTasks = todayTasks.filter(t => t.completed);
+
+        pendingContainer.innerHTML = pendingTasks.map(task => this.createTaskHTML(task)).join('');
+        completedContainer.innerHTML = completedTasks.map(task => this.createTaskHTML(task)).join('');
+
+        // 绑定任务事件
+        this.bindTaskEvents();
+    }
+
+    /**
+     * 获取指定日期的任务列表
+     * @param {Date} date - 指定日期
+     * @returns {Array} 该日期的任务列表，重复任务会包含当前日期的完成状态
+     */
+    async getTasksForDate(date) {
+        const currentDay = date.getDay(); // 0-6，0为周日
+        const currentDateStr = this.formatLocalDate(date); // 使用本地日期格式，避免时区问题
+        const Tasks = this.tasks.filter(task => {
+            if (task.type == 'repeat') {
+                // 重复任务：检查重复周期是否包含当前日期
+                return task.repeatdays && task.repeatdays.includes(currentDay);
+            } else {
+                // 一次性任务：检查日期是否匹配
+                return task.date == currentDateStr;
+            }
+        });
+        return await Promise.all(
+            Tasks.map(async task => {
+                if (task.type === 'repeat') {
+                    const taskCopy = { ...task };
+                    const repeat = await db.getTodoRepeat(task.id, currentDateStr);
+                    if (repeat) {
+                        taskCopy.completed = repeat.completed;
+                    } else {
+                        taskCopy.completed = false;
+                    }
+                    return taskCopy;
+                } else {
+                    return task;
+                }
+            })
+        );
+    }
+
+    /**
+     * 创建任务HTML元素
+     * @param {Object} task - 任务对象
+     * @returns {string} 任务的HTML字符串
+     */
+    createTaskHTML(task) {
+        const timeDisplay = task.time || '无时间';
+        
+        return `
+            <div class="task-item ${task.completed ? 'completed' : ''}" data-task-id="${task.id}">
+                <div class="task-checkbox">
+                    <input type="checkbox" id="task-${task.id}" ${task.completed ? 'checked' : ''}>
+                    <label for="task-${task.id}">${task.completed ? '✓' : ''}</label>
+                </div>
+                <div class="task-main" data-task-id="${task.id}">
+                    <div class="task-time-title">
+                        <span class="task-time-display">${timeDisplay}</span>
+                        <span class="task-title-display">${task.title}</span>
+                    </div>
+                </div>
+                <div class="task-points">${task.point}积分</div>
+                <button class="task-edit" data-task-id="${task.id}">⋮</button>
+            </div>
+        `;
+    }
+
+    /**
+     * 将重复日期数组转换为可读文本
+     * @param {Array} repeatdays - 重复日期数组（0-6，0为周日）
+     * @returns {string} 重复日期的文本描述
+     */
+    getrepeatdaysText(repeatdays) {
+        const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        if (repeatdays.length === 7) {
+            return '每天';
+        } else if (repeatdays.length === 5 && !repeatdays.includes(0) && !repeatdays.includes(6)) {
+            return '工作日';
+        } else if (repeatdays.length === 2 && repeatdays.includes(0) && repeatdays.includes(6)) {
+            return '周末';
+        } else {
+            return repeatdays.map(day => dayNames[day]).join('、');
+        }
+    }
+
+    /**
+     * 绑定任务相关事件
+     * 包括复选框切换、编辑按钮点击、任务详情查看等
+     */
+    bindTaskEvents() {
+        // 任务复选框事件
+        document.querySelectorAll('.task-checkbox input').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const taskId = e.target.id.replace('task-', '');
+                this.toggleTask(taskId);
+            });
+        });
+
+        // 编辑按钮事件
+        document.querySelectorAll('.task-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = e.target.dataset.taskId;
+                this.showEditTaskModal(taskId);
+            });
+        });
+
+        // 任务详情事件（点击任务主体）
+        document.querySelectorAll('.task-main').forEach(main => {
+            main.addEventListener('click', (e) => {
+                const taskId = e.target.closest('.task-main').dataset.taskId;
+                this.showTaskDetails(taskId);
+            });
+        });
+    }
+
+    /**
+     * 更新任务计数显示
+     * 统计当前日期的待完成和已完成任务数量
+     */
+    async updateTaskCounts() {
+        // 基于当前日期的任务进行计数
+        const todayTasks = await this.getTasksForDate(this.currentDate);
+        const pendingCount = todayTasks.filter(t => !t.completed).length;
+        const completedCount = todayTasks.filter(t => t.completed).length;
+
+        const sectionHeaders = document.querySelectorAll('.section-header');
+        if (sectionHeaders.length >= 2) {
+            sectionHeaders[0].querySelector('.task-count').textContent = `${pendingCount}项`;
+            sectionHeaders[1].querySelector('.task-count').textContent = `${completedCount}项`;
+        }
+    }
+
+    /**
+     * 添加积分
+     * @param {number} points - 要添加的积分数（可为负数）
+     */
+    addPoints(points) {
+        let currentPoints = parseInt(document.querySelector('.points .count').textContent || '0');
+        currentPoints += points;
+        this.currentUser.points = currentPoints;
+        this.saveUsers();
+        document.querySelector('.points .count').textContent = currentPoints;
+    }
+
+    async updatePoints() {
+        const res = await api.todo_getpoints();
+        const points = await res.json();
+        points.forEach(p => {
+            this.users.forEach(u => {
+                if (u.ID == p.USERID) {
+                    u.POINTS = p.POINTS;
+                }
+            })
+        });
+        this.saveUsers();
+        this.updateUserDisplay();
+    }
+    /**
+     * 日期导航功能
+     * @param {number} direction - 导航方向（1为下一天，-1为上一天）
+     */
+    navigateDate(direction) {
+        // 实现日期导航功能
+        this.currentDate.setDate(this.currentDate.getDate() + direction);
+        this.updateDateTime();
+        this.renderTasks(); // 重新渲染当天的任务
+        this.updateTaskCounts(); // 更新任务计数
+        const action = direction > 0 ? '下一天' : '上一天';
+    }
+
+
+    /**
+     * 从本地存储加载任务数据
+     * 如果没有保存的数据，返回默认的示例任务
+     * @returns {Array} 任务数组
+     */
+    async loadTasks() {
+        const tasks = await db.getTodoTasks();
+        let newtasks = [];
+        const userid = this.currentUser.ID;
+        if (tasks.length > 0) {
+            tasks.forEach(task => {
+                if (task.userid == userid) {
+                    newtasks.push(task);
+                }
+            })
+            return newtasks; // 返回保存的任务数据
+        }
+        // 默认任务数据
+        return [];
+    }
+
+    /**
+     * 加载当前用户信息
+     */
+    loadCurrentUser() {
+        const currentUserId = localStorage.getItem('currentUserId') || 1;
+        return this.users.find(user => user.id == currentUserId) || this.users[0];
+    }
+
+    /**
+     * 加载所有用户信息
+     */
+    async loadUsers() {
+        return await api.todo_getuser()
+            .then(response => response.json())
+            .then(data => {
+                this.users = data;
+                localStorage.setItem('todoUsers', JSON.stringify(data));
+                return data;
+            })
+            .catch(e => {
+                console.log(e)
+                const users = localStorage.getItem('todoUsers');
+                if (users) {
+                    return JSON.parse(users);
+                }
+                return [];
+            });
+    }
+
+    /**
+     * 保存用户信息
+     */
+    saveUsers(users = null) {
+        const usersToSave = users || this.users;
+        localStorage.setItem('todoUsers', JSON.stringify(usersToSave));
+    }
+
+    /**
+     * 切换用户
+     */
+    async switchUser(userId) {
+        const user = this.users.find(u => u.ID == userId);
+        if (!user) return;
+
+        // 保存当前用户的积分
+        this.saveCurrentUserPoints();
+        
+        // 切换到新用户
+        this.currentUser = user;
+        localStorage.setItem('currentUserId', userId);
+        
+        // 重新加载新用户的数据
+        this.tasks = await this.loadTasks();
+        this.updateUserDisplay();
+        this.renderTasks();
+        this.updateTaskCounts();
+        
+        showmsg(`已切换到${user.NAME}`);
+    }
+
+    /**
+     * 保存当前用户积分
+     */
+    saveCurrentUserPoints() {
+        const currentPoints = parseInt(document.querySelector('.points .count').textContent || '0');
+        this.currentUser.points = currentPoints;
+        this.saveUsers();
+    }
+
+    /**
+     * 更新用户显示
+     */
+    updateUserDisplay() {
+        document.querySelector('.todo-avatar img').src = 'icons/' + this.currentUser.NAME + '.jpg';
+        document.querySelector('.user-name').textContent = this.currentUser.NAME;
+        document.querySelector('.points .count').textContent = this.currentUser.POINTS;
+    }
+
+    /**
+     * 显示用户切换菜单
+     */
+    showUserSwitchMenu() {
+        // 移除已存在的菜单
+        const existingMenu = document.querySelector('.user-switch-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+            return;
+        }
+
+        const menu = document.createElement('div');
+        menu.className = 'user-switch-menu';
+        menu.innerHTML = `
+            <div class="user-switch-header">选择用户</div>
+            ${this.users.map(user => `
+                <div class="user-option ${user.id == this.currentUser.id ? 'active' : ''}" data-user-id="${user.ID}">
+                    <span class="user-avatar"><img class="todo-avatar-img" src="icons/${user.NAME}.jpg" alt=""></span>
+                    <span class="user-name">${user.NAME}</span>
+                    <span class="user-points">⭐${user.POINTS}</span>
+                </div>
+            `).join('')}
+        `;
+
+        document.body.appendChild(menu);
+
+        // 绑定点击事件
+        menu.addEventListener('click', (e) => {
+            const userOption = e.target.closest('.user-option');
+            if (userOption) {
+                const userId = userOption.dataset.userId;
+                if (userId != this.currentUser.ID) {
+                    this.switchUser(userId);
+                }
+                menu.remove();
+            }
+        });
+
+        // 点击外部关闭菜单
+        setTimeout(() => {
+            document.addEventListener('click', function closeMenu(e) {
+                if (!menu.contains(e.target)) {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                }
+            });
+        }, 100);
+    }
+    /**
+     * 将日期对象转换为本地日期字符串 (YYYY-MM-DD)
+     * 避免时区问题，确保日期比较的准确性
+     * @param {Date} date - 日期对象
+     * @returns {string} 本地日期字符串
+     */
+    formatLocalDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    getLocalISOString() {
+        const now = new Date();
+
+        const pad = (n, len = 2) => String(n).padStart(len, '0');
+
+        const year = now.getFullYear();
+        const month = pad(now.getMonth() + 1);
+        const day = pad(now.getDate());
+        const hour = pad(now.getHours());
+        const minute = pad(now.getMinutes());
+        const second = pad(now.getSeconds());
+
+        return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+    }
+}
+
+
+
+
 const calen = new Calendario();
 const db = new Database();
 const api = new Fetchapi();
@@ -2031,5 +3539,6 @@ const set = new Setpage();
 const biao = new Biaopage();
 const info = new Infopage();
 const log = new Logpage();
+const todo = new Todopage();
 const main = new Main();
 const app = new App();

@@ -525,7 +525,7 @@ body, html {
     width: 100%;
     text-align: center;
 }
-.avatar {
+.logo {
     margin-top: 80px;
     width: 150px;
     height: 150px;
@@ -1216,4 +1216,713 @@ button:active{
     border-radius: 5px;
     background-color: var(--lan);
     color: #fff;
+}
+
+/* 头部样式 */
+.header {
+    background: var(--qianlan);
+    color: white;
+    padding: 10px 15px 10px 15px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.date-info h1 {
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.date-info p {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.date-display {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    margin: 5px 0 0 0;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+.date-display:hover {
+    color: white;
+}
+
+.date-input-hidden {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    z-index: -1;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.todo-avatar {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+.todo-avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-name {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.points {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 14px;
+}
+
+.nav-arrows {
+    display: flex;
+    justify-content: left;
+    gap: 15px;
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.3s;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 主要内容区域 */
+.main-content {
+    padding: 0 20px;
+    margin-top: 120px;
+}
+
+.task-section {
+    margin-bottom: 30px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-header h2 {
+    color: #374151;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.task-count {
+    color: #6B7280;
+    font-size: 14px;
+    background: rgba(107, 114, 128, 0.1);
+    padding: 4px 12px;
+    border-radius: 12px;
+}
+
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.task-item {
+    background: white;
+    border-radius: 16px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.task-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.task-item.completed {
+    opacity: 0.7;
+}
+
+.task-item.completed .task-content h3,
+.task-item.completed .task-content p {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.task-checkbox {
+    position: relative;
+}
+
+.task-checkbox input[type="checkbox"] {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.task-checkbox input[type="checkbox"]:checked {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.task-checkbox label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.task-main {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+
+.task-main:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.task-time-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.task-time-display {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1976D2;
+    background: #E3F2FD;
+    padding: 2px 8px;
+    border-radius: 6px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.task-title-display {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    line-height: 1.3;
+    flex: 1;
+}
+
+.task-info {
+    font-size: 12px;
+    color: #888;
+    background: #f0f4ff;
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+.task-meta {
+    margin-top: 4px;
+}
+
+.task-schedule {
+    font-size: 12px;
+    color: #888;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.task-points {
+    background: #F3E5F5;
+    color: #7B1FA2;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.task-edit {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-edit:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+/* 任务详情模态框 */
+.task-details-content {
+    padding: 20px 0;
+}
+
+.detail-item {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.detail-item label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.detail-value {
+    font-size: 16px;
+    color: #333;
+    line-height: 1.4;
+    min-height: 20px;
+}
+
+/* 添加任务按钮 */
+.add-task-btn {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+    transition: transform 0.3s, box-shadow 0.3s;
+    z-index: 100;
+}
+
+.add-task-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+}
+
+/* 模态框样式 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    width: 90%;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.close-btn:hover {
+    background: #f5f5f5;
+}
+
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+
+.form-group-half {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    background: white;
+    height: 48px;
+    box-sizing: border-box;
+}
+
+/* 积分值输入框特殊样式 */
+.form-group input[type="number"] {
+    height: 48px;
+    max-height: 48px;
+}
+
+/* 时间输入框特殊样式 */
+.form-group input[type="time"] {
+    /* 去除iPhone默认样式 */
+    -webkit-appearance: none;
+    width: 100%;
+    padding: 0px;
+    box-sizing: border-box;
+}
+/* 时间输入框特殊样式 */
+.form-group input[type="date"] {
+    /* 去除iPhone默认样式 */
+    -webkit-appearance: none;
+    width: 100%;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #5B73F5;
+}
+
+/* 星期选择器样式 */
+.weekday-selector {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+    max-width: 350px;
+}
+
+.weekday-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    cursor: pointer;
+    padding: 8px 4px;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+    min-width: 0;
+    text-align: center;
+    position: relative;
+}
+
+.weekday-item:hover {
+    background-color: #f0f0f0;
+}
+
+.weekday-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0 auto 6px auto;
+    accent-color: #5B73F5;
+    display: block;
+}
+
+.weekday-item span {
+    font-weight: 500;
+    color: #666;
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-align: center;
+    margin: 0;
+    display: block;
+    width: 100%;
+}
+
+.weekday-item input[type="checkbox"]:checked + span {
+    color: #5B73F5;
+    font-weight: 600;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn-cancel,
+.btn-submit {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-cancel {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.btn-cancel:hover {
+    background: #e0e0e0;
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #5B73F5, #7B68EE);
+    color: white;
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(91, 115, 245, 0.4);
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-danger:hover {
+    background: #da190b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+}
+
+
+/* 动画效果 */
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.task-item {
+    animation: slideInUp 0.3s ease-out;
+}
+
+/* 用户切换菜单样式 */
+.user-switch-menu {
+    position: fixed;
+    top: 70px;
+    right: 15px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    min-width: 200px;
+    overflow: hidden;
+    animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.user-switch-header {
+    background: #607bf4;
+    color: white;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+}
+
+.user-option {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.user-option:last-child {
+    border-bottom: none;
+}
+
+.user-option:hover {
+    background: #f8f9fa;
+}
+
+.user-option.active {
+    background: #e3f2fd;
+    color: #607bf4;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin-right: 12px;
+}
+
+.user-option.active .user-avatar {
+    background: #607bf4;
+    color: white;
+}
+
+.user-name {
+    flex: 1;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.user-option .user-name {
+    color: #333;
+}
+
+.user-points {
+    font-size: 12px;
+    color: #666;
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.user-option.active .user-name {
+    color: #607bf4;
+}
+
+.user-option.active .user-points {
+    background: #607bf4;
+    color: white;
+}
+
+/* 头像点击效果 */
+.todo-avatar {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.todo-avatar:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
