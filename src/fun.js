@@ -16,17 +16,17 @@ function registraserviceWorker() {
 }
 // 切换页面
 function changepage(id) {
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => {
-        page.classList.add('hidden');
-    });
-    document.getElementById(id).classList.remove('hidden');
     let meta = document.querySelector('meta[name="theme-color"]');
     if (id === "todopage") {
         meta.setAttribute("content", "#49c2ef");
     } else {
         meta.setAttribute("content", "#f7f7f7");
     }
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(page => {
+        page.classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
 }
 // 获取内容名称
 function getnomemotivo(num) {
