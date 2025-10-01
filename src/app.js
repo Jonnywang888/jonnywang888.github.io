@@ -615,15 +615,11 @@ class Fetchapi {
     async todo_addmovimento(task, istask = true) {
         let dati
         if (istask) {
-            let punti = task.point
-            if (!task.completed) {
-                punti = - task.point
-            }
             const currentdate = todo.formatLocalDate(todo.currentDate);
             const now = new Date();
             const id = now.getTime();
             const time = todo.getLocalISOString();
-            dati = `${id},'${task.title}','${task.description}',${punti},${todo.currentUser.ID},'${time}','${currentdate}'`;
+            dati = `${task.id},'${currentdate}','${task.completed}','${time}',${id},'${task.title}','${task.description}',${task.point},${todo.currentUser.ID}`;
         } else {
             dati = task
         }
