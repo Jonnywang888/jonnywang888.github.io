@@ -1364,7 +1364,7 @@ button:active{
 .task-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .task-item {
@@ -1373,7 +1373,7 @@ button:active{
     padding: 8px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -1438,7 +1438,7 @@ button:active{
 .task-time-title {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .task-time-display {
@@ -1446,9 +1446,8 @@ button:active{
     font-weight: 600;
     color: #1976D2;
     background: #E3F2FD;
-    padding: 2px 8px;
+    padding: 2px 5px;
     border-radius: 6px;
-    min-width: 60px;
     text-align: center;
 }
 
@@ -1486,7 +1485,7 @@ button:active{
 .task-points {
     background: #F3E5F5;
     color: #7B1FA2;
-    padding: 4px 8px;
+    padding: 4px 5px;
     border-radius: 8px;
     font-size: 12px;
     font-weight: 500;
