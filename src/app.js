@@ -1590,7 +1590,7 @@ class Addpage {
     // 按键函数
     tastiera_key(event) {
         const page = document.getElementById('addpage')
-        if (page.style.display === 'none') return;
+        if (page.classList.contains('hidden')) return;
         const key = event.key;
         const display = document.getElementById('current-value');
         const displaystr = display.innerText;
