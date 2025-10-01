@@ -371,8 +371,8 @@ class Database {
 }
 class Fetchapi {
     constructor() {
-        this.url = 'http://192.168.1.99/server/app.asp';
-        // this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
+        // this.url = 'http://192.168.1.99/server/app.asp';
+        this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
     }
     // 获取备忘
     getmemori() {
