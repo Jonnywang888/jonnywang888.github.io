@@ -1332,19 +1332,19 @@ button:active{
 
 /* 主要内容区域 */
 .main-content {
-    padding: 0 20px;
+    padding: 0 3%;
     margin-top: 120px;
 }
 
 .task-section {
-    margin-bottom: 30px;
+    margin-bottom: 5px;
 }
 
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 
 .section-header h2 {
