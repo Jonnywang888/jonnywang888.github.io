@@ -2714,6 +2714,16 @@ class Todopage {
                     }
                 });
             }
+
+            // 直接在section-completed元素上添加折叠事件监听
+            const sectionCompleted = document.querySelector('.section-completed');
+            if (sectionCompleted) {
+                sectionCompleted.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleSection('completed-tasks');
+                });
+            }
         } catch (error) {
             console.error('绑定事件时出错:', error);
         }
@@ -3524,6 +3534,66 @@ class Todopage {
         const second = pad(now.getSeconds());
 
         return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+    }
+    /**
+     * 切换section的折叠状态
+     * @param {string} sectionId - 要切换的section ID
+     */
+    toggleSection(sectionId) {
+        const taskList = document.getElementById(sectionId);
+        const sectionHeader = document.querySelector('.section-completed');
+        const taskSection = sectionHeader?.closest('.task-section');
+        
+        if (!taskList || !sectionHeader) {
+            console.warn(`未找到元素: ${sectionId} 或 .section-completed`);
+            return;
+        }
+
+        // 切换折叠状态
+        const isCollapsed = taskList.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // 展开
+            taskList.classList.remove('collapsed');
+            sectionHeader.classList.remove('collapsed');
+            if (taskSection) {
+                taskSection.classList.remove('collapsed');
+            }
+            
+            // 保存展开状态到localStorage
+            localStorage.setItem('completedTasksCollapsed', 'false');
+        } else {
+            // 折叠
+            taskList.classList.add('collapsed');
+            sectionHeader.classList.add('collapsed');
+            if (taskSection) {
+                taskSection.classList.add('collapsed');
+            }
+            
+            // 保存折叠状态到localStorage
+            localStorage.setItem('completedTasksCollapsed', 'true');
+        }
+    }
+    /**
+     * 恢复折叠状态
+     * 在页面加载时调用，恢复用户上次的折叠状态
+     */
+    restoreCollapseState() {
+        const isCollapsed = localStorage.getItem('completedTasksCollapsed') === 'true';
+        
+        if (isCollapsed) {
+            const taskList = document.getElementById('completed-tasks');
+            const sectionHeader = document.querySelector('.section-completed');
+            const taskSection = sectionHeader?.closest('.task-section');
+            
+            if (taskList && sectionHeader) {
+                taskList.classList.add('collapsed');
+                sectionHeader.classList.add('collapsed');
+                if (taskSection) {
+                    taskSection.classList.add('collapsed');
+                }
+            }
+        }
     }
 }
 

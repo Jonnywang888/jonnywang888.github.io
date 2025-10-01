@@ -1272,6 +1272,7 @@ button:active{
     border-radius: 50%;
     align-items: center;
     justify-content: center;
+    margin-left: calc(50% - 100px);
 }
 
 .todo-avatar {
@@ -1340,12 +1341,23 @@ button:active{
 .task-section {
     margin-bottom: 5px;
 }
-
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    padding: 0 8px;
+    border-radius: 16px;
+}
+/* 折叠状态下的section-header样式 - 颜色变深 */
+.section-header.collapsed {
+    background-color: color-mix(in srgb, var(--qianlan) 30%, transparent);
+    border: 1px solid var(--qianlan);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.task-list.collapsed {
+    display: none;
 }
 
 .section-header h2 {
