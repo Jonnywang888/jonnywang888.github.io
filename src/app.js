@@ -2567,6 +2567,12 @@ class Todopage {
             document.querySelector('.todo-avatar').addEventListener('click', () => {
                 this.showUserSwitchMenu();
             });
+            const display = document.getElementById('date-display');
+            const input = document.getElementById('date-input');
+            display.addEventListener('click', () => {
+                input.focus(); // 聚焦
+                input.click(); // 触发日期选择器
+            });
             // 添加任务按钮事件
             const addTaskBtn = document.getElementById('add-task-btn');
             if (addTaskBtn) {

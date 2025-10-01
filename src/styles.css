@@ -1253,6 +1253,14 @@ button:active{
     color: white;
 }
 
+.date-input-hidden {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    z-index: -1;
+}
+
 .user-info {
     display: flex;
     align-items: center;
