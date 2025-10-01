@@ -2688,15 +2688,6 @@ class Todopage {
                 });
             }
 
-            // 手动同步按钮事件
-            const syncBtn = document.getElementById('sync-btn');
-            if (syncBtn) {
-                syncBtn.addEventListener('click', () => {
-                    if (window.syncManager) {
-                        window.syncManager.manualSync();
-                    }
-                });
-            }   
 
             // 任务列表点击事件委托（处理任务编辑和详情查看）
             const taskList = document.getElementById('task-list');
