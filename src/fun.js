@@ -21,6 +21,12 @@ function changepage(id) {
         page.classList.add('hidden');
     });
     document.getElementById(id).classList.remove('hidden');
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (id === "todopage") {
+        meta.setAttribute("content", "#49c2ef");
+    } else {
+        meta.setAttribute("content", "#f7f7f7");
+    }
 }
 // 获取内容名称
 function getnomemotivo(num) {

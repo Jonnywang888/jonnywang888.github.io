@@ -1794,19 +1794,6 @@ button:active{
     box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
 }
 
-
-/* 动画效果
-@keyframes slideInUp {
-    from {
-        transform: translateY(30px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-} */
-
 .task-item {
     animation: slideInUp 0.3s ease-out;
 }
@@ -1824,17 +1811,6 @@ button:active{
     overflow: hidden;
     animation: slideInDown 0.3s ease-out;
 }
-
-/* @keyframes slideInDown {
-    from {
-        transform: translateY(-10px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-} */
 
 .user-switch-header {
     background: #607bf4;
