@@ -1618,7 +1618,7 @@ button:active{
     cursor: pointer;
     padding: 5px;
     border-radius: 50%;
-    transition: background 0.3s;
+    transition: background-color 0.3s;
 }
 
 .close-btn:hover {
