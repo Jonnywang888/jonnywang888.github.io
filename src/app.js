@@ -3166,6 +3166,13 @@ class Todopage {
 
         // 过滤当天的任务
         const todayTasks = await this.getTasksForDate(this.currentDate);
+        todayTasks.sort((a, b) => {
+            const toMinutes = t => {
+                const [h, m] = t.split(':').map(Number);
+                return h * 60 + m;
+            };
+            return toMinutes(a.time) - toMinutes(b.time);
+        });
         // 分离待完成和已完成任务
         const pendingTasks = todayTasks.filter(t => !t.completed);
         const completedTasks = todayTasks.filter(t => t.completed);
