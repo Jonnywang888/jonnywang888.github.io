@@ -9,7 +9,7 @@
     <link rel="icon" href="/icons/app.png">
     <meta name="theme-color" content="#f7f7f7"/>
     <meta name="version" content="3.13"/>
-    <link rel="stylesheet" href="src/styles.css?v=3.15">
+    <link rel="stylesheet" href="src/styles.css?v=3.13">
 </head>
 <body>
     <div class="page hidden" id="biaopage">
@@ -261,7 +261,7 @@
         </form>
     </div>
     <div class="page hidden" id="todopage">
-        <header class="header">
+        <div class="header">
             <div class="header-content">
                 <div class="date-info">
                     <h1 class="title">今日任务</h1>
@@ -283,10 +283,10 @@
                 <button class="nav-btn prev">‹</button>
                 <button class="nav-btn next">›</button>
             </div>
-        </header>
+        </div>
 
         <!-- 主要内容区域 -->
-        <main class="main-content">
+        <div class="main-content">
             <!-- 待完成任务 -->
             <section class="task-section">
                 <div class="section-header">
@@ -304,7 +304,7 @@
                 </div>
                 <div class="task-list" id="completed-tasks"></div>
             </section>
-        </main>
+        </div>
 
         <!-- 添加任务按钮 -->
         <button class="add-task-btn" id="add-task-btn">+</button>
@@ -370,7 +370,7 @@
                         </div>
                         <div class="form-group form-group-half">
                             <label for="task-point">积分值</label>
-                            <input type="number" id="task-point" value="10">
+                            <input type="number" id="task-point" min="1" value="10">
                         </div>
                     </div>
                     <div class="form-group">
@@ -447,7 +447,7 @@
                         </div>
                         <div class="form-group form-group-half">
                             <label for="edit-task-point">积分值</label>
-                            <input type="number" id="edit-task-point" value="30">
+                            <input type="number" id="edit-task-point" min="1" value="30">
                         </div>
                     </div>
                     <div class="form-group">
@@ -526,7 +526,7 @@
         </div>
     </div>
     <script src="src/bwip-js-min.js"></script>
-    <script src="src/fun.js?v=3.15"></script>
-    <script src="src/app.js?v=3.15"></script>
+    <script src="src/fun.js?v=3.13"></script>
+    <script src="src/app.js?v=3.12"></script>
 </body>
 </html>

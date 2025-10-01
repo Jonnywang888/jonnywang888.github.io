@@ -1334,6 +1334,7 @@ button:active{
 .main-content {
     padding: 0 3%;
     margin-top: 120px;
+    padding-bottom: 90px;
 }
 
 .task-section {
