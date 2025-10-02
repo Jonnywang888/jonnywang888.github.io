@@ -1936,3 +1936,286 @@ button:active{
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
 }
+
+/* 积分兑换触发按钮样式 */
+.exchange-trigger-btn {
+    background: linear-gradient(135deg, var(--lan), var(--qianlan));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-left: 8px;
+}
+
+.exchange-trigger-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(10, 132, 255, 0.4);
+}
+
+/* 积分兑换界面样式 */
+.points-info {
+    margin-bottom: 24px;
+}
+
+.points-card {
+    background: linear-gradient(90deg, var(--qianlan), var(--lan));
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    justify-content: begin;
+    align-items: center;
+    color: white;
+    box-shadow: 0 4px 15px rgba(73, 194, 239, 0.3);
+}
+
+.points-icon {
+    font-size: 32px;
+    margin-right: 16px;
+}
+
+.points-details {
+    flex: 1;
+}
+
+.points-label {
+    text-align: right;
+    padding-right: 5px;
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 4px;
+}
+
+.points-value {
+    text-align: right;
+    padding-right: 5px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.exchange-categories {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.exchange-categories::-webkit-scrollbar {
+    display: none;
+}
+
+.category-btn {
+    background: var(--beijinghui);
+    border: 2px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.category-btn.active {
+    background: var(--lan);
+    border-color: var(--lan);
+    color: white;
+}
+
+.category-btn:hover {
+    border-color: var(--lan);
+    color: var(--lan);
+}
+
+.category-btn.active:hover {
+    color: white;
+}
+
+.exchange-items {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 24px;
+}
+
+.exchange-items::-webkit-scrollbar {
+    width: 4px;
+}
+
+.exchange-items::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.exchange-items::-webkit-scrollbar-thumb {
+    background: var(--qianlan);
+    border-radius: 2px;
+}
+
+.exchange-item {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid #f0f0f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.3s;
+}
+
+.exchange-item:hover {
+    border-color: var(--qianlan);
+    box-shadow: 0 2px 10px rgba(73, 194, 239, 0.2);
+}
+
+.item-image {
+    font-size: 32px;
+    margin-right: 16px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--danlan);
+    border-radius: 12px;
+}
+
+.item-info {
+    flex: 1;
+    margin-right: 16px;
+}
+
+.item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.item-desc {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.item-points {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--lan);
+}
+
+.exchange-btn {
+    background: linear-gradient(135deg, var(--lan), var(--qianlan));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 60px;
+}
+
+.exchange-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+}
+
+.exchange-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.exchange-history {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 20px;
+}
+
+.exchange-history h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+    margin-top: 0;
+}
+
+.history-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.history-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.history-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+    background: var(--qianlan);
+    border-radius: 2px;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-info {
+    flex: 1;
+}
+
+.history-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.history-date {
+    font-size: 12px;
+    color: #999;
+}
+
+.history-points {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--hong);
+}
+
+/* 积分兑换模态框特殊样式 */
+#exchange-modal .modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+#exchange-modal .modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+#exchange-modal .modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#exchange-modal .modal-content::-webkit-scrollbar-thumb {
+    background: var(--qianlan);
+    border-radius: 3px;
+}
+

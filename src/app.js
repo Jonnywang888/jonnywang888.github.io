@@ -2724,6 +2724,16 @@ class Todopage {
                     this.toggleSection('completed-tasks');
                 });
             }
+
+            const points = document.querySelector('.user-info .points');
+            points.addEventListener('click', () => {
+                this.showExchangeModal();
+            })
+
+            const closeexchangemodal = document.getElementById('close-exchange-modal');
+            closeexchangemodal.addEventListener('click', () => {
+                document.getElementById('exchange-modal').classList.remove('show');
+            })
         } catch (error) {
             console.error('绑定事件时出错:', error);
         }
@@ -2918,6 +2928,42 @@ class Todopage {
     hideEditTaskModal() {
         document.getElementById('edit-task-modal').classList.remove('show');
         this.editingTaskId = null;
+    }
+    async showExchangeModal() {
+        document.getElementById('exchange-modal').classList.add('show');
+        const points = this.currentUser.POINTS
+        const userpoints = document.getElementById('user-points')
+        userpoints.innerHTML = points
+        
+        const tasks = await db.getTodoTasks();
+        const rewardtasks = tasks.filter(task => task.type == 'reward');
+        rewardtasks.sort((a, b) => b.point - a.point);
+        const rewardItems = document.getElementById('exchange-items');
+        rewardItems.innerHTML = '';
+        rewardtasks.forEach(task => {
+            const item = document.createElement('div');
+            item.classList.add('exchange-item');
+            item.innerHTML = `
+                <div class="item-image">${task.description}</div>
+                <div class="item-info">
+                    <div class="item-name">${task.title}</div>
+                    <div class="item-points">${-task.point}积分</div>
+                </div>
+                <button class="exchange-btn" taskid="${task.id}"">兑换</button>
+            `;
+            const button = item.querySelector('.exchange-btn');
+            button.addEventListener('click', () => {
+                const check = confirm(`确定要兑换 - ${task.title} - 吗？`);
+                if (!check) return;
+                const id = new Date().getTime();
+                task.id = id;
+                task.completed = true;
+                api.todo_addmovimento(task)
+                this.addPoints(task.point);
+                userpoints.innerHTML = this.currentUser.POINTS
+            });
+            rewardItems.appendChild(item);
+        });
     }
 
     /**
@@ -3175,7 +3221,8 @@ class Todopage {
         const completedContainer = document.getElementById('completed-tasks');
 
         // 过滤当天的任务
-        const todayTasks = await this.getTasksForDate(this.currentDate);
+        const tasks = await this.getTasksForDate(this.currentDate)
+        const todayTasks = tasks.filter(t => t.type != 'reward');
         todayTasks.sort((a, b) => {
             const toMinutes = t => {
                 const [h, m] = t.split(':').map(Number);

@@ -369,7 +369,7 @@
                         </div>
                         <div class="form-group form-group-half">
                             <label for="task-point">积分值</label>
-                            <input type="number" id="task-point" min="1" value="10">
+                            <input type="number" id="task-point" value="10">
                         </div>
                     </div>
                     <div class="form-group">
@@ -377,6 +377,7 @@
                         <select id="task-type">
                             <option value="once">一次性任务</option>
                             <option value="repeat">重复任务</option>
+                            <option value="reward">奖励</option>
                         </select>
                     </div>
                     <div class="form-group" id="once-options">
@@ -387,31 +388,31 @@
                         <label>重复日期</label>
                         <div class="weekday-selector">
                             <label class="weekday-item">
-                                <input type="checkbox" value="1" id="monday">
+                                <input type="checkbox" value="1" id="monday" checked>
                                 <span>一</span>
                             </label>
                             <label class="weekday-item">
-                                <input type="checkbox" value="2" id="tuesday">
+                                <input type="checkbox" value="2" id="tuesday" checked>
                                 <span>二</span>
                             </label>
                             <label class="weekday-item">
-                                <input type="checkbox" value="3" id="wednesday">
+                                <input type="checkbox" value="3" id="wednesday" checked>
                                 <span>三</span>
                             </label>
                             <label class="weekday-item">
-                                <input type="checkbox" value="4" id="thursday">
+                                <input type="checkbox" value="4" id="thursday" checked>
                                 <span>四</span>
                             </label>
                             <label class="weekday-item">
-                                <input type="checkbox" value="5" id="friday">
+                                <input type="checkbox" value="5" id="friday" checked>   
                                 <span>五</span>
                             </label>
                             <label class="weekday-item">
-                                <input type="checkbox" value="6" id="saturday">
+                                <input type="checkbox" value="6" id="saturday" checked>
                                 <span>六</span>
                             </label>
                             <label class="weekday-item">
-                                <input type="checkbox" value="0" id="sunday">
+                                <input type="checkbox" value="0" id="sunday" checked>
                                 <span>日</span>
                             </label>
                         </div>
@@ -499,6 +500,29 @@
                         <button type="submit" class="btn-submit">保存</button>
                     </div>
                 </form>
+            </div>
+        </div>
+        <!-- 积分兑换模态框 -->
+        <div class="modal" id="exchange-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>积分兑换</h3>
+                    <button class="close-btn" id="close-exchange-modal">×</button>
+                </div>
+                
+                <!-- 用户积分信息 -->
+                <div class="points-info">
+                    <div class="points-card">
+                        <div class="points-icon">⭐</div>
+                        <div class="points-details">
+                            <div class="points-label">我的积分</div>
+                            <div class="points-value" id="user-points"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 兑换商品列表 -->
+                <div class="exchange-items" id="exchange-items"></div>
             </div>
         </div>
     </div>
