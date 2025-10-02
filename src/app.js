@@ -2766,7 +2766,6 @@ class Todopage {
     async aggiornamento() {
         try {
             const upload = JSON.parse(localStorage.getItem('todoupload'));
-            // 依次上传待添加任务，上传成功后从数组中删除
             for (const task of upload.addtasks) {
                 await api.todo_addtask(task);
             }
@@ -2776,14 +2775,12 @@ class Todopage {
             for (const movimento of upload.addmovimento) {
                 await api.todo_addmovimento(movimento, false);
             }
-            // 依次上传待更新任务，上传成功后从数组中删除
             for (const id of upload.updatetasks) {
                 await api.todo_updatetask(id);
             }
             for (const repeat of upload.updaterepeat) {
                 await api.todo_updaterepeat(repeat);
             }
-            // 依次上传待删除任务，上传成功后从数组中删除
             for (const id of upload.deltasks) {
                 await api.todo_deltask(id);
             }
@@ -2803,6 +2800,7 @@ class Todopage {
             this.tasks = await this.loadTasks();
             this.renderTasks();
             this.updateTaskCounts();
+            showmsg('数据已经同步到服务器！');
         } catch (err) {
             console.error('获取任务失败:', err);
         }
@@ -3331,6 +3329,11 @@ class Todopage {
         let currentPoints = parseInt(document.querySelector('.points .count').textContent || '0');
         currentPoints += points;
         this.currentUser.points = currentPoints;
+        this.users.forEach(u => {
+            if (u.ID == this.currentUser.ID) {
+                u.POINTS = currentPoints;
+            }
+        });
         this.saveUsers();
         document.querySelector('.points .count').textContent = currentPoints;
     }

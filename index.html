@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <!-- 禁用双击缩放 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <title>记账App</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icons/app.png">
@@ -86,9 +87,7 @@
                 </div>
             </div>
         </div>
-        <div id="but-tianjia">
-            <img src="icons/tianjia.png">
-        </div>
+        <button class="add-button" id="but-tianjia"></button>
         <div id="maincontainer">
             <div id="refresh-container">
                 <img id="refresh" src="icons/load.gif" alt="刷新中...">
@@ -307,7 +306,7 @@
         </div>
 
         <!-- 添加任务按钮 -->
-        <button class="add-task-btn" id="add-task-btn">+</button>
+        <button class="add-task-btn add-button" id="add-task-btn">+</button>
         <!-- 任务详情模态框 -->
         <div class="modal" id="task-details-modal">
             <div class="modal-content">

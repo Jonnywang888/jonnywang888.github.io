@@ -7,6 +7,9 @@
     --beijinghui:#F7F7F7;
     --hong: #FF0000;
     --qianhui: #8a949e;
+        /* 针对ios */
+    -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent; 
 }
 /* 辅助类 */
 .hidden {
@@ -19,10 +22,13 @@ body, html {
     flex-direction: column;
     height: 100%;
     /* 针对ios */
-    -webkit-overflow-scrolling: touch;
+    /* -webkit-overflow-scrolling: touch; */
     font-family: Arial, sans-serif;
     background-color: var(--beijinghui);
+    overscroll-behavior: none; /* 阻止ios回弹效果 */
+    height: 100%;
 }
+
 #calendar{
     z-index: 1001;
 }
@@ -96,19 +102,11 @@ body, html {
     line-height: 2.2;
 }
 #but-tianjia{
-    position: fixed;
-    width: 40px;
-    height: 40px;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: calc(50% - 1.5rem);
     z-index: 100;
-    background-color: #fff;
-    border-radius: 50%;
-}
-#but-tianjia img{
-    width: 40px;
-    height: 40px;
+    position: fixed;
+    bottom: 6rem;   /* 约等于 96px，适配不同屏幕 */
+    cursor: pointer;
 }
 .foot {
     background-color: #fff;
@@ -159,6 +157,7 @@ body, html {
 .page{
     height: 100%;
     background-color: var(--beijinghui);
+    overflow-y: auto;
 }
 #listmovimento {
     flex: 1;
@@ -1212,7 +1211,7 @@ button:active{
 .header {
     background: var(--qianlan);
     color: white;
-    padding: 10px 15px 10px 15px;
+    padding: 0 3%;
     position: fixed;
     top: 0;
     left: 0;
@@ -1220,18 +1219,18 @@ button:active{
     width: 100%;
     z-index: 1000;
     box-sizing: border-box;
+    padding-bottom: 10px;
 }
 .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
 }
 
 .date-info h1 {
     font-size: 30px;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin: 10px 0;
 }
 
 .date-info p {
@@ -1333,8 +1332,8 @@ button:active{
 
 /* 主要内容区域 */
 .main-content {
-    padding: 0 3%;
-    margin-top: 120px;
+    padding: 0 4%;
+    margin-top: 100px;
     padding-bottom: 90px;
 }
 
@@ -1352,9 +1351,11 @@ button:active{
 }
 /* 折叠状态下的section-header样式 - 颜色变深 */
 .section-header.collapsed {
-    background-color: color-mix(in srgb, var(--qianlan) 30%, transparent);
-    border: 1px solid var(--qianlan);
+    background-color: color-mix(in srgb, var(--qianlan) 25%, transparent);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.section-header.collapsed h2::after {
+    content: '-(已折叠)';
 }
 .task-list.collapsed {
     display: none;
@@ -1377,7 +1378,7 @@ button:active{
 .task-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
 }
 
 .task-item {
@@ -1386,7 +1387,6 @@ button:active{
     padding: 8px;
     display: flex;
     align-items: center;
-    gap: 8px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -1560,24 +1560,54 @@ button:active{
 /* 添加任务按钮 */
 .add-task-btn {
     position: fixed;
-    bottom: 100px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-    border: none;
-    border-radius: 50%;
-    color: white;
-    font-size: 24px;
+    bottom: 6rem;   /* 约等于 96px，适配不同屏幕 */
+    right: 1.25rem; /* 约等于 20px */
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
-    transition: transform 0.3s, box-shadow 0.3s;
     z-index: 100;
 }
+/* 添加按钮 */
+.add-button {
+    display: flex;
+    width: 3rem;  /* ≈ 56px，保证触控区域大于44px */
+    height: 3rem;
+    background: #fff; /* 手机上透明背景容易看不清，改为白色 */
+    border: 0.3rem solid #0A84FF; /* 边框用 rem，比例更稳定 */
+    border-radius: 50%;
+    color: #0A84FF;
+    font-size: 0; /* 隐藏原始文本 */
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+    align-items: center;
+    justify-content: center;
+    user-select: none; /* 防止点加号选中文本 */
+    -webkit-tap-highlight-color: transparent; /* 移动端去掉点击高亮 */
+    
+    /* iOS Safari 兼容性修复 */
+    -webkit-box-align: center;
+    -webkit-box-pack: center;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    
+    /* 确保文本垂直居中 */
+    line-height: 1;
+    text-align: center;
+    
+    /* 防止字体渲染偏移 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    /* 确保盒模型一致 */
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
 
-.add-task-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+.add-button::before {
+    content: '+';
+    display: block;
+    transform: translateY(-0.1rem); /* 向上微调 */
+    line-height: 1;
+    font-size: 2rem; /* 伪元素显示加号 */
 }
 
 /* 模态框样式 */
