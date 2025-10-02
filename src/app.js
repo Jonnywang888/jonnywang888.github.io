@@ -980,7 +980,7 @@ class Main {
         this.needload = true;
         this.groupdata = {};
         this.groupmese = {};
-        window.addEventListener('scroll', () => this.scrolling());
+        document.getElementById('mainpage').addEventListener('scroll', () => this.scrolling());
         window.addEventListener('load', () => this.refresh());
         document.getElementById('but-tianjia').addEventListener('click', add.init);
         this.loading();
@@ -993,11 +993,11 @@ class Main {
     }
     // 滚动设置
     scrolling() {
-        const mainpage = document.getElementById('mainpage').style.display;
-        if (mainpage === 'none') return;
+        const mainpage = document.getElementById('mainpage')
+        if (mainpage.classList.contains('hidden')) return;
         // 获取所有楼层
         const floors = document.querySelectorAll('.li-floor');
-        let floorH = document.documentElement.scrollTop;
+        let floorH = mainpage.scrollTop;
         for (let i = 0; i < floors.length; i++) {
             const floorTop = floors[i].offsetTop - 90;
             const nextFloorTop = i < floors.length - 1 ? floors[i + 1].offsetTop - 90 : Infinity;

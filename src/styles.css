@@ -7,9 +7,6 @@
     --beijinghui:#F7F7F7;
     --hong: #FF0000;
     --qianhui: #8a949e;
-        /* 针对ios */
-    -webkit-overflow-scrolling: touch;
-    -webkit-tap-highlight-color: transparent; 
 }
 /* 辅助类 */
 .hidden {
@@ -21,8 +18,6 @@ body, html {
     display: flex;
     flex-direction: column;
     height: 100%;
-    /* 针对ios */
-    /* -webkit-overflow-scrolling: touch; */
     font-family: Arial, sans-serif;
     background-color: var(--beijinghui);
     overscroll-behavior: none; /* 阻止ios回弹效果 */
@@ -155,7 +150,7 @@ body, html {
     background-color: var(--beijinghui);
 }
 .page{
-    height: 100%;
+    /* height: 100%; */
     background-color: var(--beijinghui);
     overflow-y: auto;
 }
@@ -1355,7 +1350,7 @@ button:active{
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .section-header.collapsed h2::after {
-    content: '-(已折叠)';
+    content: ' - (已折叠)';
 }
 .task-list.collapsed {
     display: none;
@@ -1632,7 +1627,7 @@ button:active{
     background: white;
     border-radius: 20px;
     padding: 24px;
-    width: 90%;
+    width: 80%;
     overflow-y: auto;
 }
 
