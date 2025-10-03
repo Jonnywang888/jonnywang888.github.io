@@ -3440,7 +3440,7 @@ class Todopage {
      */
     loadCurrentUser() {
         const currentUserId = localStorage.getItem('currentUserId') || 1;
-        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{id: 1, name: "Matteo", points: 0, avatar: "👤"}];
+        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{ID: 1, NAME: 'Matteo', POINTS: 0, AVATAR: '👤'}];
         return this.users.find(user => user.ID == currentUserId) || this.users[0];
     }
 
