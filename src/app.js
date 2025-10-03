@@ -2091,15 +2091,15 @@ class Setpage {
     }
     // 重新载入
     async reload() {
-        const res = new Promise((resolve, reject) => {
-            let request = indexedDB.deleteDatabase('DB');
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject();
-            request.onblocked = () => resolve();
-        });
-        await res;
+        // const res = new Promise((resolve, reject) => {
+        //     let request = indexedDB.deleteDatabase('DB');
+        //     request.onsuccess = () => resolve();
+        //     request.onerror = () => reject();
+        //     request.onblocked = () => resolve();
+        // });
+        // await res;
         // 清除所有localStorage项
-        localStorage.clear();
+        // localStorage.clear();
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(() => {
                 if (navigator.serviceWorker.controller) {
