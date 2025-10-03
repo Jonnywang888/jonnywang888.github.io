@@ -2091,15 +2091,15 @@ class Setpage {
     }
     // 重新载入
     async reload() {
-        const res = new Promise((resolve, reject) => {
-            let request = indexedDB.deleteDatabase('DB');
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject();
-            request.onblocked = () => resolve();
-        });
-        await res;
+        // const res = new Promise((resolve, reject) => {
+        //     let request = indexedDB.deleteDatabase('DB');
+        //     request.onsuccess = () => resolve();
+        //     request.onerror = () => reject();
+        //     request.onblocked = () => resolve();
+        // });
+        // await res;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then((registration) => {
+            navigator.serviceWorker.ready.then(() => {
                 if (navigator.serviceWorker.controller) {
                     navigator.serviceWorker.controller.postMessage('clear-cache');
                 } else {
@@ -2527,7 +2527,7 @@ class Todopage {
      */
     async init() {
         // 先初始化用户数据
-        this.users = await this.loadUsers();
+        // this.users = await this.loadUsers();
         this.currentUser = this.loadCurrentUser();
         this.tasks = await this.loadTasks(); // 从本地存储加载任务数据
         // 确保应用启动时始终设置为今天的日期
@@ -2794,7 +2794,7 @@ class Todopage {
             for (const id of upload.deltasks) {
                 await api.todo_deltask(id);
             }
-
+            this.users = await this.loadUsers();
             const res = await api.todo_gettasks();
             const tasks = await res.json();
             const resrepeats = await api.todo_getrepeats();
@@ -3438,7 +3438,8 @@ class Todopage {
      */
     loadCurrentUser() {
         const currentUserId = localStorage.getItem('currentUserId') || 1;
-        return this.users.find(user => user.id == currentUserId) || this.users[0];
+        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{ID: 1, NAME: "Matteo", POINTS: 0, AVATAR: "👤"}];
+        return this.users.find(user => user.ID == currentUserId) || this.users[0];
     }
 
     /**
