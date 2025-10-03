@@ -2091,13 +2091,15 @@ class Setpage {
     }
     // 重新载入
     async reload() {
-        // const res = new Promise((resolve, reject) => {
-        //     let request = indexedDB.deleteDatabase('DB');
-        //     request.onsuccess = () => resolve();
-        //     request.onerror = () => reject();
-        //     request.onblocked = () => resolve();
-        // });
-        // await res;
+        const res = new Promise((resolve, reject) => {
+            let request = indexedDB.deleteDatabase('DB');
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject();
+            request.onblocked = () => resolve();
+        });
+        await res;
+        // 清除所有localStorage项
+        localStorage.clear();
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(() => {
                 if (navigator.serviceWorker.controller) {
@@ -3438,7 +3440,7 @@ class Todopage {
      */
     loadCurrentUser() {
         const currentUserId = localStorage.getItem('currentUserId') || 1;
-        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{ID: 1, NAME: "Matteo", POINTS: 0, AVATAR: "👤"}];
+        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{id: 1, name: "Matteo", points: 0, avatar: "👤"}];
         return this.users.find(user => user.ID == currentUserId) || this.users[0];
     }
 
