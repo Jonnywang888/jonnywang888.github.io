@@ -2098,7 +2098,7 @@ class Setpage {
         //     request.onblocked = () => resolve();
         // });
         // await res;
-        // 清除所有localStorage项
+        // // 清除所有localStorage项
         // localStorage.clear();
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(() => {
@@ -2955,6 +2955,10 @@ class Todopage {
             `;
             const button = item.querySelector('.exchange-btn');
             button.addEventListener('click', () => {
+                if (points < -task.point) {
+                    showmsg('积分不足!',10);
+                    return;
+                }
                 const check = confirm(`确定要兑换 - ${task.title} - 吗？`);
                 if (!check) return;
                 const id = new Date().getTime();
@@ -3440,7 +3444,7 @@ class Todopage {
      */
     loadCurrentUser() {
         const currentUserId = localStorage.getItem('currentUserId') || 1;
-        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{ID: 1, NAME: 'Matteo', POINTS: 0, AVATAR: '👤'}];
+        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{id: 1, name: "Matteo", points: 0, avatar: "👤"}];
         return this.users.find(user => user.ID == currentUserId) || this.users[0];
     }
 

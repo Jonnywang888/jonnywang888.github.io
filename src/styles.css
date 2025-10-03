@@ -1847,7 +1847,7 @@ button:active{
 }
 
 .user-switch-header {
-    background: #607bf4;
+    background: linear-gradient(135deg, var(--lan), var(--qianlan));
     color: white;
     padding: 12px 16px;
     font-weight: 600;
@@ -1860,7 +1860,7 @@ button:active{
     align-items: center;
     padding: 12px 16px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background-color 0.2s ease;
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -1913,11 +1913,11 @@ button:active{
 }
 
 .user-option.active .user-name {
-    color: #607bf4;
+    color: var(--lan);
 }
 
 .user-option.active .user-points {
-    background: #607bf4;
+    background: linear-gradient(135deg, var(--qianlan), var(--lan));;
     color: white;
 }
 
@@ -1992,7 +1992,6 @@ button:active{
 }
 
 .exchange-items {
-    max-height: 300px;
     overflow-y: auto;
     margin-bottom: 24px;
 }
@@ -2086,24 +2085,4 @@ button:active{
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
-}
-
-/* 积分兑换模态框特殊样式 */
-#exchange-modal .modal-content {
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-#exchange-modal .modal-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-#exchange-modal .modal-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-#exchange-modal .modal-content::-webkit-scrollbar-thumb {
-    background: var(--qianlan);
-    border-radius: 3px;
 }
