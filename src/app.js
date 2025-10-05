@@ -2547,7 +2547,7 @@ class Todopage {
         
         this.renderTasks(); // 渲染任务列表
         this.updateTaskCounts(); // 更新任务计数显示
-        
+
         setTimeout(() => {
             this.updateDateTime();
             this.aggiornamento();
@@ -3393,6 +3393,7 @@ class Todopage {
     async updatePoints() {
         const res = await api.todo_getpoints();
         const points = await res.json();
+        showmsg(json.stringify(points))
         points.forEach(p => {
             this.users.forEach(u => {
                 if (u.ID == p.USERID) {
