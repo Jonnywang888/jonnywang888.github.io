@@ -3391,10 +3391,8 @@ class Todopage {
     }
 
     async updatePoints() {
-        showmsg('正在更新积分，请稍候...');
         const res = await api.todo_getpoints();
         const points = await res.json();
-        showmsg(JSON.stringify(points))
         points.forEach(p => {
             this.users.forEach(u => {
                 if (u.ID == p.USERID) {
@@ -3402,6 +3400,7 @@ class Todopage {
                 }
             })
         });
+        console.log(this.users)
         this.saveUsers();
         this.updateUserDisplay();
         showmsg('积分已更新！');
