@@ -2091,15 +2091,15 @@ class Setpage {
     }
     // 重新载入
     async reload() {
-        const res = new Promise((resolve, reject) => {
-            let request = indexedDB.deleteDatabase('DB');
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject();
-            request.onblocked = () => resolve();
-        });
-        await res;
-        // 清除所有localStorage项
-        localStorage.clear();
+        // const res = new Promise((resolve, reject) => {
+        //     let request = indexedDB.deleteDatabase('DB');
+        //     request.onsuccess = () => resolve();
+        //     request.onerror = () => reject();
+        //     request.onblocked = () => resolve();
+        // });
+        // await res;
+        // // 清除所有localStorage项
+        // localStorage.clear();
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(() => {
                 if (navigator.serviceWorker.controller) {
@@ -3403,6 +3403,7 @@ class Todopage {
         });
         this.saveUsers();
         this.updateUserDisplay();
+        showmsg('积分已更新！');
     }
     /**
      * 日期导航功能
