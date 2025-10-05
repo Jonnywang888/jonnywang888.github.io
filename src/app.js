@@ -3400,7 +3400,7 @@ class Todopage {
                 }
             })
         });
-        console.log(this.users)
+        this.currentUser = this.users.find(u => u.ID == this.currentUser.ID) || this.currentUser;
         this.saveUsers();
         this.updateUserDisplay();
     }
@@ -3513,7 +3513,6 @@ class Todopage {
      * 更新用户显示
      */
     updateUserDisplay() {
-        showmsg(JSON.stringify(this.currentUser));
         document.querySelector('.todo-avatar img').src = 'icons/' + this.currentUser.NAME + '.jpg';
         document.querySelector('.user-name').textContent = this.currentUser.NAME;
         document.querySelector('.points .count').textContent = this.currentUser.POINTS;
