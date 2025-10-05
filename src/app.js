@@ -2798,10 +2798,8 @@ class Todopage {
             this.users = await this.loadUsers();
             const res = await api.todo_gettasks();
             const tasks = await res.json();
-            showmsg(JSON.stringify(tasks));
             const resrepeats = await api.todo_getrepeats();
             const repeats = await resrepeats.json();
-            showmsg(JSON.stringify(repeats));
             const localetasks = await db.getTodoTasks();
             const localrepeats = await db.getTodoRepeats();
             this.updatePoints(); 
@@ -3393,6 +3391,7 @@ class Todopage {
     }
 
     async updatePoints() {
+        showmsg('正在更新积分，请稍候...');
         const res = await api.todo_getpoints();
         const points = await res.json();
         showmsg(json.stringify(points))
