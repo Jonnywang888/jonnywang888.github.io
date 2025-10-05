@@ -2545,14 +2545,13 @@ class Todopage {
         // 立即更新日期时间显示，确保显示今天的日期
         this.updateDateTime();
         
-        // 确保DOM元素存在后再次更新时间显示（双重保险）
+        this.renderTasks(); // 渲染任务列表
+        this.updateTaskCounts(); // 更新任务计数显示
+        
         setTimeout(() => {
             this.updateDateTime();
             this.aggiornamento();
-        }, 100);
-        
-        this.renderTasks(); // 渲染任务列表
-        this.updateTaskCounts(); // 更新任务计数显示
+        }, 1000);
     }
 
     /**
