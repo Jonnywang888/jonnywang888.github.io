@@ -2777,6 +2777,7 @@ class Todopage {
     async aggiornamento() {
         try {
             const upload = JSON.parse(localStorage.getItem('todoupload'));
+            showmsg(JSON.stringify(upload),15)
             for (const task of upload.addtasks) {
                 await api.todo_addtask(task);
             }
@@ -2802,8 +2803,6 @@ class Todopage {
             const repeats = await resrepeats.json();
             const localetasks = await db.getTodoTasks();
             const localrepeats = await db.getTodoRepeats();
-            const local = JSON.parse(localStorage.getItem('todoupload'));
-            showmsg(JSON.stringify(local),15)
             this.updatePoints(); 
             if (JSON.stringify(tasks) == JSON.stringify(localetasks) && JSON.stringify(repeats) == JSON.stringify(localrepeats)) {
                 return;
