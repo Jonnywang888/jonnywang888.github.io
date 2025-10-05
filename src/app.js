@@ -3403,7 +3403,6 @@ class Todopage {
         console.log(this.users)
         this.saveUsers();
         this.updateUserDisplay();
-        showmsg('积分已更新！');
     }
     /**
      * 日期导航功能
