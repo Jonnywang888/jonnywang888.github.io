@@ -3394,7 +3394,7 @@ class Todopage {
         showmsg('正在更新积分，请稍候...');
         const res = await api.todo_getpoints();
         const points = await res.json();
-        showmsg(json.stringify(points))
+        showmsg(JSON.stringify(points))
         points.forEach(p => {
             this.users.forEach(u => {
                 if (u.ID == p.USERID) {
