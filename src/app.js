@@ -2551,7 +2551,7 @@ class Todopage {
         setTimeout(() => {
             this.updateDateTime();
             this.aggiornamento();
-        }, 1000);
+        }, 1);
     }
 
     /**
