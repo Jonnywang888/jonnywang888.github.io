@@ -3513,6 +3513,7 @@ class Todopage {
      * 更新用户显示
      */
     updateUserDisplay() {
+        showmsg(JSON.stringify(this.currentUser));
         document.querySelector('.todo-avatar img').src = 'icons/' + this.currentUser.NAME + '.jpg';
         document.querySelector('.user-name').textContent = this.currentUser.NAME;
         document.querySelector('.points .count').textContent = this.currentUser.POINTS;
