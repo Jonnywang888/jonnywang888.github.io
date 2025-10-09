@@ -2107,7 +2107,7 @@ class Setpage {
     async reload() {
         await db.clear();
         // // 清除所有localStorage项
-        // localStorage.clear();
+        localStorage.clear();
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(() => {
                 if (navigator.serviceWorker.controller) {
