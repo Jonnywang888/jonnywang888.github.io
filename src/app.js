@@ -248,16 +248,31 @@ class Database {
             const transaction = db.transaction([this.DB_STORE_TASKS], 'readwrite');
             const store = transaction.objectStore(this.DB_STORE_TASKS);
 
-            const request = store.delete(id);
-
-            request.onsuccess = () => {
-                console.log(id)
-                resolve(true);
+            // 先获取数据
+            const getRequest = store.get(id);
+            
+            getRequest.onsuccess = (event) => {
+                const data = event.target.result;
+                if (data) {
+                    // 设置DEL=1标记为已删除
+                    data.DEL = 1;
+                    
+                    // 更新数据
+                    const putRequest = store.put(data);
+                    
+                    putRequest.onsuccess = () => {
+                        resolve(true);
+                    };
+                    
+                    putRequest.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                } else {
+                    resolve(false); // 数据不存在
+                }
             };
 
-            request.onerror = (event) => {
-                console.log(event.target.error)
-                
+            getRequest.onerror = (event) => {
                 reject(event.target.error);
             };
         });
@@ -279,27 +294,17 @@ class Database {
             };
         });
     }
-    async getTodoRepeat(id,currentDateStr) {
+    async getTodoRepeat(id) {
         id = parseInt(id);
         const db = await this.ensureDb();
         return new Promise((resolve, reject) => {
             const transaction = db.transaction([this.DB_STORE_REPEATS], 'readonly');
             const store = transaction.objectStore(this.DB_STORE_REPEATS);
-            // 使用索引查询 TASKID 等于 id 且 DATE 等于 currentDateStr 的所有记录
-            const request = store.openCursor();
+            // 直接通过ID查询数据
+            const request = store.get(id);
 
             request.onsuccess = function (event) {
-                const cursor = event.target.result;
-
-                if (cursor) {
-                    if (cursor.value.taskid == id && cursor.value.date == currentDateStr) {
-                        resolve(cursor.value);
-                        return;
-                    }
-                    cursor.continue();
-                } else {
-                    resolve(null);
-                }
+                resolve(event.target.result || null);
             };
 
             request.onerror = function (event) {
@@ -366,6 +371,14 @@ class Database {
                 console.error('清空重复任务数据失败:', event.target.error);
                 reject(event.target.error);
             };
+        });
+    }
+    async clear(){
+        return new Promise((resolve, reject) => {
+            let request = indexedDB.deleteDatabase('DB');
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject();
+            request.onblocked = () => resolve();
         });
     }
 }
@@ -498,7 +511,7 @@ class Fetchapi {
             const response = await this.fetchdata(body);
             const res = await response.json();
             
-            if (res) {
+            if (res === true) {
                 console.log('添加任务到服务器成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
                 const found = upload.addtasks.find(item => item.id === task.id);
@@ -542,7 +555,7 @@ class Fetchapi {
             const response = await this.fetchdata(body);
             const res = await response.json();
             
-            if (res) {
+            if (res === true) {
                 console.log('更新任务到服务器成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
                 
@@ -582,7 +595,7 @@ class Fetchapi {
             const response = await this.fetchdata(body);
             const res = await response.json();
             
-            if (res) {
+            if (res === true) {
                 // 删除成功
                 console.log('删除任务成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
@@ -632,7 +645,7 @@ class Fetchapi {
             const response = await this.fetchdata(body);
             const res = await response.json();
             
-            if (res) {
+            if (res === true) {
                 console.log('添加任务到服务器成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
                 const found = upload.addmovimento.find(item => item == dati);
@@ -664,7 +677,8 @@ class Fetchapi {
         }
     };
     async todo_addrepeat(task) {
-        const dati = `${task.id},${task.taskid},'${task.date}','${task.completed}'`
+        const timestr = todo.getLocalISOString();
+        const dati = `${task.id},${task.taskid},'${task.date}','${task.completed}',${timestr}`
         const body = {
             action: 'todo_addrepeat',
             dati: dati
@@ -674,7 +688,7 @@ class Fetchapi {
             const response = await this.fetchdata(body);
             const res = await response.json();
             
-            if (res) {
+            if (res === true) {
                 console.log('添加任务到服务器成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
                 const found = upload.addrepeat.find(item => item.id == task.id);
@@ -706,7 +720,7 @@ class Fetchapi {
         }
     }
     async todo_updaterepeat(task) {
-        const dati = `${task.id}|'${task.completed}'`
+        const dati = `${task.id}|'${task.completed}'|${task.lastmodifica}`;
         const body = {
             action: 'todo_updaterepeat',
             dati: dati
@@ -716,7 +730,7 @@ class Fetchapi {
             const response = await this.fetchdata(body);
             const res = await response.json();
             
-            if (res) {
+            if (res === true) {
                 console.log('更新任务到服务器成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
                 const found = upload.updaterepeat.find(item => item.id === task.id);
@@ -2091,13 +2105,7 @@ class Setpage {
     }
     // 重新载入
     async reload() {
-        // const res = new Promise((resolve, reject) => {
-        //     let request = indexedDB.deleteDatabase('DB');
-        //     request.onsuccess = () => resolve();
-        //     request.onerror = () => reject();
-        //     request.onblocked = () => resolve();
-        // });
-        // await res;
+        await db.clear();
         // // 清除所有localStorage项
         // localStorage.clear();
         if ('serviceWorker' in navigator) {
@@ -3157,11 +3165,11 @@ class Todopage {
         const task = this.tasks.find(t => t.id == taskId);
         if (task) {
             const currentDateStr = this.formatLocalDate(this.currentDate);
-            
+            const repeatid = this.creatrepeartid(taskId,currentDateStr);
             if (task.type === 'repeat') {
                 // 重复任务：按日期记录完成状态
-                const repeat = await db.getTodoRepeat(taskId,currentDateStr);
-                console.log(repeat)
+                const repeat = await db.getTodoRepeat(repeatid);
+
                 let repeattask
                 if (repeat) {
                     repeattask = repeat;
@@ -3170,19 +3178,16 @@ class Todopage {
                         id: Date.now(),
                         taskid: taskId,
                         date: currentDateStr,
-                        completed: false
+                        completed: false,
+                        lastmodifica: this.getLocalISOString()
                     };
                 }
                 const isCompleted = !repeattask.completed;
                 repeattask.completed = isCompleted;
-                
+                db.addTodoRepeat(repeattask);
                 if (repeat) {
-                    // 更新已存在记录
-                    db.addTodoRepeat(repeattask);
                     api.todo_updaterepeat(repeattask);
                 } else {
-                    // 添加新记录
-                    db.addTodoRepeat(repeattask);
                     api.todo_addrepeat(repeattask);
                 }
                 // 更新积分
@@ -3414,7 +3419,6 @@ class Todopage {
         this.updateDateTime();
         this.renderTasks(); // 重新渲染当天的任务
         this.updateTaskCounts(); // 更新任务计数
-        const action = direction > 0 ? '下一天' : '上一天';
     }
 
 
@@ -3651,6 +3655,10 @@ class Todopage {
                 }
             }
         }
+    }
+    creatrepeartid(id,datestr){
+        const dateid = parseInt(datestr + '00000');
+        return parseInt(id) + parseInt(dateid);
     }
 }
 
