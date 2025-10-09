@@ -632,7 +632,7 @@ class Fetchapi {
             const now = new Date();
             const id = now.getTime();
             const time = todo.getLocalISOString();
-            dati = `${task.id},'${currentdate}','${task.completed}','${time}',${id},'${task.title}','${task.description}',${task.point},${todo.currentUser.ID}`;
+            dati = `${task.id},'${currentdate}','${task.completed}','${time}',${id},${id},'${task.title}','${task.description}',${task.point},${todo.currentUser.ID}`;
         } else {
             dati = task
         }
@@ -677,8 +677,7 @@ class Fetchapi {
         }
     };
     async todo_addrepeat(task) {
-        const timestr = todo.getLocalISOString();
-        const dati = `${task.id},${task.taskid},'${task.date}','${task.completed}',${timestr}`
+        const dati = `${task.id},${task.taskid},'${task.date}','${task.completed}',${task.lastmodifica}`
         const body = {
             action: 'todo_addrepeat',
             dati: dati
@@ -2074,6 +2073,7 @@ class Logpage {
                 const user = {'checked': true,'utente': username,'mi': data[1]}
                 localStorage.setItem('user', JSON.stringify(user));
                 app.init();
+                todo.init();
             } else {
                 alert('用户名或密码错误')
             }
@@ -2559,7 +2559,7 @@ class Todopage {
         setTimeout(() => {
             this.updateDateTime();
             this.aggiornamento();
-        }, 1);
+        }, 1000);
     }
 
     /**
@@ -2743,6 +2743,11 @@ class Todopage {
             closeexchangemodal.addEventListener('click', () => {
                 document.getElementById('exchange-modal').classList.remove('show');
             })
+
+            const offline = document.getElementById('offline');
+            offline.addEventListener('click', () => {
+                this.showdatioffline();
+            })
         } catch (error) {
             console.error('绑定事件时出错:', error);
         }
@@ -2811,14 +2816,16 @@ class Todopage {
             const localetasks = await db.getTodoTasks();
             const localrepeats = await db.getTodoRepeats();
             this.updatePoints(); 
-            if (JSON.stringify(tasks) == JSON.stringify(localetasks) && JSON.stringify(repeats) == JSON.stringify(localrepeats)) {
+            if (JSON.stringify(tasks) === JSON.stringify(localetasks) && JSON.stringify(repeats) === JSON.stringify(localrepeats)) {
                 return;
             }
             await db.addTodoTasks(tasks);
             await db.addTodoRepeats(repeats);
+            this.currentUser = this.loadCurrentUser();
             this.tasks = await this.loadTasks();
             this.renderTasks();
             this.updateTaskCounts();
+
             showmsg('数据已经同步到服务器！');
         } catch (err) {
             console.error('获取任务失败:', err);
@@ -3169,20 +3176,20 @@ class Todopage {
             if (task.type === 'repeat') {
                 // 重复任务：按日期记录完成状态
                 const repeat = await db.getTodoRepeat(repeatid);
-
                 let repeattask
                 if (repeat) {
                     repeattask = repeat;
                 } else {
                     repeattask = {
-                        id: Date.now(),
+                        id: repeatid,
                         taskid: taskId,
                         date: currentDateStr,
                         completed: false,
-                        lastmodifica: this.getLocalISOString()
+                        lastmodifica: '',
                     };
                 }
                 const isCompleted = !repeattask.completed;
+                repeattask.lastmodifica = Date.now();
                 repeattask.completed = isCompleted;
                 db.addTodoRepeat(repeattask);
                 if (repeat) {
@@ -3217,7 +3224,7 @@ class Todopage {
             }
             api.todo_updatetask(taskId);
             // 更新同步字段     
-            this.renderTasks();
+            await this.renderTasks();
             this.updateTaskCounts();
         }
     }
@@ -3272,7 +3279,8 @@ class Todopage {
             Tasks.map(async task => {
                 if (task.type === 'repeat') {
                     const taskCopy = { ...task };
-                    const repeat = await db.getTodoRepeat(task.id, currentDateStr);
+                    const id = this.creatrepeartid(task.id, currentDateStr);
+                    const repeat = await db.getTodoRepeat(id);
                     if (repeat) {
                         taskCopy.completed = repeat.completed;
                     } else {
@@ -3656,9 +3664,132 @@ class Todopage {
             }
         }
     }
-    creatrepeartid(id,datestr){
-        const dateid = parseInt(datestr + '00000');
+    creatrepeartid(id,datestr) {
+        const dateid = parseInt(datestr.replace(/-/g, '') + '00000');
         return parseInt(id) + parseInt(dateid);
+    }
+    showdatioffline() {
+        try {
+            const modal = document.getElementById('offline-modal');
+            const content = modal?.querySelector('.modal-content');
+            if (!modal || !content) {
+                console.warn('未找到 offline-modal 或其内容容器');
+                return;
+            }
+
+            // 绑定关闭按钮
+            const closeBtn = document.getElementById('close-offline-modal');
+            if (closeBtn) {
+                closeBtn.onclick = () => {
+                    modal.classList.remove('show');
+                };
+            }
+
+            // 清理上次生成的内容（保留 header）
+            const old = content.querySelector('#offline-content');
+            if (old) old.remove();
+
+            // 创建内容容器（JSON风格视图）
+            const container = document.createElement('div');
+            container.id = 'offline-content';
+            container.className = 'json-view';
+
+            // 读取并解析离线数据
+            let data = null;
+            const raw = localStorage.getItem('todoupload');
+            if (raw) {
+                try {
+                    data = JSON.parse(raw);
+                } catch (e) {
+                    console.warn('todoupload 解析失败，作为字符串展示');
+                    data = raw;
+                }
+            }
+
+            // 如果没有数据，给出提示
+            if (!data) {
+                const empty = document.createElement('div');
+                empty.textContent = '暂无离线数据';
+                container.appendChild(empty);
+            } else if (typeof data === 'string') {
+                const pre = document.createElement('pre');
+                pre.style.whiteSpace = 'pre-wrap';
+                pre.textContent = data;
+                container.appendChild(pre);
+            } else {
+                // JSON风格折叠段落
+                const createJsonSection = (key, items, formatter) => {
+                    const section = document.createElement('div');
+                    section.className = 'json-section'; // 默认不展开
+
+                    const header = document.createElement('div');
+                    header.className = 'json-header';
+                    const count = Array.isArray(items) ? items.length : 0;
+                    header.innerHTML = `
+                        <span class="json-arrow">▶</span>
+                        <span class="json-key">"${key}":</span>
+                        <span class="json-bracket">[</span>
+                        <span class="json-count">${count}</span>
+                        <span class="json-bracket">]</span>
+                    `;
+
+                    const body = document.createElement('div');
+                    body.className = 'json-body';
+
+                    if (!items || items.length === 0) {
+                        const emptyItem = document.createElement('div');
+                        emptyItem.className = 'json-item';
+                        emptyItem.textContent = '(空)';
+                        body.appendChild(emptyItem);
+                    } else {
+                        items.forEach((item) => {
+                            const row = document.createElement('div');
+                            row.className = 'json-item';
+                            const text = formatter ? formatter(item) : JSON.stringify(item);
+                            row.textContent = text;
+                            body.appendChild(row);
+                        });
+                    }
+
+                    // 点击标题折叠/展开（JSON风格）
+                    header.addEventListener('click', () => {
+                        section.classList.toggle('expanded');
+                    });
+
+                    section.appendChild(header);
+                    section.appendChild(body);
+                    return section;
+                };
+
+                // 针对不同数据类型的格式化
+                const fmtId = (v) => typeof v === 'string' ? `ID: ${v}` : JSON.stringify(v);
+                const fmtRepeat = (v) => {
+                    if (v && typeof v === 'object') {
+                        const { taskid, date, completed, id, lastmodifica } = v;
+                        return `{"taskid": ${taskid}, "date": "${date}", "completed": ${completed}, "rid": ${id}, "lastmodifica": "${lastmodifica}"}`;
+                    }
+                    return JSON.stringify(v);
+                };
+                const fmtMov = (v) => {
+                    if (typeof v === 'string') return v;
+                    return JSON.stringify(v);
+                };
+
+                // 依次创建各类段落（默认全部折叠）
+                container.appendChild(createJsonSection('addtasks', data.addtasks, fmtId));
+                container.appendChild(createJsonSection('updatetasks', data.updatetasks, fmtId));
+                container.appendChild(createJsonSection('deltasks', data.deltasks, fmtId));
+                container.appendChild(createJsonSection('addrepeat', data.addrepeat, fmtRepeat));
+                container.appendChild(createJsonSection('updaterepeat', data.updaterepeat, fmtRepeat));
+                container.appendChild(createJsonSection('addmovimento', data.addmovimento, fmtMov));
+            }
+
+            content.appendChild(container);
+            // 显示模态
+            modal.classList.add('show');
+        } catch (error) {
+            console.error('显示离线数据时出错:', error);
+        }
     }
 }
 

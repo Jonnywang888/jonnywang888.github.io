@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html>  
 <head>
     <meta charset="UTF-8">
     <!-- 禁用双击缩放 -->
@@ -281,6 +281,7 @@
                 <input type="date" id="date-input" class="date-input-hidden">
                 <button class="nav-btn prev">‹</button>
                 <button class="nav-btn next">›</button>
+                <div class="offline" id="offline">离线</div>
             </div>
         </div>
 
@@ -523,6 +524,15 @@
 
                 <!-- 兑换商品列表 -->
                 <div class="exchange-items" id="exchange-items"></div>
+            </div>
+        </div>
+        <!-- 离线数据查看 -->
+        <div class="modal" id="offline-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>离线数据查看</h3>
+                    <button class="close-btn" id="close-offline-modal">×</button>
+                </div>
             </div>
         </div>
     </div>

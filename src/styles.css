@@ -1309,6 +1309,22 @@ button:active{
     gap: 15px;
 }
 
+/* 离线图标右侧显示且不与其他图标居中对齐 */
+.nav-arrows .offline {
+    margin-left: auto;
+    align-self: center; /* 与容器的 align-items: center 保持一致 */
+    width: 30px; /* 与 .nav-btn 尺寸一致，确保水平对齐视觉统一 */
+    height: 30px;
+    background-image: url('../icons/wangluo.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    overflow: hidden;
+    text-indent: -9999px; /* 隐藏文字，仅显示图标 */
+    white-space: nowrap;
+    flex: 0 0 30px;
+}
+
 .nav-btn {
     background: rgba(255, 255, 255, 0.2);
     border: none;
@@ -1657,6 +1673,62 @@ button:active{
 
 .close-btn:hover {
     background: #f5f5f5;
+}
+
+/* 离线 JSON 风格折叠样式 */
+#offline-content.json-view {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 13px;
+    color: #1f2328;
+}
+.json-section {
+    margin: 6px 0;
+}
+.json-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+.json-header:hover {
+    background: #f6f8fa;
+}
+.json-arrow {
+    display: inline-block;
+    width: 12px;
+    color: #6a737d;
+    transform: rotate(0deg);
+    transition: transform 0.15s ease;
+}
+.json-section.expanded .json-arrow {
+    transform: rotate(90deg);
+}
+.json-key {
+    color: #0550ae;
+}
+.json-bracket {
+    color: #6a737d;
+}
+.json-count {
+    color: #6a737d;
+}
+.json-body {
+    display: none;
+    padding-left: 22px;
+    border-left: 2px solid #eaecef;
+    margin-left: 6px;
+}
+.json-section.expanded .json-body {
+    display: block;
+}
+.json-item {
+    padding: 4px 0;
+    border-bottom: 1px dotted #eaecef;
+}
+.json-item:last-child {
+    border-bottom: none;
 }
 
 
