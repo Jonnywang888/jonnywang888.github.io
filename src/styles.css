@@ -1629,6 +1629,7 @@ button:active{
     left: 0;
     width: 100%;
     height: 100%;
+    max-height: 100vh;
     background: rgba(0, 0, 0, 0.5);
     z-index: 1000;
     align-items: center;
@@ -1680,6 +1681,17 @@ button:active{
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 13px;
     color: #1f2328;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* 高度超出滚动，横向不溢出 */
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 60vh;
+    /* 长内容自动换行，避免水平溢出 */
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 .json-section {
     margin: 6px 0;
@@ -1719,6 +1731,13 @@ button:active{
     padding-left: 22px;
     border-left: 2px solid #eaecef;
     margin-left: 6px;
+    /* 防止内部内容造成水平溢出 */
+    overflow-x: hidden;
+}
+.json-item {
+    /* 长字符串在小屏幕也不水平溢出 */
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 .json-section.expanded .json-body {
     display: block;
@@ -2157,4 +2176,10 @@ button:active{
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
+}
+.todo-uploadbuts {
+    margin-top: 20px;
+}
+#offline-content{
+    overflow-y: auto;
 }

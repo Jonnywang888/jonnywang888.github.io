@@ -373,6 +373,35 @@ class Database {
             };
         });
     }
+    async clearTodo () {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_TASKS, this.DB_STORE_REPEATS], 'readwrite');
+            const tasksStore = transaction.objectStore(this.DB_STORE_TASKS);
+            const repeatsStore = transaction.objectStore(this.DB_STORE_REPEATS);
+
+            const tasksClearRequest = tasksStore.clear();
+            tasksClearRequest.onerror = (event) => {
+                console.error('清空任务数据失败:', event.target.error);
+                reject(event.target.error);
+            };
+
+            const repeatsClearRequest = repeatsStore.clear();
+            repeatsClearRequest.onerror = (event) => {
+                console.error('清空重复任务数据失败:', event.target.error);
+                reject(event.target.error);
+            };
+
+            transaction.oncomplete = () => {
+                console.log('成功清空任务与重复任务数据');
+                resolve(true);
+            };
+            transaction.onerror = (event) => {
+                console.error('清空任务或重复任务数据事务失败:', event.target.error);
+                reject(event.target.error);
+            };
+        });
+    }
     async clear(){
         return new Promise((resolve, reject) => {
             let request = indexedDB.deleteDatabase('DB');
@@ -384,8 +413,8 @@ class Database {
 }
 class Fetchapi {
     constructor() {
-        // this.url = 'http://192.168.1.99/server/app.asp';
-        this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
+        this.url = 'http://192.168.1.99/server/app.asp';
+        // this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
     }
     // 获取备忘
     getmemori() {
@@ -2528,6 +2557,7 @@ class Todopage {
      * 加载本地存储的任务数据，设置当前日期，并启动应用初始化
      */
     constructor() {
+        this.bindEvents(); // 绑定所有事件监听器
         this.init(); // 启动应用初始化
     }
 
@@ -2546,7 +2576,6 @@ class Todopage {
         today.setHours(0, 0, 0, 0);
         this.currentDate = today;
 
-        this.bindEvents(); // 绑定所有事件监听器
         // 初始化用户显示
         this.updateUserDisplay();
         
@@ -2748,6 +2777,22 @@ class Todopage {
             offline.addEventListener('click', () => {
                 this.showdatioffline();
             })
+
+            const todoupload = document.getElementById('todo-upload');
+            todoupload.addEventListener('click', async () => {
+                const result = await this.aggiornamento();
+                if (result) {
+                    showmsg('数据已上传到服务器！');
+                } else {
+                    showmsg('没有数据可更新或无网络连接！');
+                }
+                this.showdatioffline();
+            })
+
+            const todoClear = document.getElementById('todo-clear');
+            todoClear.addEventListener('click', () => {
+                this.clearUpload();
+            })
         } catch (error) {
             console.error('绑定事件时出错:', error);
         }
@@ -2825,10 +2870,11 @@ class Todopage {
             this.tasks = await this.loadTasks();
             this.renderTasks();
             this.updateTaskCounts();
-
             showmsg('数据已经同步到服务器！');
+            return true;
         } catch (err) {
             console.error('获取任务失败:', err);
+            return false;
         }
     }
     /**
@@ -3685,14 +3731,9 @@ class Todopage {
                 };
             }
 
-            // 清理上次生成的内容（保留 header）
-            const old = content.querySelector('#offline-content');
-            if (old) old.remove();
-
             // 创建内容容器（JSON风格视图）
-            const container = document.createElement('div');
-            container.id = 'offline-content';
-            container.className = 'json-view';
+            const container = document.getElementById('offline-content');
+            container.innerHTML = '';
 
             // 读取并解析离线数据
             let data = null;
@@ -3784,12 +3825,42 @@ class Todopage {
                 container.appendChild(createJsonSection('addmovimento', data.addmovimento, fmtMov));
             }
 
-            content.appendChild(container);
             // 显示模态
             modal.classList.add('show');
         } catch (error) {
             console.error('显示离线数据时出错:', error);
         }
+    }
+    async clearUpload () {
+        const datiupload = JSON.parse(localStorage.getItem('todoupload'));
+        let check = false;
+        for(const key in datiupload){
+            if(datiupload[key].length > 0){
+                check = true;
+                break;
+            }
+        }
+        if(check){
+            if(confirm('有离线数据未上传，确定清除上传数据吗？')){
+                localStorage.removeItem('todoupload');
+            } else{
+                return false;
+            }
+        }
+        const res = await api.todo_gettasks();
+        const tasks = await res.json();
+        const resrepeats = await api.todo_getrepeats();
+        const repeats = await resrepeats.json();
+        if (tasks && repeats) {
+            await db.clearTodo();
+            await db.addTodoTasks(tasks);
+            await db.addTodoRepeats(repeats);
+            this.init();
+            showmsg('数据已清除并更新完成’');
+        } else {
+            showmsg('服务器不在线，请重试');
+        }
+        this.showdatioffline();
     }
 }
 
