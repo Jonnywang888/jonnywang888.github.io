@@ -583,6 +583,7 @@ class Fetchapi {
         try {
             const response = await this.fetchdata(body);
             const res = await response.json();
+            showmsg('todo_updatetask: '+ res);
             todo.showlogs('todo_updatetask: '+ res);
             if (res === true) {
                 console.log('更新任务到服务器成功:', res);
