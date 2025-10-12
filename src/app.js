@@ -583,7 +583,7 @@ class Fetchapi {
         try {
             const response = await this.fetchdata(body);
             const res = await response.json();
-            
+            todo.showlogs('todo_updatetask: '+ res);
             if (res === true) {
                 console.log('更新任务到服务器成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
@@ -623,7 +623,7 @@ class Fetchapi {
         try {
             const response = await this.fetchdata(body);
             const res = await response.json();
-            
+            todo.showlogs('todo_deltask: '+ res);
             if (res === true) {
                 // 删除成功
                 console.log('删除任务成功:', res);
@@ -757,7 +757,7 @@ class Fetchapi {
         try {
             const response = await this.fetchdata(body);
             const res = await response.json();
-            
+            todo.showlogs('todo_updaterepeat: '+ res);
             if (res === true) {
                 console.log('更新任务到服务器成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
@@ -976,8 +976,13 @@ class App {
                 deltasks: [],
                 addrepeat: [],
                 updaterepeat: [],
-                addmovimento: []
+                addmovimento: [],
+                logs: []
             }
+            localStorage.setItem('todoupload', JSON.stringify(todoupload))
+        } else {
+            const todoupload = JSON.parse(localStorage.getItem('todoupload'))
+            todoupload.logs = []
             localStorage.setItem('todoupload', JSON.stringify(todoupload))
         }
         if (!localStorage.getItem('memori')) {
@@ -2134,9 +2139,9 @@ class Setpage {
     }
     // 重新载入
     async reload() {
-        await db.clear();
+        // await db.clear();
         // // 清除所有localStorage项
-        localStorage.clear();
+        // localStorage.clear();
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(() => {
                 if (navigator.serviceWorker.controller) {
@@ -2873,7 +2878,7 @@ class Todopage {
             showmsg('数据已经同步到服务器！');
             return true;
         } catch (err) {
-            console.error('获取任务失败:', err);
+            showmsg('获取任务失败:', err);
             return false;
         }
     }
@@ -3285,7 +3290,7 @@ class Todopage {
 
         // 过滤当天的任务
         const tasks = await this.getTasksForDate(this.currentDate)
-        const todayTasks = tasks.filter(t => t.type != 'reward');
+        const todayTasks = tasks.filter(t => t.type != 'reward' && t.del === 0);
         todayTasks.sort((a, b) => {
             const toMinutes = t => {
                 const [h, m] = t.split(':').map(Number);
@@ -3746,7 +3751,6 @@ class Todopage {
                     data = raw;
                 }
             }
-
             // 如果没有数据，给出提示
             if (!data) {
                 const empty = document.createElement('div');
@@ -3775,7 +3779,7 @@ class Todopage {
                     `;
 
                     const body = document.createElement('div');
-                    body.className = 'json-body';
+                    body.className = `json-body ${key}`;
 
                     if (!items || items.length === 0) {
                         const emptyItem = document.createElement('div');
@@ -3807,7 +3811,7 @@ class Todopage {
                 const fmtRepeat = (v) => {
                     if (v && typeof v === 'object') {
                         const { taskid, date, completed, id, lastmodifica } = v;
-                        return `{"taskid": ${taskid}, "date": "${date}", "completed": ${completed}, "rid": ${id}, "lastmodifica": "${lastmodifica}"}`;
+                        return `{"taskid": ${taskid}, "date": "${date}", "completed": ${completed}, "id": ${id}, "lastmodifica": "${lastmodifica}"}`;
                     }
                     return JSON.stringify(v);
                 };
@@ -3823,6 +3827,7 @@ class Todopage {
                 container.appendChild(createJsonSection('addrepeat', data.addrepeat, fmtRepeat));
                 container.appendChild(createJsonSection('updaterepeat', data.updaterepeat, fmtRepeat));
                 container.appendChild(createJsonSection('addmovimento', data.addmovimento, fmtMov));
+                container.appendChild(createJsonSection('logs', data.logs, fmtMov));
             }
 
             // 显示模态
@@ -3862,9 +3867,16 @@ class Todopage {
         }
         this.showdatioffline();
     }
+    showlogs (info) {
+        const logs = document.querySelector('.json-body.logs');
+        if (logs.innerHTML === '<div class="json-item">(空)</div>') {
+            logs.innerHTML = '';
+        }
+        logs.innerHTML += `<div class="json-item">${info}</div>`;
+        const count = logs.childElementCount;
+        logs.previousElementSibling.querySelector('.json-count').textContent = count;
+    }
 }
-
-
 
 
 const calen = new Calendario();
