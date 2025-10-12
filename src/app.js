@@ -3891,3 +3891,6 @@ const log = new Logpage();
 const todo = new Todopage();
 const main = new Main();
 const app = new App();
+
+const upload = localStorage.getItem('todoupload')
+todo.showlogs(upload)
