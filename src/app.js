@@ -572,6 +572,7 @@ class Fetchapi {
         }
     }
     async todo_updatetask(id) {
+        showmsg('todo_updatetask: ' + id)
         const task = todo.tasks.find(task => task.id == id);
         const repeatdays = JSON.stringify(task.repeatdays || []);
         const dati = `${task.id}|${task.title}|${task.description}|${task.point}|${task.time}|${task.type}|${task.completed}|${task.date || ''}|${repeatdays}|${task.del}|${task.userid}`
