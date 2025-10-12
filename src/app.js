@@ -2861,6 +2861,7 @@ class Todopage {
                 await api.todo_addmovimento(movimento, false);
             }
             for (const id of upload.updatetasks) {
+                showmsg(id);
                 await api.todo_updatetask(id);
             }
             for (const repeat of upload.updaterepeat) {
