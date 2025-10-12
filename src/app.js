@@ -572,7 +572,6 @@ class Fetchapi {
         }
     }
     async todo_updatetask(id) {
-        showmsg('todo_updatetask: ' + id)
         const task = todo.tasks.find(task => task.id == id);
         const repeatdays = JSON.stringify(task.repeatdays || []);
         const dati = `${task.id}|${task.title}|${task.description}|${task.point}|${task.time}|${task.type}|${task.completed}|${task.date || ''}|${repeatdays}|${task.del}|${task.userid}`
@@ -580,13 +579,10 @@ class Fetchapi {
             action: 'todo_updatetask',
             dati: dati
         };
-        showmsg('todo_updatetask: '+ dati);
-        todo.showlogs('todo_updatetask: '+ dati);
+        
         try {
             const response = await this.fetchdata(body);
             const res = await response.json();
-            showmsg('todo_updatetask: '+ res);
-            todo.showlogs('todo_updatetask: '+ res);
             if (res === true) {
                 console.log('更新任务到服务器成功:', res);
                 const upload = JSON.parse(localStorage.getItem('todoupload'));
@@ -607,8 +603,6 @@ class Fetchapi {
                 return { success: false, error: '服务器返回失败' };
             }
         } catch (err) {
-            console.error('更新任务到服务器失败:', err);
-            showmsg('todo_updatetask: '+ err);
             todo.showlogs('todo_updatetask: '+ err);
             const upload = JSON.parse(localStorage.getItem('todoupload'));
             // 检查是否已存在，避免重复添加
@@ -3303,7 +3297,7 @@ class Todopage {
 
         // 过滤当天的任务
         const tasks = await this.getTasksForDate(this.currentDate)
-        const todayTasks = tasks.filter(t => t.type != 'reward' && t.del === 0);
+        const todayTasks = tasks.filter(t => t.type != 'reward' && t.del === 0 && t.userid === this.currentUser.ID);
         todayTasks.sort((a, b) => {
             const toMinutes = t => {
                 const [h, m] = t.split(':').map(Number);
@@ -3501,18 +3495,7 @@ class Todopage {
      */
     async loadTasks() {
         const tasks = await db.getTodoTasks();
-        let newtasks = [];
-        const userid = this.currentUser.ID;
-        if (tasks.length > 0) {
-            tasks.forEach(task => {
-                if (task.userid == userid) {
-                    newtasks.push(task);
-                }
-            })
-            return newtasks; // 返回保存的任务数据
-        }
-        // 默认任务数据
-        return [];
+        return tasks;
     }
 
     /**
