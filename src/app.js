@@ -579,7 +579,8 @@ class Fetchapi {
             action: 'todo_updatetask',
             dati: dati
         };
-        
+        showmsg('todo_updatetask: '+ dati);
+        todo.showlogs('todo_updatetask: '+ dati);
         try {
             const response = await this.fetchdata(body);
             const res = await response.json();
@@ -2861,7 +2862,6 @@ class Todopage {
                 await api.todo_addmovimento(movimento, false);
             }
             for (const id of upload.updatetasks) {
-                showmsg(id);
                 await api.todo_updatetask(id);
             }
             for (const repeat of upload.updaterepeat) {
