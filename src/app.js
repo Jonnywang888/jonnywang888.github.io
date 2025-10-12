@@ -606,7 +606,8 @@ class Fetchapi {
             }
         } catch (err) {
             console.error('更新任务到服务器失败:', err);
-             todo.showlogs('todo_updatetask: '+ err);
+            showmsg('todo_updatetask: '+ err);
+            todo.showlogs('todo_updatetask: '+ err);
             const upload = JSON.parse(localStorage.getItem('todoupload'));
             // 检查是否已存在，避免重复添加
             if (!upload.updatetasks.includes(id)) {
