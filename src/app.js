@@ -2564,6 +2564,8 @@ class Todopage {
     constructor() {
         this.bindEvents(); // 绑定所有事件监听器
         this.init(); // 启动应用初始化
+        this.showdatioffline();
+        this.hidedatioffline();
     }
 
     /**
@@ -2798,6 +2800,12 @@ class Todopage {
             todoClear.addEventListener('click', () => {
                 this.clearUpload();
             })
+            const closeBtn = document.getElementById('close-offline-modal');
+            if (closeBtn) {
+                closeBtn.onclick = () => {
+                    this.hidedatioffline();
+                };
+            }
         } catch (error) {
             console.error('绑定事件时出错:', error);
         }
@@ -3728,14 +3736,6 @@ class Todopage {
                 return;
             }
 
-            // 绑定关闭按钮
-            const closeBtn = document.getElementById('close-offline-modal');
-            if (closeBtn) {
-                closeBtn.onclick = () => {
-                    modal.classList.remove('show');
-                };
-            }
-
             // 创建内容容器（JSON风格视图）
             const container = document.getElementById('offline-content');
             container.innerHTML = '';
@@ -3836,6 +3836,10 @@ class Todopage {
             console.error('显示离线数据时出错:', error);
         }
     }
+    hidedatioffline () {
+        const offlinemodo = document.getElementById('offline-modal');
+        offlinemodo.classList.remove('show');
+    }
     async clearUpload () {
         const datiupload = JSON.parse(localStorage.getItem('todoupload'));
         let check = false;
@@ -3868,13 +3872,11 @@ class Todopage {
         this.showdatioffline();
     }
     showlogs (info) {
-        const logs = document.querySelector('.json-body.logs');
-        if (logs.innerHTML === '<div class="json-item">(空)</div>') {
-            logs.innerHTML = '';
+        const upload = JSON.parse(localStorage.getItem('todoupload'));
+        if (upload) {
+            upload.logs.push(info);
+            localStorage.setItem('todoupload', JSON.stringify(upload));
         }
-        logs.innerHTML += `<div class="json-item">${info}</div>`;
-        const count = logs.childElementCount;
-        logs.previousElementSibling.querySelector('.json-count').textContent = count;
     }
 }
 
@@ -3891,6 +3893,3 @@ const log = new Logpage();
 const todo = new Todopage();
 const main = new Main();
 const app = new App();
-
-const upload = localStorage.getItem('todoupload')
-todo.showlogs(upload)
