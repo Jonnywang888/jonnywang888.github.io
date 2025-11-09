@@ -320,6 +320,7 @@ class Database {
             const request = store.put(data);
             request.onsuccess = () => {
                 resolve(true);
+                console.log('成功添加/更新重复任务数据:', data);
             };
             request.onerror = (event) => {
                 reject(event.target.error);
@@ -3278,6 +3279,8 @@ class Todopage {
                     this.addPoints(-task.point);
                     showmsg(`任务取消完成，-${task.point}积分`);
                 }
+                const tasks = [task];
+                db.addTodoTasks(tasks);
                 api.todo_addmovimento(task);
             }
             api.todo_updatetask(taskId);
