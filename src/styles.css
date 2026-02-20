@@ -23,9 +23,6 @@ body, html {
     overscroll-behavior: none; /* 阻止ios回弹效果 */
     height: 100%;
 }
-.themo-f7 {
-    background-color: var(--beijinghui);
-}
 #calendar{
     z-index: 1001;
 }
@@ -1082,6 +1079,7 @@ button:active{
     background-color: var(--beijinghui);
 }
 .carta-head{
+    padding-top: 5px;
     position: fixed;
     width: 100%;
     background-color: var(--beijinghui);
