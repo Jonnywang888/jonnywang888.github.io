@@ -2440,7 +2440,7 @@ class Cartapage {
         if (!carte) {
             return;
         }
-        carte.sort((a, b) => a.ID - b.ID);
+        carte.sort((a, b) => a.ORDINE - b.ORDINE);
         for (let i = 0; i < carte.length; i++) {
             const carta = carte[i];
             const cartaElement = document.createElement('div');
