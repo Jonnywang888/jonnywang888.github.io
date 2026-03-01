@@ -2363,7 +2363,7 @@ class Setpage {
             result[mem.MOTIVONAME] = false;
             for (const d of dati) {
                 const id = parseInt(d.ID);
-                if (id >= starid && id <= endid && d.MOTIVO == mem.MOTIVOID && mem.ATTIVA == 1) {
+                if (id >= starid && id <= endid && d.MOTIVO == mem.MOTIVOID) {
                     result[mem.MOTIVONAME] = true;
                     break;
                 };
