@@ -254,7 +254,7 @@ class Database {
             getRequest.onsuccess = (event) => {
                 const data = event.target.result;
                 if (data) {
-                    // 设置DEL=1标记为已删除
+                    data.del = 1;
                     data.DEL = 1;
                     
                     // 更新数据
@@ -414,8 +414,9 @@ class Database {
 }
 class Fetchapi {
     constructor() {
-        // this.url = 'http://192.168.1.99/server/app.asp';
+        // this.url = 'http://192.168.1.99/server/app1.asp';
         this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
+        // this.url = 'http://130.110.10.228:3000/api?'
     }
     // 获取备忘
     getmemori() {
@@ -529,12 +530,69 @@ class Fetchapi {
         };
         return this.fetchdata(body);
     }
+    getTodoUpload() {
+        const initial = {
+            addtasks: [],
+            updatetasks: [],
+            deltasks: [],
+            addrepeat: [],
+            updaterepeat: [],
+            addmovimento: [],
+            logs: []
+        };
+        const raw = localStorage.getItem('todoupload');
+        if (!raw) {
+            localStorage.setItem('todoupload', JSON.stringify(initial));
+            return initial;
+        }
+        try {
+            const parsed = JSON.parse(raw);
+            const normalized = { ...initial, ...parsed };
+            localStorage.setItem('todoupload', JSON.stringify(normalized));
+            return normalized;
+        } catch (error) {
+            localStorage.setItem('todoupload', JSON.stringify(initial));
+            return initial;
+        }
+    }
+    saveTodoUpload(upload) {
+        localStorage.setItem('todoupload', JSON.stringify(upload));
+    }
+    getMovimentoQueueKey(payload) {
+        return `${payload.taskid}_${payload.date}_${payload.lastmodifica}`;
+    }
+    createMovimentoPayload(task) {
+        const currentdate = todo.formatLocalDate(todo.currentDate);
+        const now = new Date();
+        const id = now.getTime();
+        const time = todo.getLocalISOString();
+        return {
+            taskid: task.id,
+            date: currentdate,
+            completed: String(task.completed),
+            time: time,
+            lastmodifica: id,
+            id: id,
+            title: task.title,
+            description: task.description || '',
+            point: task.point,
+            userid: todo.currentUser.ID
+        };
+    }
     async todo_addtask(task) {
-        const repeatdays = JSON.stringify(task.repeatdays || []);
-        const dati = `${task.id},'${task.title}','${task.description}',${task.point},'${task.time}','${task.type}','${task.completed}','${task.date || ''}','${repeatdays}',${task.del},${task.userid}`
         const body = {
             action: 'todo_addtask',
-            dati: dati
+            id: task.id,
+            title: task.title,
+            description: task.description || '',
+            point: task.point,
+            time: task.time || '',
+            type: task.type,
+            completed: String(task.completed),
+            date: task.date || '',
+            repeatdays: JSON.stringify(task.repeatdays || []),
+            del: task.del ?? 0,
+            userid: task.userid
         };
         
         try {
@@ -543,42 +601,55 @@ class Fetchapi {
             
             if (res === true) {
                 console.log('添加任务到服务器成功:', res);
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 const found = upload.addtasks.find(item => item.id === task.id);
                 if (found) {
                     upload.addtasks = upload.addtasks.filter(t => t.id != task.id);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: true, data: res };
             } else {
                 showmsg('添加任务到服务器失败');
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 const found = upload.addtasks.find(item => item.id === task.id);
                 if (!found) {
                     upload.addtasks.push(task);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: false, error: '服务器返回失败' };
             }
         } catch (err) {
             console.error('添加任务到服务器失败:', err);
-            // 服务器请求失败时也应该保存到本地
-            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            const upload = this.getTodoUpload();
             const found = upload.addtasks.find(item => item.id === task.id);
             if (!found) {
                 upload.addtasks.push(task);
-                localStorage.setItem('todoupload', JSON.stringify(upload));
+                this.saveTodoUpload(upload);
             }
             return { success: false, error: err };
         }
     }
     async todo_updatetask(id) {
-        const task = todo.tasks.find(task => task.id == id);
-        const repeatdays = JSON.stringify(task.repeatdays || []);
-        const dati = `${task.id}|${task.title}|${task.description}|${task.point}|${task.time}|${task.type}|${task.completed}|${task.date || ''}|${repeatdays}|${task.del}|${task.userid}`
+        const task = todo.tasks.find(item => item.id == id);
+        if (!task) {
+            const upload = this.getTodoUpload();
+            upload.updatetasks = upload.updatetasks.filter(item => item != id);
+            this.saveTodoUpload(upload);
+            return { success: false, skipped: true, error: '任务不存在，已跳过更新' };
+        }
         const body = {
             action: 'todo_updatetask',
-            dati: dati
+            id: task.id,
+            title: task.title,
+            description: task.description || '',
+            point: task.point,
+            time: task.time || '',
+            type: task.type,
+            completed: String(task.completed),
+            date: task.date || '',
+            repeatdays: JSON.stringify(task.repeatdays || []),
+            del: task.del ?? 0,
+            userid: task.userid
         };
         
         try {
@@ -586,30 +657,27 @@ class Fetchapi {
             const res = await response.json();
             if (res === true) {
                 console.log('更新任务到服务器成功:', res);
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 
                 if (upload.updatetasks.includes(id)) {
                     upload.updatetasks = upload.updatetasks.filter(t => t != id);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: true, data: res };
             } else {
                 showmsg('更新任务到服务器失败');
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
-                // 检查是否已存在，避免重复添加
+                const upload = this.getTodoUpload();
                 if (!upload.updatetasks.includes(id)) {
                     upload.updatetasks.push(id);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: false, error: '服务器返回失败' };
             }
         } catch (err) {
-            todo.showlogs('todo_updatetask: '+ err);
-            const upload = JSON.parse(localStorage.getItem('todoupload'));
-            // 检查是否已存在，避免重复添加
+            const upload = this.getTodoUpload();
             if (!upload.updatetasks.includes(id)) {
                 upload.updatetasks.push(id);
-                localStorage.setItem('todoupload', JSON.stringify(upload));
+                this.saveTodoUpload(upload);
             }
             return { success: false, error: err };
         }
@@ -617,58 +685,70 @@ class Fetchapi {
     async todo_deltask(id) {
         const body = {
             action: 'todo_deltask',
+            id: id,
             dati: id
         };
         
         try {
             const response = await this.fetchdata(body);
             const res = await response.json();
-            todo.showlogs('todo_deltask: '+ res);
             if (res === true) {
-                // 删除成功
                 console.log('删除任务成功:', res);
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 if (upload.deltasks.includes(id)) {
                     upload.deltasks = upload.deltasks.filter(t => t != id);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: true, data: res };
             } else {
-                // 删除失败
                 showmsg('删除任务失败:', res);
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 if (!upload.deltasks.includes(id)) {
                     upload.deltasks.push(id);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: false, error: '服务器返回失败' };
             }
         } catch (err) {
             console.error('删除任务到服务器失败:', err);
-            const upload = JSON.parse(localStorage.getItem('todoupload'));
-            // 检查是否已存在，避免重复添加
+            const upload = this.getTodoUpload();
             if (!upload.deltasks.includes(id)) {
                 upload.deltasks.push(id);
-                localStorage.setItem('todoupload', JSON.stringify(upload));
+                this.saveTodoUpload(upload);
             }
             return { success: false, error: err };
         }
     }
     async todo_addmovimento(task, istask = true) {
-        let dati
+        let payload;
+        let legacyDati = null;
         if (istask) {
-            const currentdate = todo.formatLocalDate(todo.currentDate);
-            const now = new Date();
-            const id = now.getTime();
-            const time = todo.getLocalISOString();
-            dati = `${task.id},'${currentdate}','${task.completed}','${time}',${id},${id},'${task.title}','${task.description}',${task.point},${todo.currentUser.ID}`;
+            payload = this.createMovimentoPayload(task);
         } else {
-            dati = task
+            if (typeof task === 'string') {
+                legacyDati = task;
+            } else {
+                payload = task;
+            }
         }
-        const body = {
+        const body = legacyDati ? {
             action: 'todo_addmovimento',
-            dati: dati
+            dati: legacyDati
+        } : {
+            action: 'todo_addmovimento',
+            taskid: payload.taskid,
+            date: payload.date,
+            completed: String(payload.completed),
+            time: payload.time,
+            lastmodifica: payload.lastmodifica,
+            id: payload.id,
+            title: payload.title,
+            description: payload.description || '',
+            point: payload.point,
+            userid: payload.userid
         };
+        const queueItem = legacyDati || payload;
+        const queueKey = legacyDati || this.getMovimentoQueueKey(payload);
         
         try {
             const response = await this.fetchdata(body);
@@ -676,40 +756,62 @@ class Fetchapi {
             
             if (res === true) {
                 console.log('添加任务到服务器成功:', res);
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
-                const found = upload.addmovimento.find(item => item == dati);
+                const upload = this.getTodoUpload();
+                const found = upload.addmovimento.find(item => {
+                    if (typeof item === 'string') {
+                        return item === queueKey;
+                    }
+                    return this.getMovimentoQueueKey(item) === queueKey;
+                });
                 if (found) {
-                    upload.addmovimento = upload.addmovimento.filter(t => t != dati);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    upload.addmovimento = upload.addmovimento.filter(item => {
+                        if (typeof item === 'string') {
+                            return item !== queueKey;
+                        }
+                        return this.getMovimentoQueueKey(item) !== queueKey;
+                    });
+                    this.saveTodoUpload(upload);
                 }
                 return { success: true, data: res };
             } else {
                 showmsg('添加任务到服务器失败');
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
-                const found = upload.addmovimento.find(item => item == dati);
+                const upload = this.getTodoUpload();
+                const found = upload.addmovimento.find(item => {
+                    if (typeof item === 'string') {
+                        return item === queueKey;
+                    }
+                    return this.getMovimentoQueueKey(item) === queueKey;
+                });
                 if (!found) {
-                    upload.addmovimento.push(dati);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    upload.addmovimento.push(queueItem);
+                    this.saveTodoUpload(upload);
                 }
                 return { success: false, error: '服务器返回失败' };
             }
         } catch (err) {
             console.error('添加任务到服务器失败:', err);
-            // 服务器请求失败时也应该保存到本地
-            const upload = JSON.parse(localStorage.getItem('todoupload'));
-            const found = upload.addmovimento.find(item => item == dati);
+            const upload = this.getTodoUpload();
+            const found = upload.addmovimento.find(item => {
+                if (typeof item === 'string') {
+                    return item === queueKey;
+                }
+                return this.getMovimentoQueueKey(item) === queueKey;
+            });
             if (!found) {
-                upload.addmovimento.push(dati);
-                localStorage.setItem('todoupload', JSON.stringify(upload));
+                upload.addmovimento.push(queueItem);
+                this.saveTodoUpload(upload);
             }
             return { success: false, error: err };
         }
     };
     async todo_addrepeat(task) {
-        const dati = `${task.id},${task.taskid},'${task.date}','${task.completed}',${task.lastmodifica}`
         const body = {
             action: 'todo_addrepeat',
-            dati: dati
+            id: task.id,
+            taskid: task.taskid,
+            date: task.date,
+            completed: String(task.completed),
+            lastmodifica: task.lastmodifica
         };
         
         try {
@@ -718,72 +820,71 @@ class Fetchapi {
             
             if (res === true) {
                 console.log('添加任务到服务器成功:', res);
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 const found = upload.addrepeat.find(item => item.id == task.id);
                 if (found) {
                     upload.addrepeat = upload.addrepeat.filter(t => t.id != task.id);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: true, data: res };
             } else {
                 showmsg('添加任务到服务器失败');
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 const found = upload.addrepeat.find(item => item.id == task.id);
                 if (!found) {
                     upload.addrepeat.push(task);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: false, error: '服务器返回失败' };
             }
         } catch (err) {
             console.error('添加任务到服务器失败:', err);
-            // 服务器请求失败时也应该保存到本地
-            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            const upload = this.getTodoUpload();
             const found = upload.addrepeat.find(item => item.id == task.id);
             if (!found) {
                 upload.addrepeat.push(task);
-                localStorage.setItem('todoupload', JSON.stringify(upload));
+                this.saveTodoUpload(upload);
             }
             return { success: false, error: err };
         }
     }
     async todo_updaterepeat(task) {
-        const dati = `${task.id}|'${task.completed}'|${task.lastmodifica}`;
         const body = {
             action: 'todo_updaterepeat',
-            dati: dati
+            id: task.id,
+            completed: String(task.completed),
+            lastmodifica: task.lastmodifica
         };
         
         try {
             const response = await this.fetchdata(body);
             const res = await response.json();
-            todo.showlogs('todo_updaterepeat: '+ res);
             if (res === true) {
                 console.log('更新任务到服务器成功:', res);
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 const found = upload.updaterepeat.find(item => item.id === task.id);
                 if (found) {
                     upload.updaterepeat = upload.updaterepeat.filter(t => t.id != task.id);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: true, data: res };
             } else {
                 showmsg('更新任务到服务器失败');
-                const upload = JSON.parse(localStorage.getItem('todoupload'));
+                const upload = this.getTodoUpload();
                 const found = upload.updaterepeat.find(item => item.id === task.id);
                 if (!found) {
                     upload.updaterepeat.push(task);
-                    localStorage.setItem('todoupload', JSON.stringify(upload));
+                    this.saveTodoUpload(upload);
                 }
                 return { success: false, error: '服务器返回失败' };
             }
         } catch (err) {
             console.error('更新任务到服务器失败:', err);
-            const upload = JSON.parse(localStorage.getItem('todoupload'));
+            const upload = this.getTodoUpload();
             const found = upload.updaterepeat.find(item => item.id === task.id);
             if (!found) {
                 upload.updaterepeat.push(task);
-                localStorage.setItem('todoupload', JSON.stringify(upload));
+                this.saveTodoUpload(upload);
             }
             return { success: false, error: err };
         }
@@ -2844,28 +2945,123 @@ class Todopage {
             dateInput.value = `${year}-${month}-${day}`;
         }
     }
+    dedupeList(items, keyBuilder) {
+        const keys = new Set();
+        const result = [];
+        for (let i = items.length - 1; i >= 0; i--) {
+            const item = items[i];
+            const key = keyBuilder(item);
+            if (key === undefined || key === null || key === '') {
+                continue;
+            }
+            if (keys.has(key)) {
+                continue;
+            }
+            keys.add(key);
+            result.push(item);
+        }
+        return result.reverse();
+    }
+    buildTodoSyncPlan(upload) {
+        const plan = {
+            addtasks: this.dedupeList(upload.addtasks || [], (item) => item?.id),
+            updatetasks: this.dedupeList(upload.updatetasks || [], (id) => String(id)),
+            deltasks: this.dedupeList(upload.deltasks || [], (id) => String(id)),
+            addrepeat: this.dedupeList(upload.addrepeat || [], (item) => item?.id),
+            updaterepeat: this.dedupeList(upload.updaterepeat || [], (item) => item?.id),
+            addmovimento: this.dedupeList(upload.addmovimento || [], (item) => {
+                if (typeof item === 'string') {
+                    return item;
+                }
+                return api.getMovimentoQueueKey(item);
+            })
+        };
+        const deleteSet = new Set(plan.deltasks.map(id => String(id)));
+        plan.addtasks = plan.addtasks.filter(item => !deleteSet.has(String(item?.id)));
+        plan.updatetasks = plan.updatetasks.filter(id => !deleteSet.has(String(id)));
+        plan.addrepeat = plan.addrepeat.filter(item => !deleteSet.has(String(item?.taskid)));
+        plan.updaterepeat = plan.updaterepeat.filter(item => !deleteSet.has(String(item?.taskid)));
+        plan.addmovimento = plan.addmovimento.filter(item => {
+            if (typeof item === 'string') {
+                return true;
+            }
+            return !deleteSet.has(String(item?.taskid));
+        });
+
+        const addTaskMap = new Map();
+        plan.addtasks.forEach(item => addTaskMap.set(String(item.id), item));
+        const liveTaskMap = new Map((this.tasks || []).map(task => [String(task.id), task]));
+        plan.updatetasks = plan.updatetasks.filter(id => {
+            const key = String(id);
+            if (!addTaskMap.has(key)) {
+                return true;
+            }
+            const liveTask = liveTaskMap.get(key);
+            if (liveTask) {
+                addTaskMap.set(key, { ...addTaskMap.get(key), ...liveTask });
+            }
+            return false;
+        });
+        plan.addtasks = Array.from(addTaskMap.values());
+
+        const addRepeatMap = new Map();
+        plan.addrepeat.forEach(item => addRepeatMap.set(String(item.id), item));
+        plan.updaterepeat = plan.updaterepeat.filter(item => {
+            const key = String(item.id);
+            if (!addRepeatMap.has(key)) {
+                return true;
+            }
+            addRepeatMap.set(key, { ...addRepeatMap.get(key), ...item });
+            return false;
+        });
+        plan.addrepeat = Array.from(addRepeatMap.values());
+        return plan;
+    }
 
     async aggiornamento() {
         try {
-            const upload = JSON.parse(localStorage.getItem('todoupload'));
-            for (const task of upload.addtasks) {
-                await api.todo_addtask(task);
-            }
-            for (const repeat of upload.addrepeat) {
-                await api.todo_addrepeat(repeat);
-            }
-            for (const movimento of upload.addmovimento) {
-                await api.todo_addmovimento(movimento, false);
-            }
-            for (const id of upload.updatetasks) {
-                await api.todo_updatetask(id);
-            }
-            for (const repeat of upload.updaterepeat) {
-                await api.todo_updaterepeat(repeat);
-            }
-            for (const id of upload.deltasks) {
-                await api.todo_deltask(id);
-            }
+            const upload = api.getTodoUpload();
+            const plan = this.buildTodoSyncPlan(upload);
+            api.saveTodoUpload({ ...upload, ...plan, logs: upload.logs || [] });
+            const runQueue = async (action, list, runner, targetBuilder) => {
+                for (const item of list) {
+                    let result;
+                    try {
+                        result = await runner(item);
+                    } catch (error) {
+                        result = { success: false, error };
+                    }
+                    const target = targetBuilder(item);
+                    if (result?.success === true) {
+                        this.showlogs({ action, status: 'success', target });
+                    } else if (result?.skipped) {
+                        this.showlogs({
+                            action,
+                            status: 'skipped',
+                            target,
+                            reason: this.normalizeSyncError(result?.error || '已跳过')
+                        });
+                    } else {
+                        this.showlogs({
+                            action,
+                            status: 'failed',
+                            target,
+                            reason: this.normalizeSyncError(result?.error || '服务器返回失败')
+                        });
+                    }
+                }
+            };
+            await runQueue('addtasks', plan.addtasks, (task) => api.todo_addtask(task), (task) => `task:${task?.id ?? 'unknown'}`);
+            await runQueue('addrepeat', plan.addrepeat, (repeat) => api.todo_addrepeat(repeat), (repeat) => `repeat:${repeat?.id ?? 'unknown'}`);
+            await runQueue('updatetasks', plan.updatetasks, (id) => api.todo_updatetask(id), (id) => `task:${id}`);
+            await runQueue('updaterepeat', plan.updaterepeat, (repeat) => api.todo_updaterepeat(repeat), (repeat) => `repeat:${repeat?.id ?? 'unknown'}`);
+            await runQueue('addmovimento', plan.addmovimento, (movimento) => api.todo_addmovimento(movimento, false), (movimento) => {
+                if (typeof movimento === 'string') {
+                    return movimento;
+                }
+                return `mov:${movimento?.taskid ?? 'unknown'}_${movimento?.date ?? ''}`;
+            });
+            await runQueue('deltasks', plan.deltasks, (id) => api.todo_deltask(id), (id) => `task:${id}`);
             this.users = await this.loadUsers();
             const res = await api.todo_gettasks();
             const tasks = await res.json();
@@ -2875,7 +3071,7 @@ class Todopage {
             const localrepeats = await db.getTodoRepeats();
             this.updatePoints(); 
             if (JSON.stringify(tasks) === JSON.stringify(localetasks) && JSON.stringify(repeats) === JSON.stringify(localrepeats)) {
-                return;
+                return true;
             }
             await db.addTodoTasks(tasks);
             await db.addTodoRepeats(repeats);
@@ -2886,6 +3082,12 @@ class Todopage {
             showmsg('数据已经同步到服务器！');
             return true;
         } catch (err) {
+            this.showlogs({
+                action: 'sync',
+                status: 'failed',
+                target: 'global',
+                reason: this.normalizeSyncError(err)
+            });
             showmsg('获取任务失败:', err);
             return false;
         }
@@ -3300,7 +3502,10 @@ class Todopage {
 
         // 过滤当天的任务
         const tasks = await this.getTasksForDate(this.currentDate)
-        const todayTasks = tasks.filter(t => t.type != 'reward' && t.del === 0 && t.userid === this.currentUser.ID);
+        const todayTasks = tasks.filter(t => {
+            const delFlag = Number(t.del ?? t.DEL ?? 0);
+            return t.type != 'reward' && delFlag === 0 && t.userid === this.currentUser.ID;
+        });
         todayTasks.sort((a, b) => {
             const toMinutes = t => {
                 const [h, m] = t.split(':').map(Number);
@@ -3718,6 +3923,22 @@ class Todopage {
         const dateid = parseInt(datestr.replace(/-/g, '') + '00000');
         return parseInt(id) + parseInt(dateid);
     }
+    normalizeSyncError(error) {
+        if (!error) {
+            return '未知错误';
+        }
+        if (typeof error === 'string') {
+            return error;
+        }
+        if (error.message) {
+            return error.message;
+        }
+        try {
+            return JSON.stringify(error);
+        } catch (e) {
+            return String(error);
+        }
+    }
     showdatioffline() {
         try {
             const modal = document.getElementById('offline-modal');
@@ -3753,10 +3974,9 @@ class Todopage {
                 pre.textContent = data;
                 container.appendChild(pre);
             } else {
-                // JSON风格折叠段落
-                const createJsonSection = (key, items, formatter) => {
+                const createJsonSection = (key, items, formatter, expanded = false) => {
                     const section = document.createElement('div');
-                    section.className = 'json-section'; // 默认不展开
+                    section.className = expanded ? 'json-section expanded' : 'json-section';
 
                     const header = document.createElement('div');
                     header.className = 'json-header';
@@ -3781,6 +4001,11 @@ class Todopage {
                         items.forEach((item) => {
                             const row = document.createElement('div');
                             row.className = 'json-item';
+                            if (key === 'logs' && item && typeof item === 'object') {
+                                const status = item.status || 'info';
+                                row.classList.add('sync-log-item');
+                                row.classList.add(`sync-log-${status}`);
+                            }
                             const text = formatter ? formatter(item) : JSON.stringify(item);
                             row.textContent = text;
                             body.appendChild(row);
@@ -3810,15 +4035,25 @@ class Todopage {
                     if (typeof v === 'string') return v;
                     return JSON.stringify(v);
                 };
+                const fmtLog = (v) => {
+                    if (v && typeof v === 'object') {
+                        const time = v.time || '';
+                        const action = v.action || 'sync';
+                        const target = v.target ? ` ${v.target}` : '';
+                        const status = v.status || 'info';
+                        const reason = v.reason ? ` | ${v.reason}` : '';
+                        return `[${time}] ${action}${target} => ${status}${reason}`;
+                    }
+                    return String(v);
+                };
 
-                // 依次创建各类段落（默认全部折叠）
                 container.appendChild(createJsonSection('addtasks', data.addtasks, fmtId));
                 container.appendChild(createJsonSection('updatetasks', data.updatetasks, fmtId));
                 container.appendChild(createJsonSection('deltasks', data.deltasks, fmtId));
                 container.appendChild(createJsonSection('addrepeat', data.addrepeat, fmtRepeat));
                 container.appendChild(createJsonSection('updaterepeat', data.updaterepeat, fmtRepeat));
                 container.appendChild(createJsonSection('addmovimento', data.addmovimento, fmtMov));
-                container.appendChild(createJsonSection('logs', data.logs, fmtMov));
+                container.appendChild(createJsonSection('logs', data.logs, fmtLog, true));
             }
 
             // 显示模态
@@ -3832,17 +4067,26 @@ class Todopage {
         offlinemodo.classList.remove('show');
     }
     async clearUpload () {
-        const datiupload = JSON.parse(localStorage.getItem('todoupload'));
+        const datiupload = api.getTodoUpload();
+        const pendingKeys = ['addtasks', 'updatetasks', 'deltasks', 'addrepeat', 'updaterepeat', 'addmovimento'];
         let check = false;
-        for(const key in datiupload){
-            if(datiupload[key].length > 0){
+        for(const key of pendingKeys){
+            if(Array.isArray(datiupload[key]) && datiupload[key].length > 0){
                 check = true;
                 break;
             }
         }
         if(check){
             if(confirm('有离线数据未上传，确定清除上传数据吗？')){
-                localStorage.removeItem('todoupload');
+                api.saveTodoUpload({
+                    addtasks: [],
+                    updatetasks: [],
+                    deltasks: [],
+                    addrepeat: [],
+                    updaterepeat: [],
+                    addmovimento: [],
+                    logs: []
+                });
             } else{
                 return false;
             }
@@ -3863,11 +4107,28 @@ class Todopage {
         this.showdatioffline();
     }
     showlogs (info) {
-        const upload = JSON.parse(localStorage.getItem('todoupload'));
-        if (upload) {
-            upload.logs.push(info);
-            localStorage.setItem('todoupload', JSON.stringify(upload));
+        const upload = api.getTodoUpload();
+        const log = typeof info === 'string'
+            ? {
+                time: new Date().toLocaleString('zh-CN'),
+                action: 'legacy',
+                status: 'info',
+                target: '',
+                reason: info
+            }
+            : {
+                time: new Date().toLocaleString('zh-CN'),
+                action: info.action || 'sync',
+                status: info.status || 'info',
+                target: info.target || '',
+                reason: info.reason || ''
+            };
+        upload.logs = Array.isArray(upload.logs) ? upload.logs : [];
+        upload.logs.unshift(log);
+        if (upload.logs.length > 200) {
+            upload.logs = upload.logs.slice(0, 200);
         }
+        api.saveTodoUpload(upload);
     }
 }
 

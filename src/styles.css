@@ -1749,6 +1749,21 @@ button:active{
 .json-item:last-child {
     border-bottom: none;
 }
+.sync-log-item {
+    font-weight: 500;
+}
+.sync-log-success {
+    color: #107c10;
+}
+.sync-log-failed {
+    color: #d13438;
+}
+.sync-log-skipped {
+    color: #9a6700;
+}
+.sync-log-info {
+    color: #0b5394;
+}
 
 
 .form-group {
