@@ -774,7 +774,7 @@ class Fetchapi {
                 }
                 return { success: true, data: res };
             } else {
-                showmsg('添加任务到服务器失败');
+                console.error('添加任务到服务器失败');
                 const upload = this.getTodoUpload();
                 const found = upload.addmovimento.find(item => {
                     if (typeof item === 'string') {
@@ -828,7 +828,7 @@ class Fetchapi {
                 }
                 return { success: true, data: res };
             } else {
-                showmsg('添加任务到服务器失败');
+                console.error('添加任务到服务器失败');
                 const upload = this.getTodoUpload();
                 const found = upload.addrepeat.find(item => item.id == task.id);
                 if (!found) {
