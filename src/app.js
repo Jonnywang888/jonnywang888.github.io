@@ -609,7 +609,7 @@ class Fetchapi {
                 }
                 return { success: true, data: res };
             } else {
-                showmsg('添加任务到服务器失败');
+                console.error('添加任务到服务器失败:', res);
                 const upload = this.getTodoUpload();
                 const found = upload.addtasks.find(item => item.id === task.id);
                 if (!found) {
