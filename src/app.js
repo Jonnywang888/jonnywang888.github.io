@@ -2459,8 +2459,9 @@ class Setpage {
             const starmonth = String(snow.getMonth() + 1).padStart(2, '0');
             const endyear = String(enow.getFullYear()).slice(-2);
             const endmonth = String(enow.getMonth() + 1).padStart(2, '0');
+            const endday = String(enow.getDate()).padStart(2, '0');
             const starid = parseInt(`${staryear}${starmonth}000000000`);
-            const endid = parseInt(`${endyear}${endmonth}000000000`);
+            const endid = parseInt(`${endyear}${endmonth}${endday}0000000`);
             result[mem.MOTIVONAME] = false;
             for (const d of dati) {
                 const id = parseInt(d.ID);
