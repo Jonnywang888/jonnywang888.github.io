@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-cache-v1';
+const CACHE_VERSION = 'pwa-cache-v1.01';
 const OFFLINE_CACHE = `offline-${CACHE_VERSION}`;
 const STATIC_FILES = [
     '/',
