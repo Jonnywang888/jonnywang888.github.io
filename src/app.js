@@ -2451,17 +2451,12 @@ class Setpage {
         for (const mem of memori) {
             if (mem.ATTIVA !== 1) continue;
             const snow = new Date();
-            const enow = new Date();
             snow.setDate(1);
             snow.setMonth(snow.getMonth() - mem.MESE);
-            enow.setDate(1);
             const staryear = String(snow.getFullYear()).slice(-2);
             const starmonth = String(snow.getMonth() + 1).padStart(2, '0');
-            const endyear = String(enow.getFullYear()).slice(-2);
-            const endmonth = String(enow.getMonth() + 1).padStart(2, '0');
-            const endday = String(enow.getDate()).padStart(2, '0');
             const starid = parseInt(`${staryear}${starmonth}000000000`);
-            const endid = parseInt(`${endyear}${endmonth}${endday}0000000`);
+            const endid = parseInt(`9999000000000`);
             result[mem.MOTIVONAME] = false;
             for (const d of dati) {
                 const id = parseInt(d.ID);
