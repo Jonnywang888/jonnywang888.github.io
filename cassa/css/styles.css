@@ -30,8 +30,6 @@ body {
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    padding-top: 70px;
-    /* min-height: 100vh; */
 }
 
 /* 头部样式 */
@@ -42,7 +40,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: fixed;
+    position: sticky;
     top: 0;
     z-index: 10;
     box-shadow: var(--shadow);
