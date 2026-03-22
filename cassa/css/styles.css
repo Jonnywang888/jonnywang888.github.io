@@ -30,6 +30,7 @@ body {
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
+    padding-top: 70px;
     /* min-height: 100vh; */
 }
 
@@ -41,7 +42,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: absolute;
+    position: fixed;
     top: 0;
     z-index: 10;
     box-shadow: var(--shadow);
@@ -463,6 +464,7 @@ nav {
     display: inline-block;
     text-align: center;
     font-weight: 500;
+    line-height: 1.5;
 }
 
 .primary-btn:hover {
