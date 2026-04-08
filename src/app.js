@@ -1803,6 +1803,7 @@ class Addpage {
                 main.caricamovimentolist()
             });
             changepage('mainpage');
+            set.notifica_memori()
             main.uploadmovimento()
         } else {
             showmsg('请输入消费金额');
@@ -2323,6 +2324,7 @@ class Setpage {
                         <img src="${img}">
                         <span class="name">${name}</span>
                         <select class="set-memori-select">
+                            <option value="0">当月</option>
                             <option value="1">1个月</option>
                             <option value="2">2个月</option>
                             <option value="3">3个月</option>
@@ -2394,6 +2396,7 @@ class Setpage {
                 <img src="icons/${img}.png">
                 <span class="name">${name}</span>
                 <select class="set-memori-select">
+                    <option value="0">当月</option>
                     <option value="1">1个月</option>
                     <option value="2">2个月</option>
                     <option value="3">3个月</option>
@@ -2404,7 +2407,7 @@ class Setpage {
             line.querySelector('input').addEventListener('change', () => this.memori_update(line));
             line.querySelector('.set-memori-select').addEventListener('change', () => this.memori_update(line));
             const options = line.querySelector('.set-memori-select').options;
-            options[mese - 1].selected = true;
+            options[mese].selected = true;
             content.appendChild(line);
         };
     }
@@ -2423,6 +2426,7 @@ class Setpage {
                     memori[index].MESE = parseInt(mese);
                     memori[index].ATTIVA = attiva;
                     localStorage.setItem('memori', JSON.stringify(memori));
+                    this.notifica_memori();
                 } else {
                     showmsg('无法连接服务器！请在服务器启动后重试！');
                 }
