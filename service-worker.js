@@ -1,6 +1,6 @@
-const CACHE_VERSION = 'pwa v1.02';
+const CACHE_VERSION = 'pwa v1.03';
 const OFFLINE_CACHE = `offline-${CACHE_VERSION}`;
-const NETWORK_TIMEOUT_MS = 3000;
+const NETWORK_TIMEOUT_MS = 1500;
 
 const STATIC_FILES = [
     '/',
