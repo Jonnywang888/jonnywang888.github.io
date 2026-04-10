@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa v1.04';
+const CACHE_VERSION = 'pwa v1.05';
 const OFFLINE_CACHE = `offline-${CACHE_VERSION}`;
 const NETWORK_TIMEOUT_MS = 1500;
 
