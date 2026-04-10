@@ -615,7 +615,7 @@ input[type="submit"] {
     background-color: var(--beijinghui);
 }
 #biao-lie {
-    /* position: relative; */
+    position: relative;
     margin-left:3%;
     padding-left: 1%;
     width: 92%;
