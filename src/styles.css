@@ -615,6 +615,7 @@ input[type="submit"] {
     background-color: var(--beijinghui);
 }
 #biao-lie {
+    /* position: relative; */
     margin-left:3%;
     padding-left: 1%;
     width: 92%;
@@ -623,6 +624,26 @@ input[type="submit"] {
     align-items: flex-end; 
     border-bottom: 1px solid #ccc;
     border-left: 1px solid #ccc;
+    background-image:
+        repeating-linear-gradient(to right, #ccc 0 4px, transparent 4px 8px),
+        repeating-linear-gradient(to right, #ccc 0 4px, transparent 4px 8px),
+        repeating-linear-gradient(to right, #ccc 0 4px, transparent 4px 8px),
+        repeating-linear-gradient(to right, #ccc 0 4px, transparent 4px 8px);
+    background-size: 100% 1px, 100% 1px, 100% 1px;
+    background-position:
+        0 25%,
+        0 50%,
+        0 75%,
+        0 87.5%;
+    background-repeat: no-repeat;
+}
+.y-label {
+    position: absolute;
+    right: 0em;        /* 在右侧外边 */
+    transform: translateY(-50%);  /* 向上对齐到虚线 */
+    font-size: 12px;
+    color: var(--qianhui);
+    line-height: 1;
 }
 #biao-di {
     margin-left:3%;
@@ -632,7 +653,7 @@ input[type="submit"] {
     align-items: flex-end; 
 }
 .lie {
-    display: inline-block;
+    z-index: 1;
     margin: 0.5%;
     background-color:orangered;
 }
@@ -646,7 +667,7 @@ input[type="submit"] {
     width: 50px;
     border-radius: 3px;
     background-color: #fff;
-    position: absolute;
+    position: relative;
     display: none; /* 默认隐藏 */
     z-index: 10; /* 确保显示在前面 */
     font-size: 10px;

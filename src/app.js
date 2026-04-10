@@ -1952,10 +1952,11 @@ class Biaopage {
         const di = document.getElementById("biao-di");
         biao.innerHTML = '';
         di.innerHTML = '';
+        const maxValue = Math.min(...dataArray.map(item => item[1].out));
+        const maxhh = (parseInt(maxValue/-400)+1)*-400
         const num = dataArray.length;
         const w = 100 - num * 1 - 2;
-        const maxh = 150;
-        const maxValue = Math.min(...dataArray.map(item => item[1].out));
+        const maxh = 180 * maxValue/maxhh;
         const biaoFrag = document.createDocumentFragment();
         const diFrag = document.createDocumentFragment();
         const sum = {
@@ -1982,6 +1983,16 @@ class Biaopage {
             sum.out += item[1].out;
         });
         biao.appendChild(biaoFrag);
+        const max25 = parseInt(maxhh * 0.25)
+        const max50 = parseInt(maxhh * 0.5)
+        const max75 = parseInt(maxhh * 0.75)
+        const max12 = parseInt(maxhh * 0.125)
+        const newdiv = document.createElement("div")
+        newdiv.innerHTML = `<span class="y-label" style="bottom: 25%">${max25}</span>
+            <span class="y-label" style="bottom: 50%">${max50}</span>
+            <span class="y-label" style="bottom: 75%">${max75}</span>
+            <span class="y-label" style="bottom: 12.5%">${max12}</span>`
+        biao.appendChild(newdiv)
         di.appendChild(diFrag);
         if (maxElement) setevent(maxElement);
         document.querySelector('.biao-tot-in').textContent = '+' + sum.in.toFixed(2);
@@ -1992,10 +2003,11 @@ class Biaopage {
             });
             const biaoDisplay = document.getElementById('biao-display');
             const rect = target.getBoundingClientRect();
+            console.log(rect.top)
             const elementWidth = parseFloat(target.style.width) * window.innerWidth / 100;
             const offset = (60 - elementWidth) / 2;
             biaoDisplay.style.left = `${rect.left - offset}px`;
-            biaoDisplay.style.top = `${rect.top - 30}px`;
+            biaoDisplay.style.top = `${rect.top-385}px`;
             biaoDisplay.style.display = 'block';
             biaoDisplay.innerText = Number(target.dataset.value).toFixed(2);
         }    
