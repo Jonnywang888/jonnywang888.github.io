@@ -1147,16 +1147,20 @@ class Main {
         const floors = document.querySelectorAll('.li-floor');
         let floorH = mainpage.scrollTop;
         for (let i = 0; i < floors.length; i++) {
-            const floorTop = floors[i].offsetTop - 90;
-            const nextFloorTop = i < floors.length - 1 ? floors[i + 1].offsetTop - 90 : Infinity;
+            const floorTop = floors[i].offsetTop - 150;
+            const nextFloorTop = i < floors.length - 1 ? floors[i + 1].offsetTop - 150 : Infinity;
             if (floorH >= floorTop && floorH < nextFloorTop) {
                 const headanno = document.querySelector('#head-anno');
                 const headmese = document.querySelector('#head-mese');
                 const headtot = document.querySelector('#head-tot');
                 const headtotin = document.querySelector('#head-tot-in');
+                const headmensile = document.querySelector('#head-mensile')
+                const headresto = document.querySelector('#head-resto')
                 const strmese = floors[i].getAttribute('data-floor').toString();
                 headtotin.innerHTML = '+' + main.groupmese[strmese].in.toFixed(2);
-                headtot.innerHTML = main.groupmese[strmese].out.toFixed(2);
+                headtot.innerHTML = -main.groupmese[strmese].out.toFixed(2);
+                headmensile.innerHTML = spesamensile.toFixed(2)
+                headresto.innerHTML = (spesamensile + main.groupmese[strmese].out).toFixed(2)
                 headanno.innerHTML = '20' + strmese.slice(0, 2) + '年';
                 headmese.innerHTML = parseInt(strmese.slice(2, 4)) + '月';
                 break;
@@ -2003,11 +2007,10 @@ class Biaopage {
             });
             const biaoDisplay = document.getElementById('biao-display');
             const rect = target.getBoundingClientRect();
-            console.log(rect.top)
             const elementWidth = parseFloat(target.style.width) * window.innerWidth / 100;
             const offset = (60 - elementWidth) / 2;
             biaoDisplay.style.left = `${rect.left - offset}px`;
-            biaoDisplay.style.top = `${rect.top-385}px`;
+            biaoDisplay.style.top = `-195px`;
             biaoDisplay.style.display = 'block';
             biaoDisplay.innerText = Number(target.dataset.value).toFixed(2);
         }    
@@ -4143,7 +4146,8 @@ class Todopage {
         api.saveTodoUpload(upload);
     }
 }
-
+// 月度金额
+const spesamensile = 3000
 
 const calen = new Calendario();
 const db = new Database();

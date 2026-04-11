@@ -1,11 +1,12 @@
 :root{
     --hui:#86888B;
-    --lan:#0A84FF;
+    --lan:#0072e4;
     --danlan:#EDF6FF;
     /* --qianlan:#49c2ef; */
-    --qianlan:#0A84FF;
+    --qianlan:#0072e4;
     --huihei:#262c4e;
-    --beijinghui:#F7F7F7;
+    /* --beijinghui:#F7F7F7; */
+    --beijinghui:#F3F5F7;
     --hong: #FF0000;
     --qianhui: #8a949e;
 }
@@ -37,17 +38,24 @@ body, html {
     height: 25px;
 }
 .head {
-    background-color: var(--beijinghui);
+    background-color: var(--lan);
+    color: #fff;
     text-align: center;
     position: fixed;
     top: 0;
     width: 100%;
     z-index: 1000;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    height: 85px;
+    /* height: 150px; */
+    /* background:linear-gradient(145deg,#1B33EA 0%,#2D45FF 60%,#1428CC 100%);  */
+    /* padding:12px 16px 14px;  */
+    /* position:fixed; 
+    overflow:hidden; 
+    flex-shrink:0; */
 }
 .head-title{
-    font-size: 1.2em;
+    color: #fff;
+    font-size: 1.4em;
     display: flex;
     justify-content: center;
 }
@@ -57,13 +65,13 @@ body, html {
     font-size: 1.2em;
     font-weight: bolder;
     box-sizing: border-box;
-    /* border-bottom: 2px solid var(--lan); */
-    /* background-color: #0A84FF; */
 }
 .head-infotot{
+    margin: 10px 3%;
+    background:rgba(255,255,255,0.13); 
+    border-radius:14px; padding:11px 14px; 
+    border:1px solid rgba(255,255,255,0.18); 
     display: flex;
-    justify-content: space-between;
-    box-sizing: border-box;
 }
 #head-anno{
     text-align: left;
@@ -75,27 +83,34 @@ body, html {
     width: 40%;
     margin-top: 6px;
 }
-.head-tot-in {
-    text-align: left;
-    padding-left: 3vw;
+.head-tot-info {
+    display:flex; 
+    flex-direction:column; 
+    gap:6px; 
+    flex-shrink:0; 
+    border-left:1px solid rgba(255,255,255,0.2); 
+    padding-left:14px; 
 }
+.head-info-row { display:flex; align-items:baseline; justify-content:flex-end; gap:5px; }
+.head-info-val { font-family:var(--font-en); font-size:12px; font-weight:700; color:#fff; text-align:right; }
+.head-info-key { font-size:9px; color:rgba(255,255,255,0.6); text-align:right; }
 .head-tot-out {
-    text-align: right;
+    flex: 1;
+    color: #fff;
+    text-align: left;
     padding-right: 3vw;
 }
 .head-infotot .text{
     font-size: 0.8em;
-    color: var(--qianhui);
-    -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
+    color: #fff;
+    opacity:.8;
+    -webkit-tap-highlight-color: transparent;
 }
 #head-tot{
+    /* font-size:28px; font-weight:800; color:#fff; letter-spacing:-1px; line-height:1; */
     font-size: 1.8em;
-    font-weight: bold;
-    color: var(--lan);
-}
-#head-tot-in{
-    font-size: 1.2em;
-    line-height: 2.2;
+    font-weight:800;
+    color: #fff;
 }
 #but-tianjia{
     left: calc(50% - 1.5rem);
@@ -157,7 +172,7 @@ body, html {
 }
 #listmovimento {
     flex: 1;
-    margin-top: 33px; /* Match header height */
+    margin-top: 79px; /* Match header height */
     margin-bottom: 100px; /* Match footer height */
     overflow-y: auto;
     box-sizing: border-box;
@@ -172,6 +187,9 @@ body, html {
     box-sizing: border-box;
     list-style-type: none;
     padding: 0;
+}
+#biaopage .main {
+    margin-top: 160px;
 }
 #listmovimento li {
     position: relative;
@@ -346,7 +364,8 @@ body, html {
     writing-mode: vertical-rl; /* 文字竖向排列 */
 }
 .addhead {
-    background-color: var(--beijinghui);
+    background-color: var(--lan);
+    color: #fff;
     position: fixed;
     top: 0;
     width: 100%;
@@ -370,6 +389,7 @@ body, html {
 .addhead-title .text{
     width: 20vw;
     text-align-last:justify;
+    padding: 0 10px;
     margin: 0px 5vw;
     -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
 }
@@ -392,8 +412,11 @@ body, html {
     display: flex;
 }
 #current-img{
-    width: 40px;
-    height: 40px;
+    padding: 2px;
+    background-color: #fff;
+    border-radius: 80%;
+    width: 35px;
+    height: 35px;
 }
 #current-motivo{
     width: 40%;
@@ -719,6 +742,7 @@ input[type="submit"] {
     justify-content: space-between;
     align-items: center;
     margin: 5px 3%;
+    line-height: 2;
 }
 .biao-tongji div{
     width: 22%;
@@ -730,8 +754,9 @@ input[type="submit"] {
 }
 .dixian {
     font-weight: bold;
-    color: var(--lan);
-    border-bottom: 2px solid var(--lan);
+    background:rgba(255,255,255,0.13); 
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.20); 
 }
 .biao-head-display{
     margin: 0 3%;
@@ -739,16 +764,18 @@ input[type="submit"] {
 .biao-page {
     display: flex;
     justify-content: space-between;
+    height: 35px;
     align-items: center;
+    line-height: 2;
 }
 .biao-head-year {
-    color: #000;
+    color: #fff;
     width: 20%;
     text-align: center;
     height: 30px;
     border-radius: 5px;
-    border: none;
-    background-color: var(--beijinghui);
+    border:1px solid rgba(255,255,255,0.20); 
+    background-color: var(--lan);
     font-size: 16px;
     -webkit-tap-highlight-color: transparent;/* 去除点击阴影 */
     appearance: none;         /* 隐藏select下来箭头 对于其他支持 appearance 的浏览器 */
@@ -782,14 +809,12 @@ input[type="submit"] {
     display: flex;
     justify-content: space-between;
     margin: 0 3%;
-    margin-top: 10px;
-    margin-bottom: 10px;
     font-size: 20px;
-    background-color: var(--qianlan);
-    border-radius: 5px;
-    align-items: center;
     padding: 15px;
-    height: 30px;
+    margin: 8px 3%;
+    background:rgba(255,255,255,0.13); 
+    border-radius:14px; padding:11px 14px; 
+    border:1px solid rgba(255,255,255,0.18); 
 }
 .biao-tot div{
     color: #fff;
@@ -810,9 +835,8 @@ input[type="submit"] {
 }
 #biao-year div{
     height: 30px;
-    margin: 2%;
+    padding: 0 8px;
     margin-right: 5%;
-    box-sizing: border-box;
     font-size: 16px;
     line-height: 2;
 }
@@ -820,6 +844,8 @@ input[type="submit"] {
     background-color: var(--beijinghui);
 }
 .info-head{
+    background-color: var(--lan);
+    color: #fff;
     position: fixed;
     top: 0;
     width: 100%;
@@ -834,8 +860,6 @@ input[type="submit"] {
     align-items: center;
     vertical-align: middle;
     box-sizing: border-box;
-    border-bottom: 0.5px solid #ccc;
-    background-color: var(--beijinghui);
 }
 .backup{
     display: flex;
@@ -851,16 +875,12 @@ input[type="submit"] {
     font-size: 16px;
     vertical-align: middle;
 }
-.backup img{
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-}
 .info-motivo{
     display: inline-block;
     width: 54%;
     box-sizing: border-box;
     text-align: center;
+    font-weight: bolder;
     /* color: #fff; */
 }
 .info-title div{
@@ -872,22 +892,20 @@ input[type="submit"] {
 .info-tot {
     display: flex;
     justify-content: space-between;
-    margin: 0 1%;
+    margin: 0 3%;
     font-size: 20px;
-    align-items: center;
-    background-color: var(--qianlan);
-    /* margin-top: 10px; */
-    /* margin-bottom: 10px; */
-    border-radius: 5px;
     padding: 15px;
-    height: 30px;
+    margin: 8px 3%;
+    background:rgba(255,255,255,0.13); 
+    border-radius:14px; padding:11px 14px; 
+    border:1px solid rgba(255,255,255,0.18); 
 }
 .info-tot div{
     font-size: 20px;
     color: #fff;
 }
 #info-list{
-    margin-top: 110px; /* Match header height */
+    margin-top: 115px; /* Match header height */
     padding: 0;
     padding-bottom: 80px; /* Match footer height */
     overflow-y: auto;
@@ -1094,20 +1112,21 @@ input:checked + .slider:before {
 .memori-item-name {
     font-size: 14px;
 }
-#biao-hang{
-    padding-bottom: 70px;
-}
 button:active{
     transform: scale(0.9);
 }
 #cartapage{
     background-color: var(--beijinghui);
 }
+.carta-background{
+    height: 10px;
+    background-color: var(--lan);
+}
 .carta-head{
-    padding-top: 5px;
     position: fixed;
     width: 100%;
-    background-color: var(--beijinghui);
+    background: linear-gradient(to bottom, var(--lan) 50%, var(--beijinghui) 50%);
+    /* background-color: var(--lan); */
 }
 .carta-box {
     margin: 0px 3%;
@@ -1263,6 +1282,7 @@ button:active{
     color: rgba(255, 255, 255, 0.9);
     font-size: 14px;
     margin: 5px 0 0 0;
+    width: 150px;
     cursor: pointer;
     user-select: none;
     transition: color 0.2s ease;
@@ -1322,9 +1342,10 @@ button:active{
     display: flex;
     align-items: center;
     gap: 5px;
-    background: rgba(255, 255, 255, 0.2);
+    background:rgba(255,255,255,0.18); 
+    border:1px solid rgba(255,255,255,0.25); 
     padding: 5px 10px;
-    border-radius: 15px;
+    border-radius: 20px;
     font-size: 14px;
 }
 
@@ -1351,15 +1372,19 @@ button:active{
 }
 
 .nav-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 18px;
-    transition: background 0.3s;
+    width:28px; 
+    height:28px; 
+    border-radius:9px; 
+    background:rgba(255,255,255,0.18); 
+    border:1px solid rgba(255,255,255,0.25); 
+    display:flex; 
+    align-items:center; 
+    justify-content:center; 
+    color:#fff; 
+    cursor:pointer; 
+    flex-shrink:0; 
+    font-size: 1.5em;
+    line-height: 1.5;
 }
 
 .nav-btn:hover {
@@ -1370,7 +1395,7 @@ button:active{
 .main-content {
     padding: 0 4%;
     margin-top: 100px;
-    padding-bottom: 90px;
+    padding-bottom: 80px;
 }
 
 .task-section {
