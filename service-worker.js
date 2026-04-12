@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pwa-cache-v1.12';
+const CACHE_VERSION = 'pwa-cache-v1.15';
 const OFFLINE_CACHE = `offline-${CACHE_VERSION}`;
 const NETWORK_TIMEOUT_MS = 1500;
 
@@ -18,19 +18,6 @@ const STATIC_FILES = [
 
 const normalizeKey = (requestUrl) => new URL(requestUrl).pathname;
 
-/**
- * 带超时的 fetch：超时后抛出 Error，由调用方决定如何 fallback
- */
-// const fetchWithTimeout = (request, ms = NETWORK_TIMEOUT_MS) => {
-//     return new Promise((resolve, reject) => {
-//         console.log(ms)
-//         const timer = setTimeout(() => reject(new Error('SW fetch timeout')), ms);
-//         fetch(request).then(
-//             (res) => { clearTimeout(timer); resolve(res); },
-//             (err) => { clearTimeout(timer); reject(err); }
-//         );
-//     });
-// };
 const fetchWithTimeout = (request, ms = NETWORK_TIMEOUT_MS) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), ms);
@@ -110,36 +97,6 @@ self.addEventListener('fetch', (event) => {
 // ─── 策略：导航请求 ──────────────────────────────────────────
 // Network(timeout=3s) → Cache → null
 // 有缓存时：超时立即返回缓存，并在后台继续等网络更新缓存
-
-// async function handleNavigate(request) {
-//     const cache = await caches.open(OFFLINE_CACHE);
-//     const cacheKey = normalizeKey(request.url);       // 比如 /app/ 或 /app/index.html
-//     const cached = await cache.match(cacheKey);
-
-//     // 同时发起：带超时的网络请求
-//     const networkPromise = fetchWithTimeout(request)
-//         .then((response) => {
-//             updateCache(cache, cacheKey, response);
-//             return response;
-//         })
-//         .catch(() => null);
-
-//     if (cached) {
-//         // 有缓存：设置短超时，超时立即用缓存（网络继续跑，更新缓存）
-//         const timeout = new Promise((resolve) =>
-//             setTimeout(() => resolve(null), NETWORK_TIMEOUT_MS)
-//         );
-//         const faster = await Promise.race([networkPromise, timeout]);
-//         return faster || cached;
-//     }
-
-//     // 无缓存：等网络，彻底失败才返回 null（浏览器会显示错误页）
-//     const response = await networkPromise;
-//     return response || new Response('Offline - no cache available', {
-//         status: 503,
-//         headers: { 'Content-Type': 'text/plain' }
-//     });
-// }
 
 async function handleNavigate(request) {
     const cache = await caches.open(OFFLINE_CACHE);

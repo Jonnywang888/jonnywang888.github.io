@@ -741,7 +741,7 @@ input[type="submit"] {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 5px 3%;
+    margin: 0 3% 5px 3%;
     line-height: 2;
 }
 .biao-tongji div{
@@ -850,11 +850,9 @@ input[type="submit"] {
     top: 0;
     width: 100%;
     z-index: 1000;
-    /* background-color: var(--qianlan); */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 .info-title {
-    padding-top: 10px;
     display: flex;
     width: 100%;
     align-items: center;
@@ -881,6 +879,7 @@ input[type="submit"] {
     box-sizing: border-box;
     text-align: center;
     font-weight: bolder;
+    font-size: 1.2em;
     /* color: #fff; */
 }
 .info-title div{
@@ -905,7 +904,7 @@ input[type="submit"] {
     color: #fff;
 }
 #info-list{
-    margin-top: 115px; /* Match header height */
+    margin-top: 100px; /* Match header height */
     padding: 0;
     padding-bottom: 80px; /* Match footer height */
     overflow-y: auto;
