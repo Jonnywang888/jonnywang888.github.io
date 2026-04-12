@@ -904,7 +904,7 @@ input[type="submit"] {
     color: #fff;
 }
 #info-list{
-    margin-top: 100px; /* Match header height */
+    margin-top: 105px; /* Match header height */
     padding: 0;
     padding-bottom: 80px; /* Match footer height */
     overflow-y: auto;
