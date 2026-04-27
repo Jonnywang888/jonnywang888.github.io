@@ -1737,6 +1737,10 @@ class Addpage {
     }
     // 按键函数
     tastiera_key(event) {
+        const ua = navigator.userAgent;
+        // 是否 Windows
+        const isWindows = /Windows/i.test(ua);
+        if (!isWindows) return;
         const page = document.getElementById('addpage')
         if (page.classList.contains('hidden')) return;
         const key = event.key;
