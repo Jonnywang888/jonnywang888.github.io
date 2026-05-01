@@ -1158,7 +1158,7 @@ class Main {
                 const headresto = document.querySelector('#head-resto')
                 const strmese = floors[i].getAttribute('data-floor').toString();
                 headtotin.innerHTML = '+' + main.groupmese[strmese].in.toFixed(2);
-                headtot.innerHTML = -main.groupmese[strmese].out.toFixed(2);
+                headtot.innerHTML = (-main.groupmese[strmese].out).toFixed(2);
                 headmensile.innerHTML = spesamensile.toFixed(2)
                 headresto.innerHTML = (spesamensile + main.groupmese[strmese].out).toFixed(2)
                 headanno.innerHTML = '20' + strmese.slice(0, 2) + '年';
