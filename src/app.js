@@ -4194,9 +4194,9 @@ class WolApp {
 
   /* ── Constructor ───────────────────────────────────── */
   constructor() {
-    this.devices      = [];
-    this.editingId    = null;   // which device is in the modal
-    this.busyIds      = new Set();
+    this.devices       = [];
+    this.editingId     = null;   // which device is in the modal
+    this.busyIds       = new Set();
     this.selectedColor = null;
 
     this._loadDevices();
