@@ -241,6 +241,9 @@
             </div>
             <br>
             <button class="but-mensile" id="mensile">配置提醒</button>
+            <div class="set-carta">
+                <div class="set-carta-item" id="set-wol">远程启动</div>
+            </div>
             <div class="item-flex set-buts">
                 <button class="set-but" id="reload">重新加载</button>
                 <button class="set-but" id="logout">退出登录</button>
@@ -257,6 +260,147 @@
         <div class="set-page set-memori-motivi" id="sp-add">
             <div id="settabmotivi"></div>
         </div>
+    </div>
+    <div class="page hidden" id="wolpage">
+        <div class="head">
+            <div class="head-title">远程启动</div>
+        </div>
+
+        <!-- ── Scrollable Content ───────────────────────────────────── -->
+        <div class="scroll-area">
+
+            <!-- Computer Cards -->
+            <section class="cards-section" aria-label="设备列表">
+            <div class="section-label">我的设备</div>
+            <div class="cards-grid" id="cardsGrid">
+                <!-- Cards injected by wol.js -->
+            </div>
+            </section>
+
+            <!-- Log Area -->
+            <section class="log-section" aria-label="执行日志">
+            <div class="log-header">
+                <div class="log-header-left">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <polyline points="4 17 10 11 4 5"/>
+                    <line x1="12" y1="19" x2="20" y2="19"/>
+                </svg>
+                <span class="log-title">日志</span>
+                </div>
+                <button class="log-clear-btn" id="logClearBtn" aria-label="清空日志">清空</button>
+            </div>
+            <div class="log-body" id="logBody" role="log" aria-live="polite">
+                <div class="log-empty" id="logEmpty">暂无记录，点击卡片上的「唤醒」开始</div>
+            </div>
+            </section>
+
+        </div><!-- /scroll-area -->
+
+        <!-- ── Config Modal (Bottom Sheet) ─────────────────────────── -->
+        <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+            <div class="modal-backdrop" id="modalBackdrop"></div>
+
+            <div class="modal-sheet" id="modalSheet">
+            <div class="modal-handle" aria-hidden="true"></div>
+
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">设备配置</span>
+                <button class="modal-close-btn" id="modalCloseBtn" aria-label="关闭">
+                <svg viewBox="0 0 14 14" aria-hidden="true">
+                    <line x1="1" y1="1" x2="13" y2="13"/>
+                    <line x1="13" y1="1" x2="1" y2="13"/>
+                </svg>
+                </button>
+            </div>
+
+            <div class="modal-scroll">
+
+                <!-- Name -->
+                <div class="form-section">
+                <div class="form-section-title">基本信息</div>
+                <div class="form-group">
+                    <div class="form-row">
+                    <label for="fName">名称</label>
+                    <input id="fName" type="text" placeholder="我的电脑" autocomplete="off" />
+                    </div>
+                </div>
+                </div>
+
+                <!-- Color -->
+                <div class="form-section">
+                <div class="form-section-title">卡片颜色</div>
+                <div class="color-picker-row">
+                    <span class="color-label">配色</span>
+                    <div class="color-swatches" id="colorSwatches"></div>
+                </div>
+                </div>
+
+                <!-- Proxy -->
+                <div class="form-section">
+                <div class="form-section-title">代理设置</div>
+                <div class="form-group">
+                    <div class="form-row">
+                    <label for="fBaseUrl">代理 URL</label>
+                    <input id="fBaseUrl" type="text" class="mono-input"
+                            placeholder="https://…/url.asp?" autocomplete="off" />
+                    </div>
+                    <div class="form-row">
+                    <label for="fFritzUrl">Fritz URL</label>
+                    <input id="fFritzUrl" type="text" class="mono-input"
+                            placeholder="https://…:60122" autocomplete="off" />
+                    </div>
+                </div>
+                </div>
+
+                <!-- Credentials -->
+                <div class="form-section">
+                <div class="form-section-title">登录凭据</div>
+                <div class="form-group">
+                    <div class="form-row">
+                    <label for="fUsername">用户名</label>
+                    <input id="fUsername" type="text"
+                            placeholder="username" autocomplete="username" />
+                    </div>
+                    <div class="form-row">
+                    <label for="fPassword">密码</label>
+                    <input id="fPassword" type="password"
+                            placeholder="••••••••" autocomplete="current-password" />
+                    <button class="pwd-toggle" id="pwdToggleBtn" type="button" aria-label="切换密码可见性">
+                        <svg id="eyeIconSvg" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Device API -->
+                <div class="form-section">
+                <div class="form-section-title">目标设备</div>
+                <div class="form-group">
+                    <div class="form-row">
+                    <label for="fDeviceUrl">API 路径</label>
+                    <input id="fDeviceUrl" type="text" class="mono-input"
+                            placeholder="https://…/landevice/…" autocomplete="off" />
+                    </div>
+                </div>
+                </div>
+
+            </div><!-- /modal-scroll -->
+
+            <div class="modal-actions">
+                <button class="btn-secondary" id="modalCancelBtn" type="button">取消</button>
+                <button class="btn-primary"   id="modalSaveBtn"   type="button">保存</button>
+            </div>
+
+            </div><!-- /modal-sheet -->
+        </div><!-- /modal-overlay -->
+
+        <!-- ── Toast ──────────────────────────────────────────────── -->
+        <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
     </div>
     <div class="page center hidden" id="logpage">
         <div class="head-title">记账簿</div>

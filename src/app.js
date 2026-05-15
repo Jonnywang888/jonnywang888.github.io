@@ -2249,6 +2249,9 @@ class Setpage {
             this.memori_carica();
             this.changepage('sp-memori');
         });
+        document.getElementById('set-wol').addEventListener('click', () => {
+            changepage('wolpage');
+        });
         document.getElementById('but-renwu').addEventListener('click', () => this.showunload());
         this.changepage('sp-main');
     }
@@ -4150,6 +4153,456 @@ class Todopage {
         api.saveTodoUpload(upload);
     }
 }
+class WolApp {
+
+  /* ── Constants ─────────────────────────────────────── */
+  static STORAGE_KEY = 'Wol';
+
+  static CARD_COLORS = [
+    { id: 'blue',    gradient: 'linear-gradient(135deg, #1A73E8 0%, #0D47A1 100%)', pattern: '#999999' },
+    { id: 'purple',  gradient: 'linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%)', pattern: '#999999' },
+    { id: 'teal',    gradient: 'linear-gradient(135deg, #00796B 0%, #004D40 100%)', pattern: '#999999' },
+    { id: 'indigo',  gradient: 'linear-gradient(135deg, #3949AB 0%, #1A237E 100%)', pattern: '#999999' },
+    { id: 'rose',    gradient: 'linear-gradient(135deg, #C62828 0%, #880E4F 100%)', pattern: '#999999' },
+    { id: 'orange',  gradient: 'linear-gradient(135deg, #E65100 0%, #BF360C 100%)', pattern: '#999999' },
+    { id: 'green',   gradient: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)', pattern: '#999999' },
+    { id: 'slate',   gradient: 'linear-gradient(135deg, #37474F 0%, #1C313A 100%)', pattern: '#999999' },
+  ];
+
+  static DEFAULT_DEVICES = [
+    {
+      id: 1,
+      name: '主机',
+      colorId: 'blue',
+      baseUrl:   'https://xxx/xx.asp?',
+      fritzUrl:  'https://xxx',
+      username:  '',
+      password:  '',
+      deviceUrl: '',
+    },
+    {
+      id: 2,
+      name: '工作站',
+      colorId: 'teal',
+      baseUrl:   'https://xxx/xx.asp?',
+      fritzUrl:  'https://xxx',
+      username:  '',
+      password:  '',
+      deviceUrl: '',
+    },
+  ];
+
+  /* ── Constructor ───────────────────────────────────── */
+  constructor() {
+    this.devices      = [];
+    this.editingId    = null;   // which device is in the modal
+    this.busyIds      = new Set();
+    this.selectedColor = null;
+
+    this._loadDevices();
+    this._render();
+    this._bindStatic();
+  }
+
+  /* ══════════════════════════════════════════════════════
+     STORAGE
+  ══════════════════════════════════════════════════════ */
+  _loadDevices() {
+    try {
+      const raw = localStorage.getItem(WolApp.STORAGE_KEY);
+      this.devices = raw ? JSON.parse(raw) : [...WolApp.DEFAULT_DEVICES];
+    } catch {
+      this.devices = [...WolApp.DEFAULT_DEVICES];
+    }
+  }
+
+  _saveDevices() {
+    localStorage.setItem(WolApp.STORAGE_KEY, JSON.stringify(this.devices));
+  }
+
+  _getDevice(id) {
+    return this.devices.find(d => d.id === id);
+  }
+
+  _colorFor(colorId) {
+    return WolApp.CARD_COLORS.find(c => c.id === colorId) || WolApp.CARD_COLORS[0];
+  }
+
+  /* ══════════════════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════════════════ */
+  _render() {
+    this._renderCards();
+  }
+
+  _renderCards() {
+    const grid = document.getElementById('cardsGrid');
+    grid.innerHTML = '';
+    this.devices.forEach(d => grid.appendChild(this._buildCard(d)));
+  }
+
+  _buildCard(d) {
+    const color = this._colorFor(d.colorId);
+    const isBusy = this.busyIds.has(d.id);
+
+    const card = document.createElement('div');
+    card.className = 'pc-card';
+    card.dataset.id = d.id;
+
+    card.innerHTML = `
+      <div class="pc-card-bg">
+        <svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            // <linearGradient id="g${d.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+            //   <stop offset="0%" style="stop-color:${this._gradStart(color)}"/>
+            //   <stop offset="100%" style="stop-color:${this._gradEnd(color)}"/>
+            // </linearGradient>
+          </defs>
+          <rect width="200" height="150" fill="url(#g${d.id})"/>
+          <!-- Monitor outline -->
+          <rect x="55" y="50" width="90" height="62" rx="4" fill="none"
+                stroke="${color.pattern}" stroke-width="1.5" opacity="0.35"/>
+          <rect x="60" y="55" width="80" height="52" rx="2" fill="${color.pattern}" opacity="0.12"/>
+          <!-- Stand -->
+          <rect x="91" y="112" width="18" height="10" rx="1" fill="none"
+                stroke="${color.pattern}" stroke-width="1.5" opacity="0.35"/>
+          <rect x="80" y="122" width="40" height="4" rx="2" fill="none"
+                stroke="${color.pattern}" stroke-width="1.5" opacity="0.35"/>
+          <!-- Decorative circles -->
+          <circle cx="170" cy="20"  r="32" fill="none" stroke="${color.pattern}" stroke-width="1" opacity="0.20"/>
+          <circle cx="170" cy="20"  r="20" fill="none" stroke="${color.pattern}" stroke-width="1" opacity="0.15"/>
+          <circle cx="20"  cy="140" r="40" fill="none" stroke="${color.pattern}" stroke-width="1" opacity="0.18"/>
+          <!-- Screen lines -->
+          <line x1="66" y1="66" x2="114" y2="66" stroke="${color.pattern}" stroke-width="1" opacity="0.25"/>
+          <line x1="66" y1="74" x2="104" y2="74" stroke="${color.pattern}" stroke-width="1" opacity="0.20"/>
+          <line x1="66" y1="82" x2="110" y2="82" stroke="${color.pattern}" stroke-width="1" opacity="0.20"/>
+        </svg>
+      </div>
+      <div class="pc-card-content">
+        <div class="pc-card-top">
+            <div class="pc-card-icon">
+                <div class="pc-card-name">${this._esc(d.name)}</div>
+            </div>
+            <button class="pc-card-menu-btn" data-action="menu" data-id="${d.id}" aria-label="配置">
+                <span class="dot-menu"></span>
+                <span class="dot-menu"></span>
+                <span class="dot-menu"></span>
+            </button>
+        </div>
+        <div class="pc-card-bottom">
+            <div class="pc-card-wake-row">
+                <div class="wake-mini-btn" data-action="wake" data-id="${d.id}"
+                        ${isBusy ? 'disabled' : ''} aria-label="唤醒 ${this._esc(d.name)}">
+                ${isBusy
+                    ? '<svg class="spinning" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>'
+                    : '<svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>'
+                }
+                ${isBusy ? '执行中' : '唤醒'}
+                </div>
+            </div>
+        </div>
+      </div>
+    `;
+
+    // Event delegation on the card
+    card.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = parseInt(btn.dataset.id, 10);
+      if (action === 'menu') this._openModal(id);
+      if (action === 'wake') this._runWake(id);
+    });
+
+    return card;
+  }
+
+  _gradStart(color) {
+    const m = color.gradient.match(/#[0-9A-Fa-f]{6}/g);
+    return m ? m[0] : '#1A73E8';
+  }
+
+  _gradEnd(color) {
+    const m = color.gradient.match(/#[0-9A-Fa-f]{6}/g);
+    return m && m[1] ? m[1] : '#0D47A1';
+  }
+
+  _esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* ══════════════════════════════════════════════════════
+     MODAL (Bottom Sheet)
+  ══════════════════════════════════════════════════════ */
+  _openModal(id) {
+    this.editingId = id;
+    const d = this._getDevice(id);
+    if (!d) return;
+
+    this.selectedColor = d.colorId;
+
+    // Fill inputs
+    this._q('#fName').value      = d.name;
+    this._q('#fBaseUrl').value   = d.baseUrl;
+    this._q('#fFritzUrl').value  = d.fritzUrl;
+    this._q('#fUsername').value  = d.username;
+    this._q('#fPassword').value  = d.password;
+    this._q('#fDeviceUrl').value = d.deviceUrl;
+
+    // Color swatches
+    this._renderSwatches();
+
+    // Open overlay
+    const overlay = this._q('#modalOverlay');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Focus first input after animation
+    setTimeout(() => this._q('#fName').focus(), 350);
+  }
+
+  _closeModal() {
+    const overlay = this._q('#modalOverlay');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    this.editingId = null;
+  }
+
+  _renderSwatches() {
+    const container = this._q('#colorSwatches');
+    container.innerHTML = '';
+    WolApp.CARD_COLORS.forEach(c => {
+      const sw = document.createElement('button');
+      sw.className = 'color-swatch' + (c.id === this.selectedColor ? ' selected' : '');
+      sw.style.background = c.gradient;
+      sw.title = c.id;
+      sw.dataset.colorId = c.id;
+      sw.addEventListener('click', () => {
+        this.selectedColor = c.id;
+        container.querySelectorAll('.color-swatch').forEach(s =>
+          s.classList.toggle('selected', s.dataset.colorId === c.id));
+      });
+      container.appendChild(sw);
+    });
+  }
+
+  _saveModal() {
+    const d = this._getDevice(this.editingId);
+    if (!d) return;
+
+    d.name      = this._q('#fName').value.trim()      || d.name;
+    d.baseUrl   = this._q('#fBaseUrl').value.trim()   || d.baseUrl;
+    d.fritzUrl  = this._q('#fFritzUrl').value.trim()  || d.fritzUrl;
+    d.username  = this._q('#fUsername').value.trim();
+    d.password  = this._q('#fPassword').value;
+    d.deviceUrl = this._q('#fDeviceUrl').value.trim() || d.deviceUrl;
+    d.colorId   = this.selectedColor || d.colorId;
+
+    this._saveDevices();
+    this._closeModal();
+    this._renderCards();
+    showmsg('已保存');
+  }
+
+  /* ══════════════════════════════════════════════════════
+     WAKE-ON-LAN LOGIC  (preserved exactly)
+  ══════════════════════════════════════════════════════ */
+  async _runWake(id) {
+    if (this.busyIds.has(id)) return;
+    const d = this._getDevice(id);
+    if (!d) return;
+
+    const { baseUrl, fritzUrl, username, password, deviceUrl } = d;
+    if (!baseUrl || !fritzUrl || !username || !password || !deviceUrl) {
+      this._log('请先配置所有参数', 'error', id);
+      return;
+    }
+
+    this.busyIds.add(id);
+    this._updateCardBusy(id, true);
+
+    try {
+      this._log('── 开始认证 ──', '', id);
+      const sid = await this._getSid(baseUrl, fritzUrl, username, password, id);
+      this._log('── 发送 WOL 指令 ──', '', id);
+      const r = await this._fetchUrl(baseUrl, deviceUrl, 'WOL', sid, id);
+      this._log('响应内容: ' + (r.trim() || '(空)'), 'success', id);
+      this._log('✓ 唤醒指令发送成功！', 'success', id);
+      showmsg('唤醒成功 ✓');
+    } catch (e) {
+      this._log('✗ ' + e.message, 'error', id);
+      showmsg('唤醒失败');
+    } finally {
+      this.busyIds.delete(id);
+      this._updateCardBusy(id, false);
+    }
+  }
+
+  _updateCardBusy(id) {
+    const grid = document.getElementById('cardsGrid');
+    const existing = grid.querySelector('.pc-card[data-id="' + id + '"]');
+    const d = this._getDevice(id);
+    if (!d || !existing) return;
+    const fresh = this._buildCard(d);
+    grid.replaceChild(fresh, existing);
+  }
+
+  async _fetchUrl(BASE_URL, url, action, sid, id) {
+    action = action || 'GET';
+    sid    = sid    || '';
+    const encoded = encodeURIComponent(url);
+    const newurl  = BASE_URL + 'url=' + encoded + '&action=' + action + '&sid=' + sid;
+    const res = await fetch(newurl);
+    return await res.text();
+  }
+
+  async _getSid(BASE_URL, FRITZ_URL, USERNAME, PASSWORD, id) {
+    const xml1 = await this._fetchUrl(BASE_URL, FRITZ_URL + '/login_sid.lua', 'GET', '', id);
+    const m1   = xml1.match(/<Challenge>(.*?)<\/Challenge>/);
+    if (!m1) throw new Error('无法获取 Challenge，请检查 Fritz!Box URL');
+    const challenge = m1[1];
+    const response = challenge + '-' + this._md5(challenge + '-' + PASSWORD);
+    const xml2 = await this._fetchUrl(
+      BASE_URL,
+      FRITZ_URL + '/login_sid.lua?username=' + encodeURIComponent(USERNAME) + '&response=' + response,
+      'GET', '', id
+    );
+    const m2  = xml2.match(/<SID>(.*?)<\/SID>/);
+    if (!m2) throw new Error('无法解析 SID');
+    const sid = m2[1];
+    if (sid === '0000000000000000') throw new Error('认证失败，请检查用户名和密码');
+    this._log('认证成功！', 'success', id);
+    return sid;
+  }
+
+  /* ── MD5 (unchanged from original) ──────────────────── */
+  _md5(inputStr) {
+    function safeAdd(x,y){var l=(x&0xFFFF)+(y&0xFFFF);var m=(x>>16)+(y>>16)+(l>>16);return(m<<16)|(l&0xFFFF);}
+    function rol(n,c){return(n<<c)|(n>>>(32-c));}
+    function cmn(q,a,b,x,s,t){return safeAdd(rol(safeAdd(safeAdd(a,q),safeAdd(x,t)),s),b);}
+    function ff(a,b,c,d,x,s,t){return cmn((b&c)|((~b)&d),a,b,x,s,t);}
+    function gg(a,b,c,d,x,s,t){return cmn((b&d)|(c&(~d)),a,b,x,s,t);}
+    function hh(a,b,c,d,x,s,t){return cmn(b^c^d,a,b,x,s,t);}
+    function ii(a,b,c,d,x,s,t){return cmn(c^(b|(~d)),a,b,x,s,t);}
+    var bytes=[];
+    for(var i=0;i<inputStr.length;i++){var c=inputStr.charCodeAt(i);bytes.push(c&0xff);bytes.push((c>>8)&0xff);}
+    var l8=bytes.length,l32=Math.ceil((l8+9)/64)*16,M=new Array(l32).fill(0);
+    for(var i=0;i<l8;i++){M[i>>2]|=bytes[i]<<((i%4)*8);}
+    M[l8>>2]|=0x80<<((l8%4)*8);M[l32-2]=l8*8;
+    var a=0x67452301,b=0xEFCDAB89,c=0x98BADCFE,d=0x10325476;
+    for(var i=0;i<l32;i+=16){
+      var aa=a,bb=b,cc=c,dd=d;
+      a=ff(a,b,c,d,M[i+0],7,-680876936);d=ff(d,a,b,c,M[i+1],12,-389564586);c=ff(c,d,a,b,M[i+2],17,606105819);b=ff(b,c,d,a,M[i+3],22,-1044525330);
+      a=ff(a,b,c,d,M[i+4],7,-176418897);d=ff(d,a,b,c,M[i+5],12,1200080426);c=ff(c,d,a,b,M[i+6],17,-1473231341);b=ff(b,c,d,a,M[i+7],22,-45705983);
+      a=ff(a,b,c,d,M[i+8],7,1770035416);d=ff(d,a,b,c,M[i+9],12,-1958414417);c=ff(c,d,a,b,M[i+10],17,-42063);b=ff(b,c,d,a,M[i+11],22,-1990404162);
+      a=ff(a,b,c,d,M[i+12],7,1804603682);d=ff(d,a,b,c,M[i+13],12,-40341101);c=ff(c,d,a,b,M[i+14],17,-1502002290);b=ff(b,c,d,a,M[i+15],22,1236535329);
+      a=gg(a,b,c,d,M[i+1],5,-165796510);d=gg(d,a,b,c,M[i+6],9,-1069501632);c=gg(c,d,a,b,M[i+11],14,643717713);b=gg(b,c,d,a,M[i+0],20,-373897302);
+      a=gg(a,b,c,d,M[i+5],5,-701558691);d=gg(d,a,b,c,M[i+10],9,38016083);c=gg(c,d,a,b,M[i+15],14,-660478335);b=gg(b,c,d,a,M[i+4],20,-405537848);
+      a=gg(a,b,c,d,M[i+9],5,568446438);d=gg(d,a,b,c,M[i+14],9,-1019803690);c=gg(c,d,a,b,M[i+3],14,-187363961);b=gg(b,c,d,a,M[i+8],20,1163531501);
+      a=gg(a,b,c,d,M[i+13],5,-1444681467);d=gg(d,a,b,c,M[i+2],9,-51403784);c=gg(c,d,a,b,M[i+7],14,1735328473);b=gg(b,c,d,a,M[i+12],20,-1926607734);
+      a=hh(a,b,c,d,M[i+5],4,-378558);d=hh(d,a,b,c,M[i+8],11,-2022574463);c=hh(c,d,a,b,M[i+11],16,1839030562);b=hh(b,c,d,a,M[i+14],23,-35309556);
+      a=hh(a,b,c,d,M[i+1],4,-1530992060);d=hh(d,a,b,c,M[i+4],11,1272893353);c=hh(c,d,a,b,M[i+7],16,-155497632);b=hh(b,c,d,a,M[i+10],23,-1094730640);
+      a=hh(a,b,c,d,M[i+13],4,681279174);d=hh(d,a,b,c,M[i+0],11,-358537222);c=hh(c,d,a,b,M[i+3],16,-722521979);b=hh(b,c,d,a,M[i+6],23,76029189);
+      a=hh(a,b,c,d,M[i+9],4,-640364487);d=hh(d,a,b,c,M[i+12],11,-421815835);c=hh(c,d,a,b,M[i+15],16,530742520);b=hh(b,c,d,a,M[i+2],23,-995338651);
+      a=ii(a,b,c,d,M[i+0],6,-198630844);d=ii(d,a,b,c,M[i+7],10,1126891415);c=ii(c,d,a,b,M[i+14],15,-1416354905);b=ii(b,c,d,a,M[i+5],21,-57434055);
+      a=ii(a,b,c,d,M[i+12],6,1700485571);d=ii(d,a,b,c,M[i+3],10,-1894986606);c=ii(c,d,a,b,M[i+10],15,-1051523);b=ii(b,c,d,a,M[i+1],21,-2054922799);
+      a=ii(a,b,c,d,M[i+8],6,1873313359);d=ii(d,a,b,c,M[i+15],10,-30611744);c=ii(c,d,a,b,M[i+6],15,-1560198380);b=ii(b,c,d,a,M[i+13],21,1309151649);
+      a=ii(a,b,c,d,M[i+4],6,-145523070);d=ii(d,a,b,c,M[i+11],10,-1120210379);c=ii(c,d,a,b,M[i+2],15,718787259);b=ii(b,c,d,a,M[i+9],21,-343485551);
+      a=safeAdd(a,aa);b=safeAdd(b,bb);c=safeAdd(c,cc);d=safeAdd(d,dd);
+    }
+    function h(n){var s='';for(var i=0;i<4;i++){s+=('0'+((n>>>(i*8))&0xff).toString(16)).slice(-2);}return s;}
+    return h(a)+h(b)+h(c)+h(d);
+  }
+
+  /* ══════════════════════════════════════════════════════
+     LOG
+  ══════════════════════════════════════════════════════ */
+  _log(msg, type, id) {
+    const body  = document.getElementById('logBody');
+    const empty = document.getElementById('logEmpty');
+    if (empty) empty.remove();
+
+    const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    const device = id ? this._getDevice(id) : null;
+    const prefix = device ? '[' + device.name + '] ' : '';
+    line.innerHTML =
+      '<span class="log-time">[' + time + ']</span>' +
+      '<span class="log-msg ' + (type || '') + '">' + this._esc(prefix + msg) + '</span>';
+    body.appendChild(line);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  _clearLog() {
+    document.getElementById('logBody').innerHTML =
+      '<div class="log-empty" id="logEmpty">暂无记录，点击卡片上的「唤醒」开始</div>';
+  }
+
+  /* ══════════════════════════════════════════════════════
+     PASSWORD TOGGLE
+  ══════════════════════════════════════════════════════ */
+  _togglePwd() {
+    const input = this._q('#fPassword');
+    const icon  = this._q('#eyeIconSvg');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.innerHTML =
+        '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>' +
+        '<path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>' +
+        '<line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      input.type = 'password';
+      icon.innerHTML =
+        '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>' +
+        '<circle cx="12" cy="12" r="3"/>';
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════
+     STATIC BINDINGS (called once)
+  ══════════════════════════════════════════════════════ */
+  _bindStatic() {
+    this._q('#logClearBtn').addEventListener('click',    () => this._clearLog());
+    this._q('#modalBackdrop').addEventListener('click',  () => this._closeModal());
+    this._q('#modalCloseBtn').addEventListener('click',  () => this._closeModal());
+    this._q('#modalSaveBtn').addEventListener('click',   () => this._saveModal());
+    this._q('#modalCancelBtn').addEventListener('click', () => this._closeModal());
+    this._q('#pwdToggleBtn').addEventListener('click',   () => this._togglePwd());
+    this._bindSwipeToClose();
+  }
+
+  _bindSwipeToClose() {
+    const sheet = this._q('#modalSheet');
+    let startY = 0;
+    sheet.addEventListener('touchstart', e => {
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+    sheet.addEventListener('touchmove', e => {
+      const dy = e.touches[0].clientY - startY;
+      if (dy > 0) {
+        sheet.style.transform = 'translateY(' + dy + 'px)';
+        sheet.style.transition = 'none';
+      }
+    }, { passive: true });
+    sheet.addEventListener('touchend', e => {
+      const dy = e.changedTouches[0].clientY - startY;
+      sheet.style.transform = '';
+      sheet.style.transition = '';
+      if (dy > 80) this._closeModal();
+    }, { passive: true });
+  }
+
+  /* ── Helper ─────────────────────────────────────────── */
+  _q(sel) { return document.querySelector(sel); }
+}
+
+
+
 // 月度金额
 const spesamensile = 3000
 
@@ -4163,5 +4616,6 @@ const biao = new Biaopage();
 const info = new Infopage();
 const log = new Logpage();
 const todo = new Todopage();
+const wol = new WolApp();
 const main = new Main();
-const app = new App();
+const app = new App();  
