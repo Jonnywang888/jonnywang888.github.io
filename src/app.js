@@ -4495,7 +4495,7 @@ class WolApp {
         const res = JSON.parse(r);
         for (const dev of res) {
             if (dev.UID === uid) {
-                d.stato = dev.active ? 'on' : 'off';
+                d.stato = dev.active === '1' ? 'on' : 'off';
                 this._updateCardBusy(id);
                 return true;
             }
