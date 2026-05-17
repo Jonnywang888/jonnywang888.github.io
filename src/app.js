@@ -4678,4 +4678,3 @@ const todo = new Todopage();
 const wol = new WolApp();
 const main = new Main();
 const app = new App();  
-document.getElementById('set-wol').click();
