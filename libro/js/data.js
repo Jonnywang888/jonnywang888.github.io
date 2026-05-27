@@ -1,7 +1,8 @@
 // ══════════════════════════════════════
 // BOOK LIBRARY — Loaded from server
 // ══════════════════════════════════════
-let BOOKS_URL = '/books';
+const BASE_BOOKS_URL = 'https://trustmarket.ddnsfree.com/test/books';
+let BOOKS_URL = ""
 const LOGIN_URL = 'https://trustmarket.ddnsfree.com/test/book.asp';
 const BOOKS = [];
 
@@ -23,7 +24,7 @@ async function loadBooksFromServer() {
     BOOKS.length = 0;
 
     // Step 1 — fetch directory listing and extract .json links
-    var dirResp = await fetch(BOOKS_URL + '/');
+    var dirResp = await fetch(BASE_BOOKS_URL + '/');
     if (!dirResp.ok) {
       console.warn('loadBooks: cannot access directory (' + dirResp.status + ')');
       return 0;
@@ -49,7 +50,7 @@ async function loadBooksFromServer() {
     // Step 2 — fetch each book JSON in parallel
     var results = await Promise.all(
       bookFiles.map(function(file) {
-        var url = BOOKS_URL + '/' + file;
+        var url = BASE_BOOKS_URL + '/' + file;
         return fetch(url)
           .then(function(r) {
             if (!r.ok) {
@@ -133,7 +134,7 @@ function loadState() {
     var s = localStorage.getItem('it_settings'); if(s) Object.assign(state.settings, JSON.parse(s));
     var u = localStorage.getItem('it_user'); if(u) state.user = JSON.parse(u);
     if(state.user && state.user.token) {
-      BOOKS_URL = 'https://trustmarket.ddnsfree.com/test/books/' + encodeURIComponent(state.user.username);
+      BOOKS_URL = BASE_BOOKS_URL + encodeURIComponent(state.user.username);
     }
     var r = localStorage.getItem('it_readlog'); if(r) state.readLog = JSON.parse(r);
     var st = localStorage.getItem('it_stats'); if(st) Object.assign(state.stats, JSON.parse(st));

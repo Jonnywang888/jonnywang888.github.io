@@ -64,7 +64,6 @@ document.getElementById('login-btn').onclick = function() {
       btn.textContent = '登录';
       if (data && data.login) {
         state.user = { username: u, token: data.token };
-        BOOKS_URL = '/books/' + encodeURIComponent(u);
         saveState();
         renderSettings();
         showToast('欢迎回来，' + u + '！');
@@ -97,7 +96,6 @@ document.getElementById('register-btn').onclick = function() {
 // Settings — logout
 document.getElementById('logout-btn').onclick = function() {
   state.user = null;
-  BOOKS_URL = '/books';
   saveState();
   renderSettings();
   showToast('已退出登录');
