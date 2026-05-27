@@ -1,0 +1,32 @@
+{
+  "id": "cuore",
+  "title": "Cuore",
+  "author": "Edmondo De Amicis",
+  "emoji": "❤️",
+  "level": "A2",
+  "chapters": [
+    {
+      "id": "ch1", "title": "Ottobre",
+      "subtitle": "Primo giorno di scuola",
+      "sentences": [
+        { "it": "Lunedì, 17 ottobre.", "zh": "十月十七日，星期一。" },
+        { "it": "Stamattina mia madre mi ha condotto alla scuola elementare Baretti, per farmi iscrivere alla terza classe.", "zh": "今天早上，妈妈带我去了巴雷蒂小学，为我办理三年级的入学手续。" },
+        { "it": "Pensavo alla scuola con un po' di spavento.", "zh": "我对学校感到有点害怕。" },
+        { "it": "Dopo tre mesi di vacanze di campagna, la scuola mi pesava.", "zh": "经过三个月的乡村假期，学校让我感到厌倦。" },
+        { "it": "Per le vie c'era un gran viavai di ragazzi.", "zh": "街道上孩子们来来往往。" },
+        { "it": "Davanti alle librerie, dove s'affollavano le madri a comprare zaini, cartelle e quaderni, era pressa.", "zh": "书店门前挤满了购买书包、文具盒和练习本的妈妈们。" }
+      ]
+    },
+    {
+      "id": "ch2", "title": "Novembre",
+      "subtitle": "Il piccolo scrivano fiorentino",
+      "sentences": [
+        { "it": "C'era una volta a Firenze un ragazzo di undici anni.", "zh": "从前在佛罗伦萨有个十一岁的男孩。" },
+        { "it": "Il padre suo faceva il copista, scrivendo a mano degli indirizzi di manifesti e circolari per le case commerciali.", "zh": "他父亲是个抄写员，为商行手工书写广告和通知的地址。" },
+        { "it": "La famiglia era numerosa, e il padre lavorava fino a tardi la sera per guadagnare il necessario.", "zh": "家里人口众多，父亲工作到深夜才能赚取所需。" },
+        { "it": "Il ragazzo vide come il padre si affaticasse.", "zh": "男孩看到父亲是多么劳累。" },
+        { "it": "Una notte, di nascosto, si alzò e cominciò a scrivere al posto del padre.", "zh": "一天夜里，他悄悄起床，代替父亲开始书写。" }
+      ]
+    }
+  ]
+}

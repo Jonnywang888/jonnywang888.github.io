@@ -1,22 +1,18 @@
 {
-  "name": "中意双语阅读",
-  "short_name": "双语阅读",
-  "description": "中意双语阅读网站 - 支持PWA的跨设备阅读体验",
-  "start_url": "/libro/",
+  "name": "Italiano · 意大利语阅读",
+  "short_name": "Italiano",
+  "description": "沉浸式意大利语阅读应用",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4A90E2",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
+  "background_color": "#0f0f1a",
+  "theme_color": "#1a1a2e",
+  "lang": "zh-CN",
   "icons": [
     {
-      "src": "icons/libro192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "libro512.png",
-      "sizes": "512x512",
+      "src": "icons/libro.png",
+      "sizes": "800x800",
       "type": "image/png"
     }
   ]
-} 
+}
