@@ -184,7 +184,7 @@ async function syncPushPull() {
 
     var resp = await fetch(LOGIN_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // headers: { 'Content-Type': 'application/json' },
       body: body
     });
 
