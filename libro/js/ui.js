@@ -361,6 +361,9 @@ function renderVocab(filter) {
 
   // Build book filter options from vocab
   var bookTitles = [];
+  state.vocab = state.vocab.filter(function(w) {
+    return w.deleted !== true;
+  });
   state.vocab.forEach(function(w) {
     var t = w.bookTitle || '未归类';
     if(bookTitles.indexOf(t) === -1) bookTitles.push(t);
