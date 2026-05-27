@@ -1,9 +1,9 @@
 // ══════════════════════════════════════
 // BOOK LIBRARY — Loaded from server
 // ══════════════════════════════════════
-const BASE_BOOKS_URL = 'https://trustmarket.ddnsfree.com/test/books';
+const BASE_BOOKS_URL = 'https://trustmarket.ddnsfree.com/libro/books';
 let BOOKS_URL = ""
-const LOGIN_URL = 'https://trustmarket.ddnsfree.com/test/book.asp';
+const LOGIN_URL = 'https://trustmarket.ddnsfree.com/server/book.asp';
 const BOOKS = [];
 
 /**
