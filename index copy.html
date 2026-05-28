@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Italiano · 意大利语阅读</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="top-bar">
+    <span id="page-title">Italiano</span>
+    <button class="top-btn" id="search-btn" style="display:none" aria-label="搜索">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </button>
+    <button class="top-btn" id="theme-btn" aria-label="切换主题">
+      <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+    <!-- HOME PAGE -->
+    <div id="home-page" class="page active">
+      <div class="page-inner">
+        <p class="greeting" id="greeting-text">Buongiorno</p>
+        <p class="greeting-sub" id="greeting-sub">每一句阅读都是进步</p>
+
+        <div class="streak-bar">
+          <span class="streak-flame">🔥</span>
+          <div>
+            <div class="streak-num" id="streak-num">0</div>
+            <div class="streak-label">连续学习天数</div>
+          </div>
+          <div style="margin-left:auto; text-align:right">
+            <div class="streak-num" style="font-size:18px" id="today-sentences">0</div>
+            <div class="streak-label">今日阅读句数</div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-val" id="total-words">0</div>
+            <div class="stat-lbl">生词总数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="total-sentences">0</div>
+            <div class="stat-lbl">累计阅读句数</div>
+          </div>
+        </div>
+
+        <p class="section-title">继续阅读</p>
+        <div id="home-books"></div>
+
+        <p class="section-title" style="margin-top:24px">最近生词</p>
+        <div id="recent-words-home" class="recent-words"></div>
+      </div>
+    </div>
+
+    <!-- READING PAGE -->
+    <div id="reading-page" class="page">
+      <div id="reading-book-sel">
+        <div class="book-list-reading">
+          <p class="section-title" style="margin-bottom:16px">选择书籍</p>
+          <div class="book-filter-bar">
+            <span class="book-filter-hint" id="book-filter-hint"></span>
+            <button class="book-filter-btn" id="book-filter-btn">显示全部</button>
+          </div>
+          <div id="book-sel-list"></div>
+        </div>
+      </div>
+      <div id="reading-chapter-sel" style="display:none">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px">
+          <button class="top-btn" id="back-to-books">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          </button>
+          <span id="chapter-sel-book-title" style="font-family:var(--font-serif); font-size:18px; font-style:italic"></span>
+        </div>
+        <div class="chapter-list" id="chapter-list"></div>
+      </div>
+      <div id="reading-view" style="display:none">
+        <div class="reading-top">
+          <button class="top-btn" id="back-to-chapters">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          </button>
+          <span class="chapter-title-sm" id="reading-chapter-name"></span>
+          <span class="reading-progress-mini" id="reading-progress-txt"></span>
+        </div>
+        <div class="sentences-list" id="sentences-list"></div>
+      </div>
+    </div>
+
+    <!-- VOCAB PAGE -->
+    <div id="vocab-page" class="page">
+      <div class="vocab-search-wrap">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" type="search" placeholder="搜索生词…" id="vocab-search" />
+        </div>
+      </div>
+      <div class="vocab-count-bar">
+        <select class="vocab-book-select" id="vocab-book-filter"></select>
+        <span id="vocab-count-txt">共 0 个生词</span>
+        <button class="vocab-add-btn" id="vocab-add-btn" aria-label="添加生词">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          添加生词
+        </button>
+      </div>
+      <div class="vocab-list" id="vocab-list"></div>
+    </div>
+
+    <!-- STATS PAGE -->
+    <div id="stats-page" class="page">
+      <div class="page-inner">
+        <p class="section-title">本月阅读记录</p>
+        <div class="stats-section">
+          <div class="cal-labels">
+            <div class="cal-label">日</div><div class="cal-label">一</div><div class="cal-label">二</div>
+            <div class="cal-label">三</div><div class="cal-label">四</div><div class="cal-label">五</div><div class="cal-label">六</div>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+
+        <p class="section-title">近7天每日阅读句数</p>
+        <div class="stats-section">
+          <div class="chart-bar-wrap" id="bar-chart"></div>
+        </div>
+
+        <p class="section-title">总体数据</p>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-val" id="stat-days">0</div>
+            <div class="stat-lbl">累计学习天数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-all-sentences">0</div>
+            <div class="stat-lbl">累计阅读句数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-words">0</div>
+            <div class="stat-lbl">生词总数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-streak">0</div>
+            <div class="stat-lbl">最长连续天数</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="settings-page" class="page">
+      <div class="page-inner">
+        <div id="account-section">
+          <div class="login-card" id="login-form-wrap">
+            <div class="account-avatar" id="account-avatar">A</div>
+            <p style="font-size:14px; color:var(--text3); margin-bottom:16px" id="account-status">登录以同步学习数据</p>
+            <input class="settings-input" type="text" placeholder="用户名" id="login-username" />
+            <input class="settings-input" type="password" placeholder="密码" id="login-password" />
+            <button class="btn-primary" id="login-btn">登录</button>
+            <button class="btn-ghost" id="register-btn">注册账号</button>
+            <div id="login-msg" style="font-size:12px; color:var(--red); margin-top:8px; display:none"></div>
+          </div>
+          <div class="login-card" id="logged-in-wrap" style="display:none">
+            <div class="account-avatar" id="logged-avatar">U</div>
+            <p style="font-size:16px; font-weight:500; margin-bottom:4px" id="logged-name"></p>
+            <p style="font-size:12px; color:var(--text3); margin-bottom:16px">数据已同步</p>
+            <button class="btn-ghost" id="logout-btn">退出登录</button>
+          </div>
+        </div>
+
+        <p class="section-title" style="margin-top:8px">外观</p>
+        <div class="settings-group">
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">夜间模式</div>
+              <div class="settings-sub">护眼，适合长时间阅读</div>
+            </div>
+            <button class="toggle on" id="dark-toggle"></button>
+          </div>
+          <div class="settings-item">
+            <div class="settings-label">字体大小</div>
+            <div class="font-size-btns">
+              <button class="font-size-btn" data-size="sm">A</button>
+              <button class="font-size-btn active" data-size="md">A</button>
+              <button class="font-size-btn" data-size="lg" style="font-size:18px">A</button>
+              <button class="font-size-btn" data-size="xl" style="font-size:22px">A</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="section-title">阅读</p>
+        <div class="settings-group">
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">默认显示翻译</div>
+              <div class="settings-sub">关闭以保持沉浸体验</div>
+            </div>
+            <button class="toggle" id="translate-toggle"></button>
+          </div>
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">自动标记生词</div>
+              <div class="settings-sub">高亮已添加的生词</div>
+            </div>
+            <button class="toggle on" id="highlight-toggle"></button>
+          </div>
+        </div>
+
+        <p class="section-title">翻译</p>
+        <div class="settings-group">
+          <div class="settings-item" style="flex-direction:column; align-items:stretch; gap:8px">
+            <div>
+              <div class="settings-label">DeepSeek API Key</div>
+              <div class="settings-sub">用于AI翻译，输入后点击保存</div>
+            </div>
+            <div>
+              <input class="settings-input" type="password" placeholder="sk-xxxxxxxxxxxxxxxx" id="api-key-input" style="flex:1" />
+              <button class="btn-primary" id="api-key-save-btn" style="white-space:nowrap; padding:8px 16px">保存</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="section-title">数据</p>
+        <div class="settings-group">
+          <div class="settings-item" style="cursor:pointer" id="export-btn">
+            <div class="settings-label">导出生词本</div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="settings-item" style="cursor:pointer; color:var(--red)" id="clear-data-btn">
+            <div class="settings-label" style="color:var(--red)">清除所有数据</div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.5"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </div>
+        </div>
+
+        <p style="text-align:center; font-size:12px; color:var(--text3); margin-top:24px; font-style:italic; font-family:var(--font-serif)">
+          Italiano · 版本 1.0 · 沉浸式意大利语阅读
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="nav">
+    <button class="nav-btn active" data-page="home">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      主页
+    </button>
+    <button class="nav-btn" data-page="reading">
+      <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      阅读
+    </button>
+    <button class="nav-btn" data-page="vocab">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      生词
+    </button>
+    <button class="nav-btn" data-page="stats">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      统计
+    </button>
+    <button class="nav-btn" data-page="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      设置
+    </button>
+  </nav>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctx-menu">
+  <div class="ctx-word" id="ctx-word-display"></div>
+  <div class="ctx-item" id="ctx-add">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    添加到生词本
+  </div>
+  <div class="ctx-item" id="ctx-explain">
+    <svg viewBox="0 0 24 24"><path d="M12 3c5.5 0 10 4.5 10 10s-4.5 10-10 10S2 18.5 2 13 6.5 3 12 3z"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 3-2.5 5"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    翻译
+  </div>
+  <div class="ctx-result" id="ctx-result" style="display:none">
+    <div class="ctx-result-text" id="ctx-result-text"></div>
+  </div>
+</div>
+
+<!-- ADD WORD MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">添加生词</div>
+    <div class="modal-word" id="modal-word"></div>
+    <input class="modal-input" type="text" placeholder="意大利语单词…" id="modal-word-input" />
+    <input class="modal-input" type="text" placeholder="中文翻译…" id="modal-translation" />
+    <input class="modal-input" type="text" placeholder="例句（可选）…" id="modal-example" />
+    <div class="modal-btns">
+      <button class="modal-cancel" id="modal-cancel">取消</button>
+      <button class="modal-save" id="modal-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORD DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal modal-detail">
+    <div class="modal-handle"></div>
+    <div class="modal-title detail-title">详细解释</div>
+    <div class="detail-word" id="detail-word-title"></div>
+    <div class="detail-body" id="detail-body"></div>
+    <button class="modal-cancel detail-close" id="detail-close">关闭</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
