@@ -134,7 +134,6 @@ async function syncPullFull() {
     // Replace progress
     if (data.progress) {
       for (const key in data.progress) {
-        console.log(data.progress[key])
         data.progress[key] = JSON.parse(data.progress[key])
       }
       state.progress = data.progress;

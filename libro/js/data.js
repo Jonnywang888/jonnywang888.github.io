@@ -20,9 +20,6 @@ const BOOKS = [];
  */
 async function loadBooksFromServer() {
   try {
-    // Step 0 — clear existing books to prevent duplicates on reload
-    BOOKS.length = 0;
-
     // Step 1 — fetch directory listing and extract .json links
     var dirResp = await fetch(BOOKS_URL + '/');
     if (!dirResp.ok) {
@@ -72,6 +69,8 @@ async function loadBooksFromServer() {
     var count = 0;
     for (var i = 0; i < results.length; i++) {
       if (results[i]) {
+        // Clear cached books only when we have fresh data to replace them
+        if (count === 0) BOOKS.length = 0;
         // Support both a single book object and an array of books
         if (Array.isArray(results[i])) {
           BOOKS.push.apply(BOOKS, results[i]);
@@ -82,11 +81,39 @@ async function loadBooksFromServer() {
         }
       }
     }
+    if (count > 0) saveBooksToCache();
     return count;
   } catch(e) {
     console.warn('loadBooks failed:', e);
     return 0;
   }
+}
+
+// ══════════════════════════════════════
+// BOOK CACHE (localStorage)
+// ══════════════════════════════════════
+function saveBooksToCache() {
+  try {
+    localStorage.setItem('it_books', JSON.stringify(BOOKS));
+    localStorage.setItem('it_books_updated', JSON.stringify(Date.now()));
+  } catch(e) {
+    console.warn('Failed to cache books to localStorage: ' + e.message);
+  }
+}
+
+function loadBooksFromCache() {
+  try {
+    var data = localStorage.getItem('it_books');
+    if (data) {
+      var books = JSON.parse(data);
+      BOOKS.length = 0;
+      BOOKS.push.apply(BOOKS, books);
+      return books.length;
+    }
+  } catch(e) {
+    console.warn('Failed to load cached books: ' + e.message);
+  }
+  return 0;
 }
 
 // ══════════════════════════════════════
@@ -99,7 +126,7 @@ const state = {
   vocab: [],
   progress: {},       // { bookId: { chapterId: lastSentenceIdx } }
   lastReadAt: {},     // { bookId: timestamp } — for sorting by recency
-  settings: { dark: true, fontSize: 'md', showTranslation: false, highlightWords: true },
+  settings: { dark: true, fontSize: 'md', showTranslation: false, highlightWords: true, apiKey: '' },
   user: null,
   readLog: {},        // { 'YYYY-MM-DD': sentenceCount }
   stats: { totalSentences: 0 },
@@ -140,5 +167,6 @@ function loadState() {
     var st = localStorage.getItem('it_stats'); if(st) Object.assign(state.stats, JSON.parse(st));
     var ls = localStorage.getItem('it_lastsync'); if(ls) state.lastSync = JSON.parse(ls);
     var pu = localStorage.getItem('it_progress_updated'); if(pu) state.progressUpdatedAt = JSON.parse(pu);
+    loadBooksFromCache();
   } catch(e) {}
 }

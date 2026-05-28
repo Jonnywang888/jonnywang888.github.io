@@ -101,6 +101,14 @@ document.getElementById('logout-btn').onclick = function() {
   showToast('已退出登录');
 };
 
+// Settings — API key save
+document.getElementById('api-key-save-btn').onclick = function() {
+  var key = document.getElementById('api-key-input').value.trim();
+  state.settings.apiKey = key;
+  saveState();
+  showToast('API Key 已保存');
+};
+
 // Settings — export vocab
 document.getElementById('export-btn').onclick = function() {
   var data = state.vocab.map(function(w) { return w.word + '\t' + w.translation + '\t' + (w.example || ''); }).join('\n');
@@ -121,6 +129,9 @@ document.getElementById('clear-data-btn').onclick = function() {
     state.readLog = {};
     state.stats = { totalSentences: 0 };
     state.lastSync = null;
+    BOOKS.length = 0;
+    localStorage.removeItem('it_books');
+    localStorage.removeItem('it_books_updated');
     saveState();
     showToast('数据已清除');
     renderSettings();

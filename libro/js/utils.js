@@ -56,12 +56,35 @@ function applyFontSize() {
 var lastTranslation = '';
 
 function translateWord(word) {
-  var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=it%7Czh-CN';
-  return fetch(url)
+  var apiKey = state.settings.apiKey;
+  if (!apiKey) {
+    lastTranslation = '';
+    return Promise.resolve(null);
+  }
+
+  return fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: '原始意大利语,翻译成中文.多个含义用","分隔,最多10个,如果不是原形写出词语原形' },
+        { role: 'user', content: word }
+      ]
+    })
+  })
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(data) {
-      if (data && data.responseData && data.responseData.translatedText) {
-        lastTranslation = data.responseData.translatedText;
+      if (data && data.choices && data.choices[0] && data.choices[0].message) {
+        var content = data.choices[0].message.content.trim();
+        try {
+          var parsed = JSON.parse(content);
+          if (parsed.responseData && parsed.responseData.translatedText) {
+            lastTranslation = parsed.responseData.translatedText;
+            return lastTranslation;
+          }
+        } catch(e) {}
+        lastTranslation = content;
         return lastTranslation;
       }
       return null;

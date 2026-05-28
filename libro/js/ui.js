@@ -264,7 +264,7 @@ function renderSentences(chapter) {
   var container = document.getElementById('sentences-list');
   container.innerHTML = '';
   var savedPos = (state.progress[state.currentBook.id] || {})[chapter.id] || 0;
-
+  console.log(state.progress[state.currentBook.id])
   chapter.sentences.forEach(function(sent, idx) {
     var block = document.createElement('div');
     block.className = 'sentence-block' + (idx === savedPos ? ' current' : '');
@@ -591,6 +591,8 @@ function renderSettings() {
   document.querySelectorAll('.font-size-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.size === state.settings.fontSize);
   });
+
+  document.getElementById('api-key-input').value = state.settings.apiKey || '';
 
   if(state.user) {
     document.getElementById('login-form-wrap').style.display = 'none';
