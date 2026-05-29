@@ -67,8 +67,12 @@ function translateWord(word) {
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
     body: JSON.stringify({
       model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: '原始意大利语,翻译成中文.多个含义用","分隔,最多10个,如果不是原形写出词语原形' },
+      messages: [{ role: 'system', content: `
+        将其翻译成中文。如果有多个含义，用逗号分隔，最多 10 个。
+        判断是否为词语原形：
+        原形 → 只返回：释义,释义...
+        非原形 → 要写出原形，并注明是第几人称、什么式/数等,返回：释义,释义...（原形:xxx, 第X人称的什么形式）
+        ` },
         { role: 'user', content: word }
       ]
     })
