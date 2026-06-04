@@ -2697,8 +2697,6 @@ class Todopage {
      * 绑定事件监听器，更新界面显示，设置定时器
      */
     async init() {
-        // 先初始化用户数据
-        // this.users = await this.loadUsers();
         this.currentUser = this.loadCurrentUser();
         this.tasks = await this.loadTasks(); // 从本地存储加载任务数据
         // 确保应用启动时始终设置为今天的日期
@@ -2859,7 +2857,6 @@ class Todopage {
                 });
             }
 
-
             // 任务列表点击事件委托（处理任务编辑和详情查看）
             const taskList = document.getElementById('task-list');
             if (taskList) {
@@ -2897,17 +2894,17 @@ class Todopage {
             const points = document.querySelector('.user-info .points');
             points.addEventListener('click', () => {
                 this.showExchangeModal();
-            })
+            });
 
             const closeexchangemodal = document.getElementById('close-exchange-modal');
             closeexchangemodal.addEventListener('click', () => {
                 document.getElementById('exchange-modal').classList.remove('show');
-            })
+            });
 
             const offline = document.getElementById('offline');
             offline.addEventListener('click', () => {
                 this.showdatioffline();
-            })
+            });
 
             const todoupload = document.getElementById('todo-upload');
             todoupload.addEventListener('click', async () => {
@@ -2918,12 +2915,13 @@ class Todopage {
                     showmsg('没有数据可更新或无网络连接！');
                 }
                 this.showdatioffline();
-            })
+            });
 
             const todoClear = document.getElementById('todo-clear');
             todoClear.addEventListener('click', () => {
                 this.clearUpload();
-            })
+            });
+
             const closeBtn = document.getElementById('close-offline-modal');
             if (closeBtn) {
                 closeBtn.onclick = () => {
@@ -2938,10 +2936,8 @@ class Todopage {
     /**
      * 更新日期时间显示
      * 更新页面顶部的日期显示和隐藏的日期输入框的值
-     * 显示格式包含任务数量信息
      */
     updateDateTime() {
-        // 设置日期显示格式选项
         const options = { 
             year: 'numeric', 
             month: 'long', 
@@ -2949,17 +2945,13 @@ class Todopage {
             weekday: 'long' 
         };
         const dateStr = this.currentDate.toLocaleDateString('zh-CN', options);
-        
-        // 获取当天任务总数并构建显示文本
         const displayText = dateStr;
         
-        // 更新页面顶部的日期显示
         const dateDisplay = document.getElementById('date-display');
         if (dateDisplay) {
             dateDisplay.textContent = displayText;
         }
         
-        // 设置隐藏日期输入框的值（用于日期选择器）
         const dateInput = document.getElementById('date-input');
         if (dateInput) {
             const year = this.currentDate.getFullYear();
@@ -2968,6 +2960,7 @@ class Todopage {
             dateInput.value = `${year}-${month}-${day}`;
         }
     }
+
     dedupeList(items, keyBuilder) {
         const keys = new Set();
         const result = [];
@@ -2985,10 +2978,20 @@ class Todopage {
         }
         return result.reverse();
     }
+
+    // ============================================================
+    // [修复] Bug 4：updatetasks 去重 keyBuilder 改为提取 item.id，
+    //               避免 String(object) => "[object Object]" 导致所有更新被丢弃
+    // [修复] Bug 2：updatetasks 队列存完整任务对象，同步时服务器能收到完整字段
+    // ============================================================
     buildTodoSyncPlan(upload) {
         const plan = {
             addtasks: this.dedupeList(upload.addtasks || [], (item) => item?.id),
-            updatetasks: this.dedupeList(upload.updatetasks || [], (id) => String(id)),
+            // [修复] keyBuilder 兼容旧格式（纯 id 字符串）和新格式（完整对象）
+            updatetasks: this.dedupeList(upload.updatetasks || [], (item) => {
+                if (typeof item === 'object' && item !== null) return String(item.id);
+                return String(item);
+            }),
             deltasks: this.dedupeList(upload.deltasks || [], (id) => String(id)),
             addrepeat: this.dedupeList(upload.addrepeat || [], (item) => item?.id),
             updaterepeat: this.dedupeList(upload.updaterepeat || [], (item) => item?.id),
@@ -2999,9 +3002,14 @@ class Todopage {
                 return api.getMovimentoQueueKey(item);
             })
         };
+
         const deleteSet = new Set(plan.deltasks.map(id => String(id)));
         plan.addtasks = plan.addtasks.filter(item => !deleteSet.has(String(item?.id)));
-        plan.updatetasks = plan.updatetasks.filter(id => !deleteSet.has(String(id)));
+        // [修复] filter 时兼容对象格式提取 id
+        plan.updatetasks = plan.updatetasks.filter(item => {
+            const id = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
+            return !deleteSet.has(id);
+        });
         plan.addrepeat = plan.addrepeat.filter(item => !deleteSet.has(String(item?.taskid)));
         plan.updaterepeat = plan.updaterepeat.filter(item => !deleteSet.has(String(item?.taskid)));
         plan.addmovimento = plan.addmovimento.filter(item => {
@@ -3014,8 +3022,10 @@ class Todopage {
         const addTaskMap = new Map();
         plan.addtasks.forEach(item => addTaskMap.set(String(item.id), item));
         const liveTaskMap = new Map((this.tasks || []).map(task => [String(task.id), task]));
-        plan.updatetasks = plan.updatetasks.filter(id => {
-            const key = String(id);
+
+        // [修复] updatetasks 是对象，正确提取 id 进行比对
+        plan.updatetasks = plan.updatetasks.filter(item => {
+            const key = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
             if (!addTaskMap.has(key)) {
                 return true;
             }
@@ -3041,11 +3051,16 @@ class Todopage {
         return plan;
     }
 
+    // ============================================================
+    // [修复] Bug 2：updatetasks 同步时传完整对象给 api.todo_updatetask，
+    //               而不仅仅是 id，确保服务器收到完整字段
+    // ============================================================
     async aggiornamento() {
         try {
             const upload = api.getTodoUpload();
             const plan = this.buildTodoSyncPlan(upload);
             api.saveTodoUpload({ ...upload, ...plan, logs: upload.logs || [] });
+
             const runQueue = async (action, list, runner, targetBuilder) => {
                 for (const item of list) {
                     let result;
@@ -3074,17 +3089,59 @@ class Todopage {
                     }
                 }
             };
-            await runQueue('addtasks', plan.addtasks, (task) => api.todo_addtask(task), (task) => `task:${task?.id ?? 'unknown'}`);
-            await runQueue('addrepeat', plan.addrepeat, (repeat) => api.todo_addrepeat(repeat), (repeat) => `repeat:${repeat?.id ?? 'unknown'}`);
-            await runQueue('updatetasks', plan.updatetasks, (id) => api.todo_updatetask(id), (id) => `task:${id}`);
-            await runQueue('updaterepeat', plan.updaterepeat, (repeat) => api.todo_updaterepeat(repeat), (repeat) => `repeat:${repeat?.id ?? 'unknown'}`);
-            await runQueue('addmovimento', plan.addmovimento, (movimento) => api.todo_addmovimento(movimento, false), (movimento) => {
-                if (typeof movimento === 'string') {
-                    return movimento;
+
+            await runQueue(
+                'addtasks',
+                plan.addtasks,
+                (task) => api.todo_addtask(task),
+                (task) => `task:${task?.id ?? 'unknown'}`
+            );
+            await runQueue(
+                'addrepeat',
+                plan.addrepeat,
+                (repeat) => api.todo_addrepeat(repeat),
+                (repeat) => `repeat:${repeat?.id ?? 'unknown'}`
+            );
+
+            // [修复] 传完整对象（兼容旧格式纯 id 字符串）
+            await runQueue(
+                'updatetasks',
+                plan.updatetasks,
+                (item) => {
+                    if (typeof item === 'object' && item !== null) {
+                        return api.todo_updatetask(item.id, item);
+                    }
+                    // 旧格式：纯 id，从内存中补全任务数据
+                    const liveTask = (this.tasks || []).find(t => String(t.id) === String(item));
+                    return api.todo_updatetask(item, liveTask || { id: item });
+                },
+                (item) => `task:${typeof item === 'object' && item !== null ? item?.id : item}`
+            );
+
+            await runQueue(
+                'updaterepeat',
+                plan.updaterepeat,
+                (repeat) => api.todo_updaterepeat(repeat),
+                (repeat) => `repeat:${repeat?.id ?? 'unknown'}`
+            );
+            await runQueue(
+                'addmovimento',
+                plan.addmovimento,
+                (movimento) => api.todo_addmovimento(movimento, false),
+                (movimento) => {
+                    if (typeof movimento === 'string') {
+                        return movimento;
+                    }
+                    return `mov:${movimento?.taskid ?? 'unknown'}_${movimento?.date ?? ''}`;
                 }
-                return `mov:${movimento?.taskid ?? 'unknown'}_${movimento?.date ?? ''}`;
-            });
-            await runQueue('deltasks', plan.deltasks, (id) => api.todo_deltask(id), (id) => `task:${id}`);
+            );
+            await runQueue(
+                'deltasks',
+                plan.deltasks,
+                (id) => api.todo_deltask(id),
+                (id) => `task:${id}`
+            );
+
             this.users = await this.loadUsers();
             const res = await api.todo_gettasks();
             const tasks = await res.json();
@@ -3092,7 +3149,7 @@ class Todopage {
             const repeats = await resrepeats.json();
             const localetasks = await db.getTodoTasks();
             const localrepeats = await db.getTodoRepeats();
-            this.updatePoints(); 
+            this.updatePoints();
             if (JSON.stringify(tasks) === JSON.stringify(localetasks) && JSON.stringify(repeats) === JSON.stringify(localrepeats)) {
                 return true;
             }
@@ -3115,9 +3172,9 @@ class Todopage {
             return false;
         }
     }
+
     /**
      * 显示添加任务模态框
-     * 初始化表单默认值并聚焦到标题输入框
      */
     showAddTaskModal() {
         document.getElementById('add-task-modal').classList.add('show');
@@ -3131,15 +3188,12 @@ class Todopage {
 
     /**
      * 隐藏添加任务模态框
-     * 重置表单并恢复默认状态
      */
     hideAddTaskModal() {
         document.getElementById('add-task-modal').classList.remove('show');
         document.getElementById('add-task-form').reset();
-        // 重置选项显示状态
         document.getElementById('repeat-options').style.display = 'none';
         document.getElementById('once-options').style.display = 'block';
-        // 重置日期为今天
         const today = this.formatLocalDate(new Date());
         document.getElementById('task-date').value = today;
     }
@@ -3152,13 +3206,11 @@ class Todopage {
         const task = this.tasks.find(t => t.id == taskId);
         if (!task) return;
 
-        // 填充任务详情信息
         document.getElementById('detail-title').textContent = task.title;
         document.getElementById('detail-desc').textContent = task.description || '无描述';
         document.getElementById('detail-time').textContent = task.time || '无时间';
         document.getElementById('detail-points').textContent = `${task.point}积分`;
         
-        // 根据任务类型显示相应信息
         if (task.type === 'repeat') {
             document.getElementById('detail-type').textContent = '重复任务';
             document.getElementById('detail-repeat-info').style.display = 'block';
@@ -3172,7 +3224,6 @@ class Todopage {
             document.getElementById('detail-date').textContent = task.date || '未设置';
         }
 
-        // 显示模态框
         document.getElementById('task-details-modal').classList.add('show');
     }
 
@@ -3191,24 +3242,19 @@ class Todopage {
         const task = this.tasks.find(t => t.id == taskId);
         if (!task) return;
 
-        // 存储当前编辑的任务ID
         this.editingTaskId = taskId;
-        // 填充表单数据
         document.getElementById('edit-task-title').value = task.title;
         document.getElementById('edit-task-desc').value = task.description || '';
         document.getElementById('edit-task-time').value = task.time || '09:00';
         document.getElementById('edit-task-point').value = task.point;
         document.getElementById('edit-task-type').value = task.type;
 
-        // 根据任务类型显示相应选项
         this.toggleEditRepeatOptions(task.type);
 
         if (task.type === 'repeat' && task.repeatdays) {
-            // 清除所有复选框
             document.querySelectorAll('#edit-repeat-options input[type="checkbox"]').forEach(cb => {
                 cb.checked = false;
             });
-            // 设置选中的日期
             task.repeatdays.forEach(day => {
                 const checkbox = document.querySelector(`#edit-repeat-options input[value="${day}"]`);
                 if (checkbox) checkbox.checked = true;
@@ -3217,23 +3263,22 @@ class Todopage {
             document.getElementById('edit-task-date').value = task.date;
         }
 
-        // 显示模态框
         document.getElementById('edit-task-modal').classList.add('show');
     }
 
     /**
      * 隐藏编辑任务模态框
-     * 清除编辑状态
      */
     hideEditTaskModal() {
         document.getElementById('edit-task-modal').classList.remove('show');
         this.editingTaskId = null;
     }
+
     async showExchangeModal() {
         document.getElementById('exchange-modal').classList.add('show');
-        const points = this.currentUser.POINTS
-        const userpoints = document.getElementById('user-points')
-        userpoints.innerHTML = points
+        const points = this.currentUser.POINTS;
+        const userpoints = document.getElementById('user-points');
+        userpoints.innerHTML = points;
         
         const tasks = await db.getTodoTasks();
         const rewardtasks = tasks.filter(task => task.type == 'reward');
@@ -3249,12 +3294,12 @@ class Todopage {
                     <div class="item-name">${task.title}</div>
                     <div class="item-points">${-task.point}积分</div>
                 </div>
-                <button class="exchange-btn" taskid="${task.id}"">兑换</button>
+                <button class="exchange-btn" taskid="${task.id}">兑换</button>
             `;
             const button = item.querySelector('.exchange-btn');
             button.addEventListener('click', () => {
                 if (points < -task.point) {
-                    showmsg('积分不足!',10);
+                    showmsg('积分不足!', 10);
                     return;
                 }
                 const check = confirm(`确定要兑换 - ${task.title} - 吗？`);
@@ -3262,9 +3307,9 @@ class Todopage {
                 const id = new Date().getTime();
                 task.id = id;
                 task.completed = true;
-                api.todo_addmovimento(task)
+                api.todo_addmovimento(task);
                 this.addPoints(task.point);
-                userpoints.innerHTML = this.currentUser.POINTS
+                userpoints.innerHTML = this.currentUser.POINTS;
             });
             rewardItems.appendChild(item);
         });
@@ -3272,7 +3317,7 @@ class Todopage {
 
     /**
      * 切换编辑模态框中的重复选项显示
-     * @param {string} taskType - 任务类型（'once' 或 'repeat'）
+     * @param {string} taskType - 任务类型
      */
     toggleEditRepeatOptions(taskType) {
         const repeatOptions = document.getElementById('edit-repeat-options');
@@ -3284,7 +3329,6 @@ class Todopage {
         } else {
             repeatOptions.style.display = 'none';
             onceOptions.style.display = 'block';
-            // 设置默认日期为今天
             const today = this.formatLocalDate(new Date());
             document.getElementById('edit-task-date').value = today;
         }
@@ -3292,7 +3336,6 @@ class Todopage {
 
     /**
      * 更新任务信息
-     * 从编辑模态框获取数据并更新对应任务
      */
     updateTask() {
         if (!this.editingTaskId) return;
@@ -3307,10 +3350,10 @@ class Todopage {
             alert('请输入任务标题');
             return;
         }
-        // 找到要更新的任务
+
         const taskIndex = this.tasks.findIndex(t => t.id == this.editingTaskId);
         if (taskIndex === -1) return;
-        // 更新任务数据
+
         const updatedTask = {
             ...this.tasks[taskIndex],
             title,
@@ -3319,6 +3362,7 @@ class Todopage {
             point,
             type: taskType,
         };
+
         if (taskType === 'repeat') {
             const selectedDays = Array.from(document.querySelectorAll('#edit-repeat-options input[type="checkbox"]:checked'))
                 .map(cb => parseInt(cb.value));
@@ -3335,39 +3379,48 @@ class Todopage {
             updatedTask.date = taskDate;
             delete updatedTask.repeatdays;
         }
-        // 更新任务数组
+
         this.tasks[taskIndex] = updatedTask;
         db.addTodoTasks([updatedTask]);
-        api.todo_updatetask(this.editingTaskId);
-        // 刷新显示
+
+        // [修复] 编辑任务时入队完整对象，而不仅是 id
+        const upload = api.getTodoUpload();
+        upload.updatetasks = upload.updatetasks || [];
+        const idx = upload.updatetasks.findIndex(item =>
+            (typeof item === 'object' && item !== null ? String(item?.id) : String(item)) === String(updatedTask.id)
+        );
+        if (idx >= 0) {
+            upload.updatetasks[idx] = { ...updatedTask };
+        } else {
+            upload.updatetasks.push({ ...updatedTask });
+        }
+        api.saveTodoUpload(upload);
+
+        // 尝试在线同步（失败时已入队，下次会重试）
+        api.todo_updatetask(this.editingTaskId, updatedTask);
+
         this.renderTasks();
-        
-        // 关闭模态框
         this.hideEditTaskModal();
     }
+
     /**
      * 删除当前正在编辑的任务
-     * 需要用户确认后执行删除操作
      */
     deleteCurrentTask() {
         if (!this.editingTaskId) return;
 
         if (confirm('确定要删除这个任务吗？')) {
-            // 从任务数组中删除
             this.tasks = this.tasks.filter(t => t.id != this.editingTaskId);
             db.delTodoTask(this.editingTaskId);
-            api.todo_deltask(this.editingTaskId)
-            // 刷新显示
+            api.todo_deltask(this.editingTaskId);
             this.renderTasks();
-            
-            // 关闭模态框
             this.hideEditTaskModal();
         }
     }
 
     /**
      * 切换添加任务模态框中的重复选项显示
-     * @param {string} taskType - 任务类型（'once' 或 'repeat'）
+     * @param {string} taskType - 任务类型
      */
     toggleRepeatOptions(taskType) {
         const repeatOptions = document.getElementById('repeat-options');
@@ -3379,7 +3432,6 @@ class Todopage {
         } else {
             repeatOptions.style.display = 'none';
             onceOptions.style.display = 'block';
-            // 设置默认日期为今天
             const today = this.formatLocalDate(new Date());
             document.getElementById('task-date').value = today;
         }
@@ -3393,14 +3445,13 @@ class Todopage {
         if (dateValue) {
             this.currentDate = new Date(dateValue);
             this.updateDateTime();
-            this.renderTasks(); // 重新渲染当天的任务
-            this.updateTaskCounts(); // 更新任务计数
+            this.renderTasks();
+            this.updateTaskCounts();
         }
     }
 
     /**
      * 添加新任务
-     * 从表单获取数据并创建新任务
      */
     async addTask() {
         const title = document.getElementById('task-title').value.trim();
@@ -3422,7 +3473,7 @@ class Todopage {
             userid: this.currentUser.ID,
             del: 0
         };
-        // 如果是重复任务，获取选中的星期
+
         if (taskType === 'repeat') {
             const selectedDays = [];
             const checkboxes = document.querySelectorAll('#repeat-options input[type="checkbox"]:checked');
@@ -3431,16 +3482,13 @@ class Todopage {
             });
             task.repeatdays = selectedDays;
         } else {
-            // 一次性任务从日期选择器获取日期
             const taskDate = document.getElementById('task-date').value;
-            task.date = taskDate; // YYYY-MM-DD格式
+            task.date = taskDate;
         }
 
         this.tasks.unshift(task);
-        // 异步添加到数据库
         await db.addTodoTasks([task]);
         api.todo_addtask(task);
-        // 更新任务列表
         this.renderTasks();
         this.updateTaskCounts();
         this.hideAddTaskModal();
@@ -3448,19 +3496,22 @@ class Todopage {
         showmsg('任务添加成功！');
     }
 
-    /**
-     * 切换任务完成状态
-     * @param {string} taskId - 任务ID
-     */
+    // ============================================================
+    // [修复] Bug 5：toggleTask 一次性任务完成时，将完整任务对象写入
+    //               updatetasks 队列（而不是仅依赖 api.todo_updatetask 的副作用），
+    //               确保离线时下次打开可以正确同步完成状态到服务器。
+    //               重复任务的完成状态通过 addrepeat/updaterepeat 队列同步，
+    //               不再额外调用 todo_updatetask 造成队列里出现孤立 id。
+    // ============================================================
     async toggleTask(taskId) {
         const task = this.tasks.find(t => t.id == taskId);
         if (task) {
             const currentDateStr = this.formatLocalDate(this.currentDate);
-            const repeatid = this.creatrepeartid(taskId,currentDateStr);
+            const repeatid = this.creatrepeartid(taskId, currentDateStr);
+
             if (task.type === 'repeat') {
-                // 重复任务：按日期记录完成状态
                 const repeat = await db.getTodoRepeat(repeatid);
-                let repeattask
+                let repeattask;
                 if (repeat) {
                     repeattask = repeat;
                 } else {
@@ -3476,12 +3527,13 @@ class Todopage {
                 repeattask.lastmodifica = Date.now();
                 repeattask.completed = isCompleted;
                 db.addTodoRepeat(repeattask);
+
                 if (repeat) {
                     api.todo_updaterepeat(repeattask);
                 } else {
                     api.todo_addrepeat(repeattask);
                 }
-                // 更新积分
+
                 if (isCompleted) {
                     this.addPoints(task.point);
                     showmsg(`任务完成！+${task.point}积分`);
@@ -3489,14 +3541,17 @@ class Todopage {
                     this.addPoints(-task.point);
                     showmsg(`任务取消完成，-${task.point}积分`);
                 }
+
                 const taskCopy = { ...task };
                 taskCopy.completed = isCompleted;
                 api.todo_addmovimento(taskCopy);
+
+                // [修复] 重复任务完成状态由 addrepeat/updaterepeat 队列负责，
+                // 不再额外调用 todo_updatetask，避免 updatetasks 出现孤立 id
             } else {
-                // 一次性任务：使用原有逻辑
+                // 一次性任务
                 task.completed = !task.completed;
-                
-                // 更新积分
+
                 if (task.completed) {
                     this.addPoints(task.point);
                     showmsg(`任务完成！+${task.point}积分`);
@@ -3504,12 +3559,28 @@ class Todopage {
                     this.addPoints(-task.point);
                     showmsg(`任务取消完成，-${task.point}积分`);
                 }
-                const tasks = [task];
-                db.addTodoTasks(tasks);
+
+                db.addTodoTasks([task]);
                 api.todo_addmovimento(task);
+
+                // [修复] 将完整任务对象写入 updatetasks 队列
+                // 离线时 api.todo_updatetask 调用失败，但队列有数据，下次打开可重试
+                const upload = api.getTodoUpload();
+                upload.updatetasks = upload.updatetasks || [];
+                const idx = upload.updatetasks.findIndex(item =>
+                    (typeof item === 'object' && item !== null ? String(item?.id) : String(item)) === String(task.id)
+                );
+                if (idx >= 0) {
+                    upload.updatetasks[idx] = { ...task };
+                } else {
+                    upload.updatetasks.push({ ...task });
+                }
+                api.saveTodoUpload(upload);
+
+                // 尝试在线同步（失败时已入队，下次 aggiornamento 会重试）
+                api.todo_updatetask(task.id, task);
             }
-            api.todo_updatetask(taskId);
-            // 更新同步字段     
+
             await this.renderTasks();
             this.updateTaskCounts();
         }
@@ -3517,14 +3588,12 @@ class Todopage {
 
     /**
      * 渲染任务列表
-     * 根据当前日期过滤任务并分别显示待完成和已完成任务
      */
     async renderTasks() {
         const pendingContainer = document.getElementById('pending-tasks');
         const completedContainer = document.getElementById('completed-tasks');
 
-        // 过滤当天的任务
-        const tasks = await this.getTasksForDate(this.currentDate)
+        const tasks = await this.getTasksForDate(this.currentDate);
         const todayTasks = tasks.filter(t => {
             const delFlag = Number(t.del ?? t.DEL ?? 0);
             return t.type != 'reward' && delFlag === 0 && t.userid === this.currentUser.ID;
@@ -3536,31 +3605,28 @@ class Todopage {
             };
             return toMinutes(a.time) - toMinutes(b.time);
         });
-        // 分离待完成和已完成任务
+
         const pendingTasks = todayTasks.filter(t => !t.completed);
         const completedTasks = todayTasks.filter(t => t.completed);
 
         pendingContainer.innerHTML = pendingTasks.map(task => this.createTaskHTML(task)).join('');
         completedContainer.innerHTML = completedTasks.map(task => this.createTaskHTML(task)).join('');
 
-        // 绑定任务事件
         this.bindTaskEvents();
     }
 
     /**
      * 获取指定日期的任务列表
      * @param {Date} date - 指定日期
-     * @returns {Array} 该日期的任务列表，重复任务会包含当前日期的完成状态
+     * @returns {Array} 该日期的任务列表
      */
     async getTasksForDate(date) {
-        const currentDay = date.getDay(); // 0-6，0为周日
-        const currentDateStr = this.formatLocalDate(date); // 使用本地日期格式，避免时区问题
+        const currentDay = date.getDay();
+        const currentDateStr = this.formatLocalDate(date);
         const Tasks = this.tasks.filter(task => {
             if (task.type == 'repeat') {
-                // 重复任务：检查重复周期是否包含当前日期
                 return task.repeatdays && task.repeatdays.includes(currentDay);
             } else {
-                // 一次性任务：检查日期是否匹配
                 return task.date == currentDateStr;
             }
         });
@@ -3611,7 +3677,7 @@ class Todopage {
 
     /**
      * 将重复日期数组转换为可读文本
-     * @param {Array} repeatdays - 重复日期数组（0-6，0为周日）
+     * @param {Array} repeatdays - 重复日期数组
      * @returns {string} 重复日期的文本描述
      */
     getrepeatdaysText(repeatdays) {
@@ -3629,10 +3695,8 @@ class Todopage {
 
     /**
      * 绑定任务相关事件
-     * 包括复选框切换、编辑按钮点击、任务详情查看等
      */
     bindTaskEvents() {
-        // 任务复选框事件
         document.querySelectorAll('.task-checkbox input').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
                 const taskId = e.target.id.replace('task-', '');
@@ -3640,7 +3704,6 @@ class Todopage {
             });
         });
 
-        // 编辑按钮事件
         document.querySelectorAll('.task-edit').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -3649,7 +3712,6 @@ class Todopage {
             });
         });
 
-        // 任务详情事件（点击任务主体）
         document.querySelectorAll('.task-main').forEach(main => {
             main.addEventListener('click', (e) => {
                 const taskId = e.target.closest('.task-main').dataset.taskId;
@@ -3660,10 +3722,8 @@ class Todopage {
 
     /**
      * 更新任务计数显示
-     * 统计当前日期的待完成和已完成任务数量
      */
     async updateTaskCounts() {
-        // 基于当前日期的任务进行计数
         const todayTasks = await this.getTasksForDate(this.currentDate);
         const pendingCount = todayTasks.filter(t => !t.completed).length;
         const completedCount = todayTasks.filter(t => t.completed).length;
@@ -3700,28 +3760,26 @@ class Todopage {
                 if (u.ID == p.USERID) {
                     u.POINTS = p.POINTS;
                 }
-            })
+            });
         });
         this.currentUser = this.users.find(u => u.ID == this.currentUser.ID) || this.currentUser;
         this.saveUsers();
         this.updateUserDisplay();
     }
+
     /**
      * 日期导航功能
-     * @param {number} direction - 导航方向（1为下一天，-1为上一天）
+     * @param {number} direction - 导航方向
      */
     navigateDate(direction) {
-        // 实现日期导航功能
         this.currentDate.setDate(this.currentDate.getDate() + direction);
         this.updateDateTime();
-        this.renderTasks(); // 重新渲染当天的任务
-        this.updateTaskCounts(); // 更新任务计数
+        this.renderTasks();
+        this.updateTaskCounts();
     }
-
 
     /**
      * 从本地存储加载任务数据
-     * 如果没有保存的数据，返回默认的示例任务
      * @returns {Array} 任务数组
      */
     async loadTasks() {
@@ -3734,7 +3792,7 @@ class Todopage {
      */
     loadCurrentUser() {
         const currentUserId = localStorage.getItem('currentUserId') || 1;
-        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{id: 1, name: "Matteo", points: 0, avatar: "👤"}];
+        this.users = JSON.parse(localStorage.getItem('todoUsers')) || [{ id: 1, name: "Matteo", points: 0, avatar: "👤" }];
         return this.users.find(user => user.ID == currentUserId) || this.users[0];
     }
 
@@ -3750,7 +3808,7 @@ class Todopage {
                 return data;
             })
             .catch(e => {
-                console.log(e)
+                console.log(e);
                 const users = localStorage.getItem('todoUsers');
                 if (users) {
                     return JSON.parse(users);
@@ -3774,14 +3832,11 @@ class Todopage {
         const user = this.users.find(u => u.ID == userId);
         if (!user) return;
 
-        // 保存当前用户的积分
         this.saveCurrentUserPoints();
         
-        // 切换到新用户
         this.currentUser = user;
         localStorage.setItem('currentUserId', userId);
         
-        // 重新加载新用户的数据
         this.tasks = await this.loadTasks();
         this.updateUserDisplay();
         this.renderTasks();
@@ -3812,7 +3867,6 @@ class Todopage {
      * 显示用户切换菜单
      */
     showUserSwitchMenu() {
-        // 移除已存在的菜单
         const existingMenu = document.querySelector('.user-switch-menu');
         if (existingMenu) {
             existingMenu.remove();
@@ -3834,7 +3888,6 @@ class Todopage {
 
         document.body.appendChild(menu);
 
-        // 绑定点击事件
         menu.addEventListener('click', (e) => {
             const userOption = e.target.closest('.user-option');
             if (userOption) {
@@ -3846,7 +3899,6 @@ class Todopage {
             }
         });
 
-        // 点击外部关闭菜单
         setTimeout(() => {
             document.addEventListener('click', function closeMenu(e) {
                 if (!menu.contains(e.target)) {
@@ -3856,9 +3908,9 @@ class Todopage {
             });
         }, 100);
     }
+
     /**
      * 将日期对象转换为本地日期字符串 (YYYY-MM-DD)
-     * 避免时区问题，确保日期比较的准确性
      * @param {Date} date - 日期对象
      * @returns {string} 本地日期字符串
      */
@@ -3868,20 +3920,19 @@ class Todopage {
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
+
     getLocalISOString() {
         const now = new Date();
-
         const pad = (n, len = 2) => String(n).padStart(len, '0');
-
         const year = now.getFullYear();
         const month = pad(now.getMonth() + 1);
         const day = pad(now.getDate());
         const hour = pad(now.getHours());
         const minute = pad(now.getMinutes());
         const second = pad(now.getSeconds());
-
         return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
     }
+
     /**
      * 切换section的折叠状态
      * @param {string} sectionId - 要切换的section ID
@@ -3896,34 +3947,27 @@ class Todopage {
             return;
         }
 
-        // 切换折叠状态
         const isCollapsed = taskList.classList.contains('collapsed');
         
         if (isCollapsed) {
-            // 展开
             taskList.classList.remove('collapsed');
             sectionHeader.classList.remove('collapsed');
             if (taskSection) {
                 taskSection.classList.remove('collapsed');
             }
-            
-            // 保存展开状态到localStorage
             localStorage.setItem('completedTasksCollapsed', 'false');
         } else {
-            // 折叠
             taskList.classList.add('collapsed');
             sectionHeader.classList.add('collapsed');
             if (taskSection) {
                 taskSection.classList.add('collapsed');
             }
-            
-            // 保存折叠状态到localStorage
             localStorage.setItem('completedTasksCollapsed', 'true');
         }
     }
+
     /**
      * 恢复折叠状态
-     * 在页面加载时调用，恢复用户上次的折叠状态
      */
     restoreCollapseState() {
         const isCollapsed = localStorage.getItem('completedTasksCollapsed') === 'true';
@@ -3942,10 +3986,12 @@ class Todopage {
             }
         }
     }
-    creatrepeartid(id,datestr) {
+
+    creatrepeartid(id, datestr) {
         const dateid = parseInt(datestr.replace(/-/g, '') + '00000');
         return parseInt(id) + parseInt(dateid);
     }
+
     normalizeSyncError(error) {
         if (!error) {
             return '未知错误';
@@ -3962,6 +4008,7 @@ class Todopage {
             return String(error);
         }
     }
+
     showdatioffline() {
         try {
             const modal = document.getElementById('offline-modal');
@@ -3971,11 +4018,9 @@ class Todopage {
                 return;
             }
 
-            // 创建内容容器（JSON风格视图）
             const container = document.getElementById('offline-content');
             container.innerHTML = '';
 
-            // 读取并解析离线数据
             let data = null;
             const raw = localStorage.getItem('todoupload');
             if (raw) {
@@ -3986,7 +4031,7 @@ class Todopage {
                     data = raw;
                 }
             }
-            // 如果没有数据，给出提示
+
             if (!data) {
                 const empty = document.createElement('div');
                 empty.textContent = '暂无离线数据';
@@ -4035,7 +4080,6 @@ class Todopage {
                         });
                     }
 
-                    // 点击标题折叠/展开（JSON风格）
                     header.addEventListener('click', () => {
                         section.classList.toggle('expanded');
                     });
@@ -4045,7 +4089,6 @@ class Todopage {
                     return section;
                 };
 
-                // 针对不同数据类型的格式化
                 const fmtId = (v) => typeof v === 'string' ? `ID: ${v}` : JSON.stringify(v);
                 const fmtRepeat = (v) => {
                     if (v && typeof v === 'object') {
@@ -4079,28 +4122,32 @@ class Todopage {
                 container.appendChild(createJsonSection('logs', data.logs, fmtLog, true));
             }
 
-            // 显示模态
             modal.classList.add('show');
         } catch (error) {
             console.error('显示离线数据时出错:', error);
         }
     }
-    hidedatioffline () {
+
+    hidedatioffline() {
         const offlinemodo = document.getElementById('offline-modal');
         offlinemodo.classList.remove('show');
     }
-    async clearUpload () {
+
+    // ============================================================
+    // [修复] Bug 3：showmsg 调用里多余的引号导致语法错误，已修正
+    // ============================================================
+    async clearUpload() {
         const datiupload = api.getTodoUpload();
         const pendingKeys = ['addtasks', 'updatetasks', 'deltasks', 'addrepeat', 'updaterepeat', 'addmovimento'];
         let check = false;
-        for(const key of pendingKeys){
-            if(Array.isArray(datiupload[key]) && datiupload[key].length > 0){
+        for (const key of pendingKeys) {
+            if (Array.isArray(datiupload[key]) && datiupload[key].length > 0) {
                 check = true;
                 break;
             }
         }
-        if(check){
-            if(confirm('有离线数据未上传，确定清除上传数据吗？')){
+        if (check) {
+            if (confirm('有离线数据未上传，确定清除上传数据吗？')) {
                 api.saveTodoUpload({
                     addtasks: [],
                     updatetasks: [],
@@ -4110,7 +4157,7 @@ class Todopage {
                     addmovimento: [],
                     logs: []
                 });
-            } else{
+            } else {
                 return false;
             }
         }
@@ -4123,13 +4170,14 @@ class Todopage {
             await db.addTodoTasks(tasks);
             await db.addTodoRepeats(repeats);
             this.init();
-            showmsg('数据已清除并更新完成’');
+            showmsg('数据已清除并更新完成'); // [修复] 删除多余的引号
         } else {
             showmsg('服务器不在线，请重试');
         }
         this.showdatioffline();
     }
-    showlogs (info) {
+
+    showlogs(info) {
         const upload = api.getTodoUpload();
         const log = typeof info === 'string'
             ? {
