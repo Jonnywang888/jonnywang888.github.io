@@ -629,11 +629,16 @@ class Fetchapi {
             return { success: false, error: err };
         }
     }
-    async todo_updatetask(id) {
-        const task = todo.tasks.find(item => item.id == id);
+    async todo_updatetask(id, taskData = null) {
+        // 优先使用传入的 taskData，其次从内存里找，避免任务不在内存时误判为不存在
+        const task = taskData || todo.tasks.find(item => item.id == id);
         if (!task) {
+            // 真正找不到时才移除队列并跳过
             const upload = this.getTodoUpload();
-            upload.updatetasks = upload.updatetasks.filter(item => item != id);
+            upload.updatetasks = upload.updatetasks.filter(item => {
+                const itemId = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
+                return itemId !== String(id);
+            });
             this.saveTodoUpload(upload);
             return { success: false, skipped: true, error: '任务不存在，已跳过更新' };
         }
@@ -658,25 +663,33 @@ class Fetchapi {
             if (res === true) {
                 console.log('更新任务到服务器成功:', res);
                 const upload = this.getTodoUpload();
-                
-                if (upload.updatetasks.includes(id)) {
-                    upload.updatetasks = upload.updatetasks.filter(t => t != id);
-                    this.saveTodoUpload(upload);
-                }
+                upload.updatetasks = upload.updatetasks.filter(item => {
+                    const itemId = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
+                    return itemId !== String(id);
+                });
+                this.saveTodoUpload(upload);
                 return { success: true, data: res };
             } else {
                 showmsg('更新任务到服务器失败');
                 const upload = this.getTodoUpload();
-                if (!upload.updatetasks.includes(id)) {
-                    upload.updatetasks.push(id);
+                const exists = upload.updatetasks.some(item => {
+                    const itemId = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
+                    return itemId === String(id);
+                });
+                if (!exists) {
+                    upload.updatetasks.push(task);
                     this.saveTodoUpload(upload);
                 }
                 return { success: false, error: '服务器返回失败' };
             }
         } catch (err) {
             const upload = this.getTodoUpload();
-            if (!upload.updatetasks.includes(id)) {
-                upload.updatetasks.push(id);
+            const exists = upload.updatetasks.some(item => {
+                const itemId = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
+                return itemId === String(id);
+            });
+            if (!exists) {
+                upload.updatetasks.push(task);
                 this.saveTodoUpload(upload);
             }
             return { success: false, error: err };
@@ -2979,15 +2992,9 @@ class Todopage {
         return result.reverse();
     }
 
-    // ============================================================
-    // [修复] Bug 4：updatetasks 去重 keyBuilder 改为提取 item.id，
-    //               避免 String(object) => "[object Object]" 导致所有更新被丢弃
-    // [修复] Bug 2：updatetasks 队列存完整任务对象，同步时服务器能收到完整字段
-    // ============================================================
     buildTodoSyncPlan(upload) {
         const plan = {
             addtasks: this.dedupeList(upload.addtasks || [], (item) => item?.id),
-            // [修复] keyBuilder 兼容旧格式（纯 id 字符串）和新格式（完整对象）
             updatetasks: this.dedupeList(upload.updatetasks || [], (item) => {
                 if (typeof item === 'object' && item !== null) return String(item.id);
                 return String(item);
@@ -3005,7 +3012,6 @@ class Todopage {
 
         const deleteSet = new Set(plan.deltasks.map(id => String(id)));
         plan.addtasks = plan.addtasks.filter(item => !deleteSet.has(String(item?.id)));
-        // [修复] filter 时兼容对象格式提取 id
         plan.updatetasks = plan.updatetasks.filter(item => {
             const id = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
             return !deleteSet.has(id);
@@ -3023,7 +3029,6 @@ class Todopage {
         plan.addtasks.forEach(item => addTaskMap.set(String(item.id), item));
         const liveTaskMap = new Map((this.tasks || []).map(task => [String(task.id), task]));
 
-        // [修复] updatetasks 是对象，正确提取 id 进行比对
         plan.updatetasks = plan.updatetasks.filter(item => {
             const key = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
             if (!addTaskMap.has(key)) {
@@ -3051,15 +3056,13 @@ class Todopage {
         return plan;
     }
 
-    // ============================================================
-    // [修复] Bug 2：updatetasks 同步时传完整对象给 api.todo_updatetask，
-    //               而不仅仅是 id，确保服务器收到完整字段
-    // ============================================================
     async aggiornamento() {
         try {
             const upload = api.getTodoUpload();
             const plan = this.buildTodoSyncPlan(upload);
-            api.saveTodoUpload({ ...upload, ...plan, logs: upload.logs || [] });
+            // 注意：这里只把 plan 用于本次同步，不立即写回 localStorage。
+            // 各个 api.todo_xxx 方法内部会在成功后自己把对应条目从队列里移除，
+            // 失败时会确保条目留在队列里，保证离线数据不丢失。
 
             const runQueue = async (action, list, runner, targetBuilder) => {
                 for (const item of list) {
@@ -3103,7 +3106,6 @@ class Todopage {
                 (repeat) => `repeat:${repeat?.id ?? 'unknown'}`
             );
 
-            // [修复] 传完整对象（兼容旧格式纯 id 字符串）
             await runQueue(
                 'updatetasks',
                 plan.updatetasks,
@@ -3113,7 +3115,7 @@ class Todopage {
                     }
                     // 旧格式：纯 id，从内存中补全任务数据
                     const liveTask = (this.tasks || []).find(t => String(t.id) === String(item));
-                    return api.todo_updatetask(item, liveTask || { id: item });
+                    return api.todo_updatetask(item, liveTask || null);
                 },
                 (item) => `task:${typeof item === 'object' && item !== null ? item?.id : item}`
             );
@@ -3142,24 +3144,38 @@ class Todopage {
                 (id) => `task:${id}`
             );
 
-            this.users = await this.loadUsers();
-            const res = await api.todo_gettasks();
-            const tasks = await res.json();
-            const resrepeats = await api.todo_getrepeats();
-            const repeats = await resrepeats.json();
-            const localetasks = await db.getTodoTasks();
-            const localrepeats = await db.getTodoRepeats();
-            this.updatePoints();
-            if (JSON.stringify(tasks) === JSON.stringify(localetasks) && JSON.stringify(repeats) === JSON.stringify(localrepeats)) {
-                return true;
+            // 上传完成后，再从服务器拉取最新数据同步本地
+            // 这里单独 try-catch，避免网络失败时破坏已经入队的离线数据
+            try {
+                this.users = await this.loadUsers();
+                const res = await api.todo_gettasks();
+                const tasks = await res.json();
+                const resrepeats = await api.todo_getrepeats();
+                const repeats = await resrepeats.json();
+                const localetasks = await db.getTodoTasks();
+                const localrepeats = await db.getTodoRepeats();
+                await this.updatePoints();
+                if (JSON.stringify(tasks) === JSON.stringify(localetasks) && JSON.stringify(repeats) === JSON.stringify(localrepeats)) {
+                    return true;
+                }
+                await db.addTodoTasks(tasks);
+                await db.addTodoRepeats(repeats);
+                this.currentUser = this.loadCurrentUser();
+                this.tasks = await this.loadTasks();
+                this.renderTasks();
+                this.updateTaskCounts();
+                showmsg('数据已经同步到服务器！');
+            } catch (fetchErr) {
+                // 服务器不在线或拉取失败，本地已上传的数据不受影响
+                // 未上传成功的数据仍在队列里，下次会重试
+                console.warn('同步后拉取服务器数据失败，下次重试:', fetchErr);
+                this.showlogs({
+                    action: 'fetch',
+                    status: 'failed',
+                    target: 'server',
+                    reason: this.normalizeSyncError(fetchErr)
+                });
             }
-            await db.addTodoTasks(tasks);
-            await db.addTodoRepeats(repeats);
-            this.currentUser = this.loadCurrentUser();
-            this.tasks = await this.loadTasks();
-            this.renderTasks();
-            this.updateTaskCounts();
-            showmsg('数据已经同步到服务器！');
             return true;
         } catch (err) {
             this.showlogs({
@@ -3168,7 +3184,7 @@ class Todopage {
                 target: 'global',
                 reason: this.normalizeSyncError(err)
             });
-            showmsg('获取任务失败:', err);
+            showmsg('同步失败: ' + this.normalizeSyncError(err));
             return false;
         }
     }
@@ -3383,7 +3399,7 @@ class Todopage {
         this.tasks[taskIndex] = updatedTask;
         db.addTodoTasks([updatedTask]);
 
-        // [修复] 编辑任务时入队完整对象，而不仅是 id
+        // 编辑任务时入队完整对象，而不仅是 id
         const upload = api.getTodoUpload();
         upload.updatetasks = upload.updatetasks || [];
         const idx = upload.updatetasks.findIndex(item =>
@@ -3496,13 +3512,6 @@ class Todopage {
         showmsg('任务添加成功！');
     }
 
-    // ============================================================
-    // [修复] Bug 5：toggleTask 一次性任务完成时，将完整任务对象写入
-    //               updatetasks 队列（而不是仅依赖 api.todo_updatetask 的副作用），
-    //               确保离线时下次打开可以正确同步完成状态到服务器。
-    //               重复任务的完成状态通过 addrepeat/updaterepeat 队列同步，
-    //               不再额外调用 todo_updatetask 造成队列里出现孤立 id。
-    // ============================================================
     async toggleTask(taskId) {
         const task = this.tasks.find(t => t.id == taskId);
         if (task) {
@@ -3546,7 +3555,7 @@ class Todopage {
                 taskCopy.completed = isCompleted;
                 api.todo_addmovimento(taskCopy);
 
-                // [修复] 重复任务完成状态由 addrepeat/updaterepeat 队列负责，
+                // 重复任务完成状态由 addrepeat/updaterepeat 队列负责，
                 // 不再额外调用 todo_updatetask，避免 updatetasks 出现孤立 id
             } else {
                 // 一次性任务
@@ -3563,7 +3572,7 @@ class Todopage {
                 db.addTodoTasks([task]);
                 api.todo_addmovimento(task);
 
-                // [修复] 将完整任务对象写入 updatetasks 队列
+                // 将完整任务对象写入 updatetasks 队列
                 // 离线时 api.todo_updatetask 调用失败，但队列有数据，下次打开可重试
                 const upload = api.getTodoUpload();
                 upload.updatetasks = upload.updatetasks || [];
@@ -4133,9 +4142,6 @@ class Todopage {
         offlinemodo.classList.remove('show');
     }
 
-    // ============================================================
-    // [修复] Bug 3：showmsg 调用里多余的引号导致语法错误，已修正
-    // ============================================================
     async clearUpload() {
         const datiupload = api.getTodoUpload();
         const pendingKeys = ['addtasks', 'updatetasks', 'deltasks', 'addrepeat', 'updaterepeat', 'addmovimento'];
@@ -4170,7 +4176,7 @@ class Todopage {
             await db.addTodoTasks(tasks);
             await db.addTodoRepeats(repeats);
             this.init();
-            showmsg('数据已清除并更新完成'); // [修复] 删除多余的引号
+            showmsg('数据已清除并更新完成');
         } else {
             showmsg('服务器不在线，请重试');
         }
@@ -4707,7 +4713,6 @@ class WolApp {
     /* ── Helper ─────────────────────────────────────────── */
     _q(sel) { return document.querySelector(sel); }
 }
-
 
 
 // 月度金额
