@@ -415,8 +415,8 @@ class Database {
 class Fetchapi {
     constructor() {
         // this.url = 'http://192.168.1.99/server/app1.asp';
-        // this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
-        this.url = 'https://trustmarket.ddnsgeek.com/app/app.asp';
+        this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
+        // this.url = 'https://trustmarket.ddnsgeek.com/app/app.asp';
         // this.url = 'http://130.110.10.228:3000/api?'
     }
     // 获取备忘
