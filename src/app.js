@@ -944,7 +944,7 @@ class Calendario {
             const d = Math.floor(date.getMilliseconds() / 100); // 转成 0-9
             return yy + MM + dd + hh + mm + ss + d;
         };
-
+        this.currentDate = new Date();
         if (dateString) {
             const year = 2000 + parseInt(dateString.slice(0, 2), 10);
             const month = parseInt(dateString.slice(2, 4), 10) - 1;
@@ -955,8 +955,6 @@ class Calendario {
             const ms = parseInt(dateString.slice(12, 13), 10) * 100;
 
             this.currentDate = new Date(year, month, day, hour, minute, second, ms);
-        } else {
-            this.currentDate = new Date();
         }
 
         // 设置 this.timeid
