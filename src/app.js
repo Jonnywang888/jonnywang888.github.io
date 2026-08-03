@@ -944,7 +944,6 @@ class Calendario {
             const d = Math.floor(date.getMilliseconds() / 100); // 转成 0-9
             return yy + MM + dd + hh + mm + ss + d;
         };
-        this.currentDate = new Date();
         if (dateString) {
             const year = 2000 + parseInt(dateString.slice(0, 2), 10);
             const month = parseInt(dateString.slice(2, 4), 10) - 1;
@@ -2524,6 +2523,7 @@ class Setpage {
             <img src="icons/${img}.png">
             <div class="memori-item-name">${name}</div>`
         item.addEventListener('click',() => {
+            calen.currentDate = new Date();
             calen.update();
             calen.hidden();
             changepage('addpage');
