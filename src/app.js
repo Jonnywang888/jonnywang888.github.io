@@ -1143,7 +1143,10 @@ class Main {
         this.groupmese = {};
         document.getElementById('mainpage').addEventListener('scroll', () => this.scrolling());
         window.addEventListener('load', () => this.refresh());
-        document.getElementById('but-tianjia').addEventListener('click', add.init);
+        document.getElementById('but-tianjia').addEventListener('click', () => {
+            calendar.currentDate = new Date();
+            add.init();
+        });
         this.loading();
     }
     init() {
