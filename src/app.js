@@ -1144,7 +1144,7 @@ class Main {
         document.getElementById('mainpage').addEventListener('scroll', () => this.scrolling());
         window.addEventListener('load', () => this.refresh());
         document.getElementById('but-tianjia').addEventListener('click', () => {
-            calendar.currentDate = new Date();
+            calen.currentDate = new Date();
             add.init();
         });
         this.loading();
