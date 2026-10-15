@@ -1,10 +1,185 @@
+// =====================================================================
+// To Do 同步 v2 —— TodoSync 命名空间
+// =====================================================================
+// 这些工具函数被三个平级的类共用，所以放在模块级并收进一个对象里：
+//   Todopage  做合并决策        Database  落库时规范化字段
+//   Fetchapi  组装请求参数
+// 收成命名空间而不是一堆裸的全局函数，是为了不让 int / normalizeTask /
+// merge 这种通用名字散落在全局作用域里被别处误用。
+//
+// 修复的三个根因：
+//   1) 旧同步收尾无条件用服务器数据覆盖本地，其中 addTodoRepeats 还是
+//      先 clear() 再写，本地尚未上传的完成记录被整表清空。
+//   2) 旧上传队列只认服务器回没回 "true"，而服务器 UPDATE 匹配 0 行时
+//      也回 "true"，条目被出队后改动永久消失。
+//   3) 合并只看客户端 Date.now()，设备时钟不一致就丢改动。
+// 现在的做法：索引库里的 _dirty 标记本身就是待上传队列（和数据同一次
+// 事务落盘，不会分叉）；推送带 compare-and-set，基线由服务器分配的
+// SYNCREV 决定；两边改了同一字段时按「最后修改时间」裁决，输的那版归档。
+//
+// ⚠ 关于冲突裁决：用的是客户端上报的 lastmodifica（Date.now()），
+//   含义就是"谁最后改的谁说了算"。代价是设备时钟不准时会误判——慢的那台
+//   会输掉冲突。服务器侧仍然完整保留 SYNCREV（真实落盘顺序），
+//   如果以后发现时钟不可靠，把 merge 里的 localIsNewer 改成比较
+//   SYNCREV 即可，其余逻辑不用动。
+const TodoSync = {
+    // 参与内容比对的字段。lastmodifica 不在这里——它是裁决用的元数据，
+    // 不参与逐字段合并，由 merge 单独维护。
+    TASK_FIELDS: ['title', 'description', 'point', 'time', 'type', 'completed', 'date', 'repeatdays', 'del', 'userid'],
+    REPEAT_FIELDS: ['taskid', 'date', 'completed', 'del'],
+
+    int(value, fallback = 0) {
+        const n = Number(value);
+        return Number.isFinite(n) ? Math.trunc(n) : fallback;
+    },
+    str(value) {
+        if (value === null || value === undefined) return '';
+        return String(value);
+    },
+    bool(value) {
+        if (value === true || value === false) return value;
+        const s = TodoSync.str(value).trim().toLowerCase();
+        return s === 'true' || s === '1';
+    },
+    days(value) {
+        let arr = value;
+        if (typeof arr === 'string') {
+            try {
+                arr = JSON.parse(arr);
+            } catch (e) {
+                return [];
+            }
+        }
+        if (!Array.isArray(arr)) return [];
+        return arr.map(day => TodoSync.int(day, -1)).filter(day => day >= 0 && day <= 6);
+    },
+    // 统一成规范形态。老记录里可能是 DEL 大写、taskid 是字符串、
+    // completed 存的是 'true' 字符串，这里一次抹平，比较和渲染都不用再防御。
+    normalizeTask(raw) {
+        const src = raw || {};
+        return {
+            id: TodoSync.int(src.id !== undefined ? src.id : src.ID),
+            title: TodoSync.str(src.title),
+            description: TodoSync.str(src.description),
+            point: TodoSync.int(src.point),
+            time: TodoSync.str(src.time),
+            type: TodoSync.str(src.type) || 'once',
+            completed: TodoSync.bool(src.completed),
+            date: TodoSync.str(src.date),
+            repeatdays: TodoSync.days(src.repeatdays),
+            del: TodoSync.int(src.del !== undefined ? src.del : src.DEL),
+            userid: TodoSync.int(src.userid !== undefined ? src.userid : src.USERID),
+            lastmodifica: TodoSync.int(src.lastmodifica !== undefined ? src.lastmodifica : src.LASTMODIFICA),
+        };
+    },
+    normalizeRepeat(raw) {
+        const src = raw || {};
+        return {
+            id: TodoSync.int(src.id !== undefined ? src.id : src.ID),
+            taskid: TodoSync.int(src.taskid !== undefined ? src.taskid : src.TASKID),
+            date: TodoSync.str(src.date),
+            completed: TodoSync.bool(src.completed),
+            del: TodoSync.int(src.del !== undefined ? src.del : src.DEL),
+            lastmodifica: TodoSync.int(src.lastmodifica !== undefined ? src.lastmodifica : src.LASTMODIFICA),
+        };
+    },
+    equal(a, b) {
+        return JSON.stringify(a) === JSON.stringify(b);
+    },
+    fieldsEqual(fields, a, b) {
+        return fields.every(field => TodoSync.equal(a ? a[field] : undefined, b ? b[field] : undefined));
+    },
+    fieldDiff(fields, local, server) {
+        return fields
+            .filter(field => !TodoSync.equal(local ? local[field] : undefined, server ? server[field] : undefined))
+            .map(field => ({ field, local: local ? local[field] : null, server: server ? server[field] : null }));
+    },
+    // 记录最后一次被改动的时间（客户端时钟）。base 里的值只用于合并判断，
+    // 不作为"新改动"上报。
+    now() {
+        return Date.now();
+    },
+    // 设备标识，用于诊断"这条是谁改的"以及给积分事件 id 加后缀
+    clientId() {
+        let id = localStorage.getItem('todoClientId');
+        if (!id) {
+            id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('todoClientId', id);
+        }
+        return id;
+    },
+    clientNum() {
+        let num = localStorage.getItem('todoClientNum');
+        if (num === null) {
+            num = String(Math.floor(Math.random() * 1000));
+            localStorage.setItem('todoClientNum', num);
+        }
+        return TodoSync.int(num, 0);
+    },
+
+    // 三方合并。base 是这台设备上次见到的服务器版本。
+    //   本地没动        -> 采纳服务器
+    //   服务器没动      -> 保留本地
+    //   两边都动了同一字段 -> 比 lastmodifica，谁晚谁说了算；输的那版记进
+    //                        conflicts 交给归档，所以再输也不会无痕消失
+    // base 为空（升级前的遗留记录）时两边都没有共同参照，直接按修改时间裁决。
+    // 时间戳相同（含两边都是 0 的老数据）时保持本地优先，保证结果确定。
+    merge(fields, local, base, server) {
+        const merged = Object.assign({}, local);
+        const conflicts = [];
+        if (!server) return { merged, conflicts };
+
+        const localTime = TodoSync.int(local.lastmodifica);
+        const serverTime = TodoSync.int(server.lastmodifica);
+        const localIsNewer = localTime >= serverTime;
+
+        for (const field of fields) {
+            const localValue = local[field];
+            const serverValue = server[field];
+            if (base === null || base === undefined) {
+                if (TodoSync.equal(localValue, serverValue)) continue;
+                if (localIsNewer) {
+                    merged[field] = localValue;
+                    conflicts.push({ field, winner: 'local', local: localValue, server: serverValue });
+                } else {
+                    merged[field] = serverValue;
+                    conflicts.push({ field, winner: 'server', local: localValue, server: serverValue });
+                }
+                continue;
+            }
+            const baseValue = base[field];
+            if (TodoSync.equal(localValue, baseValue)) {
+                merged[field] = serverValue;              // 本地没动，用服务器的
+            } else if (TodoSync.equal(serverValue, baseValue)) {
+                merged[field] = localValue;               // 服务器没动，用本地的
+            } else if (!TodoSync.equal(localValue, serverValue)) {
+                if (localIsNewer) {
+                    merged[field] = localValue;           // 两边都改了，谁晚谁赢
+                    conflicts.push({ field, winner: 'local', local: localValue, server: serverValue });
+                } else {
+                    merged[field] = serverValue;
+                    conflicts.push({ field, winner: 'server', local: localValue, server: serverValue });
+                }
+            }
+        }
+        // 合并结果的修改时间取两边较晚者：它既包含本地这次的改动，
+        // 也包含服务器那一版的内容，不该比任何一方更早。
+        merged.lastmodifica = Math.max(localTime, serverTime);
+        return { merged, conflicts };
+    },
+};
+
 class Database {
     constructor() {
         this.DB_NAME = 'DB';
         this.DB_STORE = 'movimento';
         this.DB_STORE_TASKS = 'tasks';
         this.DB_STORE_REPEATS = 'repeats';
-        this.DB_VERSION = 1;
+        this.DB_STORE_META = 'meta';
+        this.DB_STORE_PENDING = 'pending';
+        // v2 只新增 meta / pending 两个 object store，既有 store 和其中的
+        // 数据由 IndexedDB 原样保留，不需要搬迁
+        this.DB_VERSION = 2;
         this.db = null;
         this.initPromise = this.init();
     }
@@ -32,6 +207,15 @@ class Database {
                 }
                 if (!db.objectStoreNames.contains(this.DB_STORE_REPEATS)) {
                     db.createObjectStore(this.DB_STORE_REPEATS, { keyPath: "id", autoIncrement: false });
+                }
+                // v2 新增：同步水位线 / 设备标识
+                if (!db.objectStoreNames.contains(this.DB_STORE_META)) {
+                    db.createObjectStore(this.DB_STORE_META, { keyPath: "key" });
+                }
+                // v2 新增：待上传的积分事件和冲突归档（这些没有对应的本地记录，
+                // 必须单独持久化，否则离线时会丢）
+                if (!db.objectStoreNames.contains(this.DB_STORE_PENDING)) {
+                    db.createObjectStore(this.DB_STORE_PENDING, { keyPath: "key" });
                 }
             };
 
@@ -256,7 +440,10 @@ class Database {
                 if (data) {
                     data.del = 1;
                     data.DEL = 1;
-                    
+                    // 本地写操作必须带上待上传标记，否则这次删除不会同步到服务器
+                    data._dirty = 1;
+                    data._op = 'delete';
+
                     // 更新数据
                     const putRequest = store.put(data);
                     
@@ -327,50 +514,48 @@ class Database {
             };
         });
     }
+    // 注意：这个方法以前第一步就 store.clear()，而旧同步流程每次结束都会调用
+    // 它，于是本地所有尚未上传的完成记录会被整表清空——这正是数据丢失的主因之一。
+    // 现在只做写入，不再清空；重复任务记录的同步由 saveRepeat / adoptServer 负责。
     async addTodoRepeats(dataArray) {
         const db = await this.ensureDb();
         return new Promise((resolve, reject) => {
             const transaction = db.transaction([this.DB_STORE_REPEATS], 'readwrite');
             const store = transaction.objectStore(this.DB_STORE_REPEATS);
-            
-            // 先清空现有数据
-            const clearRequest = store.clear();
-            clearRequest.onsuccess = () => {
-                // 添加新数据
-                if (dataArray && dataArray.length > 0) {
-                    let completed = 0;
-                    let hasError = false;
-                    
-                    dataArray.forEach((item, index) => {
-                        // 确保数据有正确的 id 字段
-                        if (!item.id && item.ID) {
-                            item.id = item.ID;
-                        } else if (!item.id && !item.ID) {
-                            item.id = Date.now() + index; // 生成唯一 ID
-                        }
-                        
-                        const request = store.put(item);
-                        request.onsuccess = () => {
-                            completed++;
-                            if (completed === dataArray.length && !hasError) {
-                                resolve(true);
-                            }
-                        };
-                        request.onerror = (event) => {
-                            if (!hasError) {
-                                hasError = true;
-                                console.error('添加重复任务数据失败:', event.target.error, '数据:', item);
-                                reject(event.target.error);
-                            }
-                        };
-                    });
-                } else {
-                    resolve(true);
+
+            if (!dataArray || dataArray.length === 0) {
+                resolve(true);
+                return;
+            }
+            let completed = 0;
+            let hasError = false;
+            dataArray.forEach((item, index) => {
+                const record = Object.assign({}, item);
+                if (!record.id && record.ID) {
+                    record.id = record.ID;
+                } else if (!record.id && !record.ID) {
+                    record.id = Date.now() + index; // 生成唯一 ID
                 }
-            };
-            clearRequest.onerror = (event) => {
-                console.error('清空重复任务数据失败:', event.target.error);
-                reject(event.target.error);
+                const request = store.put(record);
+                request.onsuccess = () => {
+                    completed++;
+                    if (completed === dataArray.length && !hasError) {
+                        resolve(true);
+                    }
+                };
+                request.onerror = (event) => {
+                    if (!hasError) {
+                        hasError = true;
+                        console.error('添加重复任务数据失败:', event.target.error, '数据:', record);
+                        reject(event.target.error);
+                    }
+                };
+            });
+            transaction.onerror = (event) => {
+                if (!hasError) {
+                    hasError = true;
+                    reject(event.target.error);
+                }
             };
         });
     }
@@ -411,13 +596,316 @@ class Database {
             request.onblocked = () => resolve();
         });
     }
+
+    // =================================================================
+    // 同步 v2：元数据 / 待上传标记 / 待上传事件
+    // =================================================================
+    // 关键点：待上传状态（_dirty）和被改动的数据写在同一条记录、同一次
+    // 事务里。旧版把队列单独放在 localStorage，数据和队列会分叉——
+    // 队列没了改动就永久丢失，队列留着又会和本地数据不一致。
+    async getMeta(key, fallback = null) {
+        const db = await this.ensureDb();
+        return new Promise((resolve) => {
+            const request = db.transaction([this.DB_STORE_META], 'readonly')
+                .objectStore(this.DB_STORE_META).get(key);
+            request.onsuccess = (event) => {
+                const row = event.target.result;
+                resolve(row === undefined ? fallback : row.value);
+            };
+            request.onerror = () => resolve(fallback);
+        });
+    }
+    async setMeta(key, value) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const request = db.transaction([this.DB_STORE_META], 'readwrite')
+                .objectStore(this.DB_STORE_META).put({ key, value });
+            request.onsuccess = () => resolve(true);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    async getTask(id) {
+        const db = await this.ensureDb();
+        return new Promise((resolve) => {
+            const request = db.transaction([this.DB_STORE_TASKS], 'readonly')
+                .objectStore(this.DB_STORE_TASKS).get(TodoSync.int(id));
+            request.onsuccess = (event) => resolve(event.target.result || null);
+            request.onerror = () => resolve(null);
+        });
+    }
+    // 写入本地任务。options.dirty 决定这条改动要不要上传。
+    // _rev / _base 是推送时做 compare-and-set 的基线，本地编辑时必须原样保留，
+    // 否则会把"我改的是服务器第几版"这条信息丢掉，冲突就检测不出来了。
+    async saveTask(record, options = {}) {
+        const dirty = options.dirty !== false;
+        const op = options.op || record._op || 'upsert';
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_TASKS], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE_TASKS);
+            const getRequest = store.get(TodoSync.int(record.id));
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result || {};
+                const next = Object.assign({}, existing, TodoSync.normalizeTask(record), {
+                    // 任何一次本地改动都要更新修改时间——它决定冲突时谁说了算。
+                    // 取 max 是防止设备时钟回拨导致同一台设备的新改动比旧改动还"旧"。
+                    lastmodifica: dirty
+                        ? Math.max(TodoSync.now(), TodoSync.int(existing.lastmodifica, 0))
+                        : TodoSync.int(record.lastmodifica !== undefined ? record.lastmodifica : existing.lastmodifica, 0),
+                    _rev: record._rev !== undefined ? TodoSync.int(record._rev) : TodoSync.int(existing._rev, 0),
+                    _base: record._base !== undefined ? record._base : (existing._base || null),
+                    _dirty: dirty ? 1 : 0,
+                    _op: op,
+                    _needsReconcile: 0,
+                });
+                const putRequest = store.put(next);
+                putRequest.onsuccess = () => resolve(next);
+                putRequest.onerror = (event) => reject(event.target.error);
+            };
+            getRequest.onerror = (event) => reject(event.target.error);
+        });
+    }
+    async saveRepeat(record, options = {}) {
+        const dirty = options.dirty !== false;
+        const op = options.op || record._op || 'upsert';
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_REPEATS], 'readwrite');
+            const store = transaction.objectStore(this.DB_STORE_REPEATS);
+            const getRequest = store.get(TodoSync.int(record.id));
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result || {};
+                const next = Object.assign({}, existing, TodoSync.normalizeRepeat(record), {
+                    // 同 saveTask：本地改动一律刷新修改时间，取 max 防时钟回拨
+                    lastmodifica: dirty
+                        ? Math.max(TodoSync.now(), TodoSync.int(existing.lastmodifica, 0))
+                        : TodoSync.int(record.lastmodifica !== undefined ? record.lastmodifica : existing.lastmodifica, 0),
+                    _rev: record._rev !== undefined ? TodoSync.int(record._rev) : TodoSync.int(existing._rev, 0),
+                    _base: record._base !== undefined ? record._base : (existing._base || null),
+                    _dirty: dirty ? 1 : 0,
+                    _op: op,
+                    _needsReconcile: 0,
+                });
+                const putRequest = store.put(next);
+                putRequest.onsuccess = () => resolve(next);
+                putRequest.onerror = (event) => reject(event.target.error);
+            };
+            getRequest.onerror = (event) => reject(event.target.error);
+        });
+    }
+    async getDirtyTasks() {
+        const all = await this.getTodoTasks();
+        return all.filter(record => Number(record._dirty) === 1);
+    }
+    async getDirtyRepeats() {
+        const all = await this.getTodoRepeats();
+        return all.filter(record => Number(record._dirty) === 1);
+    }
+    async _updateSyncMeta(storeName, id, meta) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const getRequest = store.get(TodoSync.int(id));
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result;
+                if (!existing) {
+                    resolve(null);
+                    return;
+                }
+                const putRequest = store.put(Object.assign({}, existing, meta));
+                putRequest.onsuccess = () => resolve(true);
+                putRequest.onerror = (event) => reject(event.target.error);
+            };
+            getRequest.onerror = (event) => reject(event.target.error);
+        });
+    }
+    // 服务器确认收下了这一版：记下新的修订号、把当前内容存成新基线、清掉待上传标记
+    async markPushed(storeName, id, rev, snapshot) {
+        return this._updateSyncMeta(storeName, id, {
+            _rev: TodoSync.int(rev),
+            _base: Object.assign({}, snapshot),
+            _dirty: 0,
+            _op: 'upsert',
+            _needsReconcile: 0,
+        });
+    }
+    // 直接把服务器的版本落库（本地没有未上传改动时才这么做）
+    async adoptServer(storeName, record, rev) {
+        const normalized = storeName === this.DB_STORE_TASKS
+            ? TodoSync.normalizeTask(record) : TodoSync.normalizeRepeat(record);
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const request = db.transaction([storeName], 'readwrite')
+                .objectStore(storeName).put(Object.assign({}, normalized, {
+                    _rev: TodoSync.int(rev),
+                    _base: Object.assign({}, normalized),
+                    _dirty: 0,
+                    _op: 'upsert',
+                    _needsReconcile: 0,
+                }));
+            request.onsuccess = () => resolve(true);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    async removeRecord(storeName, id) {
+        const db = await this.ensureDb();
+        return new Promise((resolve) => {
+            const request = db.transaction([storeName], 'readwrite')
+                .objectStore(storeName).delete(TodoSync.int(id));
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => resolve(false);
+        });
+    }
+
+    // ---- 待上传事件（积分事件、冲突归档）----
+    // 这些没有对应的本地记录，只能单独排队，所以离线时也必须先落库再算完成
+    async addPending(item) {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const request = db.transaction([this.DB_STORE_PENDING], 'readwrite')
+                .objectStore(this.DB_STORE_PENDING).put(item);
+            request.onsuccess = () => resolve(true);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    async getPending() {
+        const db = await this.ensureDb();
+        return new Promise((resolve) => {
+            const request = db.transaction([this.DB_STORE_PENDING], 'readonly')
+                .objectStore(this.DB_STORE_PENDING).getAll();
+            request.onsuccess = (event) => resolve(event.target.result || []);
+            request.onerror = () => resolve([]);
+        });
+    }
+    async removePending(key) {
+        const db = await this.ensureDb();
+        return new Promise((resolve) => {
+            const request = db.transaction([this.DB_STORE_PENDING], 'readwrite')
+                .objectStore(this.DB_STORE_PENDING).delete(key);
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => resolve(false);
+        });
+    }
+    async clearPending() {
+        const db = await this.ensureDb();
+        return new Promise((resolve) => {
+            const request = db.transaction([this.DB_STORE_PENDING], 'readwrite')
+                .objectStore(this.DB_STORE_PENDING).clear();
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => resolve(false);
+        });
+    }
+
+    // ---- 升级迁移 ----
+    // 给 v1 时代留下的记录补上同步元数据：标记成"无基线"。用 _dirty === undefined
+    // 判断，所以只会生效一次，重复调用无副作用。
+    async applySyncDefaults() {
+        const db = await this.ensureDb();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.DB_STORE_TASKS, this.DB_STORE_REPEATS], 'readwrite');
+            [this.DB_STORE_TASKS, this.DB_STORE_REPEATS].forEach((storeName) => {
+                const cursorRequest = transaction.objectStore(storeName).openCursor();
+                cursorRequest.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (!cursor) return;
+                    const value = cursor.value;
+                    if (value && value._dirty === undefined) {
+                        cursor.update(Object.assign({}, value, {
+                            _rev: 0,
+                            _base: null,
+                            _dirty: 0,
+                            _op: 'upsert',
+                            _needsReconcile: 1,
+                        }));
+                    }
+                    cursor.continue();
+                };
+            });
+            transaction.oncomplete = () => resolve(true);
+            transaction.onerror = (event) => reject(event.target.error);
+        });
+    }
+    // 把旧版 localStorage 队列里确实还没上传的改动搬进新机制。
+    // 只搬"用户明确做过、但服务器还没确认"的操作，搬完清掉旧队列，
+    // 避免两套队列并存造成重复推送。
+    async migrateLegacyQueue(clientid) {
+        if (await this.getMeta('legacyQueueMigrated', 0)) return 0;
+
+        let queue = null;
+        try {
+            queue = JSON.parse(localStorage.getItem('todoupload') || 'null');
+        } catch (e) {
+            queue = null;
+        }
+        queue = queue || {};
+        let migrated = 0;
+
+        const markTask = async (entry, op) => {
+            const isObject = entry && typeof entry === 'object';
+            const id = TodoSync.int(isObject ? entry.id : entry);
+            if (!id) return;
+            const existing = await this.getTask(id);
+            if (isObject) {
+                await this.saveTask(Object.assign({}, existing || {}, TodoSync.normalizeTask(entry)), { dirty: true, op });
+            } else if (existing) {
+                await this.saveTask(existing, { dirty: true, op });
+            } else {
+                return; // 本地也没这条记录了，没什么可补的
+            }
+            migrated++;
+        };
+
+        for (const entry of (queue.addtasks || [])) {
+            await markTask(entry, 'upsert');
+        }
+        for (const entry of (queue.updatetasks || [])) {
+            await markTask(entry, 'upsert');
+        }
+        for (const entry of (queue.deltasks || [])) {
+            const id = TodoSync.int(entry);
+            const existing = id ? await this.getTask(id) : null;
+            if (existing) {
+                await this.saveTask(Object.assign({}, existing, { del: 1 }), { dirty: true, op: 'delete' });
+                migrated++;
+            }
+        }
+
+        const markRepeat = async (entry) => {
+            if (!entry || typeof entry !== 'object') return;
+            const id = TodoSync.int(entry.id);
+            if (!id) return;
+            await this.saveRepeat(TodoSync.normalizeRepeat(entry), { dirty: true, op: 'upsert' });
+            migrated++;
+        };
+        for (const entry of (queue.addrepeat || [])) {
+            await markRepeat(entry);
+        }
+        for (const entry of (queue.updaterepeat || [])) {
+            await markRepeat(entry);
+        }
+
+        let seq = 0;
+        for (const entry of (queue.addmovimento || [])) {
+            if (typeof entry === 'string') continue; // 旧格式逗号串没有用户信息，无法归属
+            await this.addPending({
+                key: 'mov:' + clientid + ':' + Date.now() + ':' + (seq++),
+                type: 'movimento',
+                payload: entry,
+            });
+            migrated++;
+        }
+
+        // 旧队列里的内容都已经落到 IndexedDB，清空避免重复处理
+        localStorage.removeItem('todoupload');
+        await this.setMeta('legacyQueueMigrated', 1);
+        return migrated;
+    }
 }
 class Fetchapi {
     constructor() {
-        // this.url = 'http://192.168.1.99/server/app1.asp';
+        // this.url = './server/app.asp';
         this.url = 'https://trustmarket.ddnsfree.com/server/app.asp';
-        // this.url = 'https://trustmarket.ddnsgeek.com/app/app.asp';
-        // this.url = 'http://130.110.10.228:3000/api?'
     }
     // 获取备忘
     getmemori() {
@@ -531,377 +1019,112 @@ class Fetchapi {
         };
         return this.fetchdata(body);
     }
-    getTodoUpload() {
-        const initial = {
-            addtasks: [],
-            updatetasks: [],
-            deltasks: [],
-            addrepeat: [],
-            updaterepeat: [],
-            addmovimento: [],
-            logs: []
-        };
-        const raw = localStorage.getItem('todoupload');
-        if (!raw) {
-            localStorage.setItem('todoupload', JSON.stringify(initial));
-            return initial;
+    // 说明：旧版的 getTodoUpload / saveTodoUpload 是一对基于 localStorage 的
+    // 上传队列接口。v2 把队列改成了记录上的 _dirty 标记（和数据同一次事务落盘），
+    // 这两个方法已无调用方，为避免有人误以为队列还在 localStorage 里，直接删除。
+    // ---- 同步 v2 ----
+    // 一次拉取把任务、重复任务和服务器水位线一起取回来
+    async todoSyncGet(since) {
+        const response = await this.fetchdata({
+            action: 'todo_sync_get',
+            since: String(since || 0)
+        });
+        const data = await response.json();
+        if (!data || data.ok !== true) {
+            throw new Error('sync_get 返回异常');
         }
-        try {
-            const parsed = JSON.parse(raw);
-            const normalized = { ...initial, ...parsed };
-            localStorage.setItem('todoupload', JSON.stringify(normalized));
-            return normalized;
-        } catch (error) {
-            localStorage.setItem('todoupload', JSON.stringify(initial));
-            return initial;
-        }
+        return data;
     }
-    saveTodoUpload(upload) {
-        localStorage.setItem('todoupload', JSON.stringify(upload));
+    // 带基线的写入。服务器只有在"当前修订号 == baserev"时才落盘，
+    // 否则回 conflict 并把服务器当前版本带回来，由调用方合并后重试。
+    async todoSyncPut(request) {
+        const data = request.data;
+        const body = {
+            action: 'todo_sync_put',
+            entity: request.entity,
+            op: request.op,
+            id: String(request.id),
+            baserev: String(request.baserev || 0),
+            clientid: request.clientid,
+            userid: String(data.userid || 0)
+        };
+        if (request.entity === 'task') {
+            body.title = data.title;
+            body.description = data.description;
+            body.point = String(data.point);
+            body.time = data.time;
+            body.type = data.type;
+            body.completed = String(data.completed);
+            body.date = data.date;
+            body.repeatdays = JSON.stringify(data.repeatdays || []);
+            body.del = String(data.del || 0);
+            // 冲突时服务器/对方设备靠这个时间戳判断谁最后改的
+            body.lastmodifica = String(data.lastmodifica || 0);
+        } else {
+            body.taskid = String(data.taskid);
+            body.date = data.date;
+            body.completed = String(data.completed);
+            body.lastmodifica = String(data.lastmodifica || 0);
+            body.del = String(data.del || 0);
+        }
+        const response = await this.fetchdata(body);
+        return response.json();
+    }
+    // 积分事件。事件键是 (任务, 日期, 用户)，重复上传只会覆盖同一行，
+    // 不会重复计分，也不会把别人的记录盖掉。
+    async todoMovimentoPut(event, clientid) {
+        const body = {
+            action: 'todo_movimento_put',
+            taskid: String(event.taskid),
+            date: event.date,
+            userid: String(event.userid),
+            completed: String(event.completed),
+            point: String(event.point),
+            time: event.time,
+            lastmodifica: String(event.lastmodifica || 0),
+            id: String(event.id || ''),
+            title: event.title || '',
+            description: event.description || '',
+            clientid: clientid
+        };
+        const response = await this.fetchdata(body);
+        return response.json();
+    }
+    // 冲突归档：把被覆盖掉的那一版原样存到服务器，供事后查回
+    async todoSyncLog(entry, clientid) {
+        const body = {
+            action: 'todo_sync_log',
+            entity: entry.entity,
+            recordid: String(entry.recordid),
+            serverrev: String(entry.serverrev || 0),
+            userid: String(entry.userid || 0),
+            clientid: clientid,
+            serverdata: entry.serverdata || '',
+            clientdata: entry.clientdata || ''
+        };
+        const response = await this.fetchdata(body);
+        return response.json();
     }
     getMovimentoQueueKey(payload) {
         return `${payload.taskid}_${payload.date}_${payload.lastmodifica}`;
     }
-    createMovimentoPayload(task) {
+    createMovimentoPayload(task, completed = null) {
         const currentdate = todo.formatLocalDate(todo.currentDate);
-        const now = new Date();
-        const id = now.getTime();
-        const time = todo.getLocalISOString();
+        const now = Date.now();
+        // 事件 id 用"毫秒 + 本机固定后缀"拼出来，两台设备同一毫秒操作也不会撞主键
+        const id = String(now) + String(TodoSync.clientNum()).padStart(3, '0');
         return {
-            taskid: task.id,
+            taskid: TodoSync.int(task.id),
             date: currentdate,
-            completed: String(task.completed),
-            time: time,
-            lastmodifica: id,
+            completed: completed === null ? TodoSync.bool(task.completed) : TodoSync.bool(completed),
+            time: todo.getLocalISOString(),
+            lastmodifica: now,
             id: id,
-            title: task.title,
+            title: task.title || '',
             description: task.description || '',
-            point: task.point,
-            userid: todo.currentUser.ID
+            point: TodoSync.int(task.point),
+            userid: TodoSync.int(todo.currentUser.ID)
         };
-    }
-    async todo_addtask(task) {
-        const body = {
-            action: 'todo_addtask',
-            id: task.id,
-            title: task.title,
-            description: task.description || '',
-            point: task.point,
-            time: task.time || '',
-            type: task.type,
-            completed: String(task.completed),
-            date: task.date || '',
-            repeatdays: JSON.stringify(task.repeatdays || []),
-            del: task.del ?? 0,
-            userid: task.userid
-        };
-        
-        try {
-            const response = await this.fetchdata(body);
-            const res = await response.json();
-            
-            if (res === true) {
-                console.log('添加任务到服务器成功:', res);
-                const upload = this.getTodoUpload();
-                const found = upload.addtasks.find(item => item.id === task.id);
-                if (found) {
-                    upload.addtasks = upload.addtasks.filter(t => t.id != task.id);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: true, data: res };
-            } else {
-                console.error('添加任务到服务器失败:', res);
-                const upload = this.getTodoUpload();
-                const found = upload.addtasks.find(item => item.id === task.id);
-                if (!found) {
-                    upload.addtasks.push(task);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: false, error: '服务器返回失败' };
-            }
-        } catch (err) {
-            console.error('添加任务到服务器失败:', err);
-            const upload = this.getTodoUpload();
-            const found = upload.addtasks.find(item => item.id === task.id);
-            if (!found) {
-                upload.addtasks.push(task);
-                this.saveTodoUpload(upload);
-            }
-            return { success: false, error: err };
-        }
-    }
-    async todo_updatetask(id, taskData = null) {
-        // 优先使用传入的 taskData，其次从内存里找，避免任务不在内存时误判为不存在
-        const task = taskData || todo.tasks.find(item => item.id == id);
-        if (!task) {
-            // 真正找不到时才移除队列并跳过
-            const upload = this.getTodoUpload();
-            upload.updatetasks = upload.updatetasks.filter(item => {
-                const itemId = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
-                return itemId !== String(id);
-            });
-            this.saveTodoUpload(upload);
-            return { success: false, skipped: true, error: '任务不存在，已跳过更新' };
-        }
-        const body = {
-            action: 'todo_updatetask',
-            id: task.id,
-            title: task.title,
-            description: task.description || '',
-            point: task.point,
-            time: task.time || '',
-            type: task.type,
-            completed: String(task.completed),
-            date: task.date || '',
-            repeatdays: JSON.stringify(task.repeatdays || []),
-            del: task.del ?? 0,
-            userid: task.userid
-        };
-        
-        try {
-            const response = await this.fetchdata(body);
-            const res = await response.json();
-            if (res === true) {
-                console.log('更新任务到服务器成功:', res);
-                const upload = this.getTodoUpload();
-                upload.updatetasks = upload.updatetasks.filter(item => {
-                    const itemId = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
-                    return itemId !== String(id);
-                });
-                this.saveTodoUpload(upload);
-                return { success: true, data: res };
-            } else {
-                showmsg('更新任务到服务器失败');
-                const upload = this.getTodoUpload();
-                const exists = upload.updatetasks.some(item => {
-                    const itemId = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
-                    return itemId === String(id);
-                });
-                if (!exists) {
-                    upload.updatetasks.push(task);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: false, error: '服务器返回失败' };
-            }
-        } catch (err) {
-            const upload = this.getTodoUpload();
-            const exists = upload.updatetasks.some(item => {
-                const itemId = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
-                return itemId === String(id);
-            });
-            if (!exists) {
-                upload.updatetasks.push(task);
-                this.saveTodoUpload(upload);
-            }
-            return { success: false, error: err };
-        }
-    }
-    async todo_deltask(id) {
-        const body = {
-            action: 'todo_deltask',
-            id: id,
-            dati: id
-        };
-        
-        try {
-            const response = await this.fetchdata(body);
-            const res = await response.json();
-            if (res === true) {
-                console.log('删除任务成功:', res);
-                const upload = this.getTodoUpload();
-                if (upload.deltasks.includes(id)) {
-                    upload.deltasks = upload.deltasks.filter(t => t != id);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: true, data: res };
-            } else {
-                showmsg('删除任务失败:', res);
-                const upload = this.getTodoUpload();
-                if (!upload.deltasks.includes(id)) {
-                    upload.deltasks.push(id);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: false, error: '服务器返回失败' };
-            }
-        } catch (err) {
-            console.error('删除任务到服务器失败:', err);
-            const upload = this.getTodoUpload();
-            if (!upload.deltasks.includes(id)) {
-                upload.deltasks.push(id);
-                this.saveTodoUpload(upload);
-            }
-            return { success: false, error: err };
-        }
-    }
-    async todo_addmovimento(task, istask = true) {
-        let payload;
-        let legacyDati = null;
-        if (istask) {
-            payload = this.createMovimentoPayload(task);
-        } else {
-            if (typeof task === 'string') {
-                legacyDati = task;
-            } else {
-                payload = task;
-            }
-        }
-        const body = legacyDati ? {
-            action: 'todo_addmovimento',
-            dati: legacyDati
-        } : {
-            action: 'todo_addmovimento',
-            taskid: payload.taskid,
-            date: payload.date,
-            completed: String(payload.completed),
-            time: payload.time,
-            lastmodifica: payload.lastmodifica,
-            id: payload.id,
-            title: payload.title,
-            description: payload.description || '',
-            point: payload.point,
-            userid: payload.userid
-        };
-        const queueItem = legacyDati || payload;
-        const queueKey = legacyDati || this.getMovimentoQueueKey(payload);
-        
-        try {
-            const response = await this.fetchdata(body);
-            const res = await response.json();
-            
-            if (res === true) {
-                console.log('添加任务到服务器成功:', res);
-                const upload = this.getTodoUpload();
-                const found = upload.addmovimento.find(item => {
-                    if (typeof item === 'string') {
-                        return item === queueKey;
-                    }
-                    return this.getMovimentoQueueKey(item) === queueKey;
-                });
-                if (found) {
-                    upload.addmovimento = upload.addmovimento.filter(item => {
-                        if (typeof item === 'string') {
-                            return item !== queueKey;
-                        }
-                        return this.getMovimentoQueueKey(item) !== queueKey;
-                    });
-                    this.saveTodoUpload(upload);
-                }
-                return { success: true, data: res };
-            } else {
-                console.error('添加任务到服务器失败');
-                const upload = this.getTodoUpload();
-                const found = upload.addmovimento.find(item => {
-                    if (typeof item === 'string') {
-                        return item === queueKey;
-                    }
-                    return this.getMovimentoQueueKey(item) === queueKey;
-                });
-                if (!found) {
-                    upload.addmovimento.push(queueItem);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: false, error: '服务器返回失败' };
-            }
-        } catch (err) {
-            console.error('添加任务到服务器失败:', err);
-            const upload = this.getTodoUpload();
-            const found = upload.addmovimento.find(item => {
-                if (typeof item === 'string') {
-                    return item === queueKey;
-                }
-                return this.getMovimentoQueueKey(item) === queueKey;
-            });
-            if (!found) {
-                upload.addmovimento.push(queueItem);
-                this.saveTodoUpload(upload);
-            }
-            return { success: false, error: err };
-        }
-    };
-    async todo_addrepeat(task) {
-        const body = {
-            action: 'todo_addrepeat',
-            id: task.id,
-            taskid: task.taskid,
-            date: task.date,
-            completed: String(task.completed),
-            lastmodifica: task.lastmodifica
-        };
-        
-        try {
-            const response = await this.fetchdata(body);
-            const res = await response.json();
-            
-            if (res === true) {
-                console.log('添加任务到服务器成功:', res);
-                const upload = this.getTodoUpload();
-                const found = upload.addrepeat.find(item => item.id == task.id);
-                if (found) {
-                    upload.addrepeat = upload.addrepeat.filter(t => t.id != task.id);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: true, data: res };
-            } else {
-                console.error('添加任务到服务器失败');
-                const upload = this.getTodoUpload();
-                const found = upload.addrepeat.find(item => item.id == task.id);
-                if (!found) {
-                    upload.addrepeat.push(task);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: false, error: '服务器返回失败' };
-            }
-        } catch (err) {
-            console.error('添加任务到服务器失败:', err);
-            const upload = this.getTodoUpload();
-            const found = upload.addrepeat.find(item => item.id == task.id);
-            if (!found) {
-                upload.addrepeat.push(task);
-                this.saveTodoUpload(upload);
-            }
-            return { success: false, error: err };
-        }
-    }
-    async todo_updaterepeat(task) {
-        const body = {
-            action: 'todo_updaterepeat',
-            id: task.id,
-            completed: String(task.completed),
-            lastmodifica: task.lastmodifica
-        };
-        
-        try {
-            const response = await this.fetchdata(body);
-            const res = await response.json();
-            if (res === true) {
-                console.log('更新任务到服务器成功:', res);
-                const upload = this.getTodoUpload();
-                const found = upload.updaterepeat.find(item => item.id === task.id);
-                if (found) {
-                    upload.updaterepeat = upload.updaterepeat.filter(t => t.id != task.id);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: true, data: res };
-            } else {
-                showmsg('更新任务到服务器失败');
-                const upload = this.getTodoUpload();
-                const found = upload.updaterepeat.find(item => item.id === task.id);
-                if (!found) {
-                    upload.updaterepeat.push(task);
-                    this.saveTodoUpload(upload);
-                }
-                return { success: false, error: '服务器返回失败' };
-            }
-        } catch (err) {
-            console.error('更新任务到服务器失败:', err);
-            const upload = this.getTodoUpload();
-            const found = upload.updaterepeat.find(item => item.id === task.id);
-            if (!found) {
-                upload.updaterepeat.push(task);
-                this.saveTodoUpload(upload);
-            }
-            return { success: false, error: err };
-        }
     }
     todo_getpoints() {
         const body = {
@@ -2702,10 +2925,18 @@ class Todopage {
      * 加载本地存储的任务数据，设置当前日期，并启动应用初始化
      */
     constructor() {
+        this.clientid = TodoSync.clientId();
+        this.syncPromise = null;
+        this.lastSyncAt = 0;
+        this.retryCount = 0;
+        this.retryTimer = null;
         this.bindEvents(); // 绑定所有事件监听器
+        this.bindSyncTriggers();
         this.init(); // 启动应用初始化
-        this.showdatioffline();
-        this.hidedatioffline();
+        // 预热面板内容后立刻收起。showdatioffline 现在是异步的（要先从
+        // IndexedDB 重建待上传视图），所以必须等它渲染完再关，
+        // 否则关早了它稍后反而会把弹窗打开。
+        this.showdatioffline().then(() => this.hidedatioffline());
     }
 
     /**
@@ -2714,6 +2945,18 @@ class Todopage {
      */
     async init() {
         this.currentUser = this.loadCurrentUser();
+        // 先把旧版遗留在 localStorage 队列里的改动搬进新机制再做别的，
+        // 否则那些离线操作会在第一次同步时被判成"已同步"而丢掉
+        try {
+            await db.applySyncDefaults();
+            const migrated = await db.migrateLegacyQueue(this.clientid);
+            if (migrated > 0) {
+                console.log('已迁移 ' + migrated + ' 条旧版离线改动');
+            }
+        } catch (error) {
+            console.error('旧版离线数据迁移失败:', error);
+        }
+
         this.tasks = await this.loadTasks(); // 从本地存储加载任务数据
         // 确保应用启动时始终设置为今天的日期
         const today = new Date();
@@ -2723,10 +2966,10 @@ class Todopage {
 
         // 初始化用户显示
         this.updateUserDisplay();
-        
+
         // 立即更新日期时间显示，确保显示今天的日期
         this.updateDateTime();
-        
+
         this.renderTasks(); // 渲染任务列表
         this.updateTaskCounts(); // 更新任务计数显示
 
@@ -2734,6 +2977,36 @@ class Todopage {
             this.updateDateTime();
             this.aggiornamento();
         }, 1000);
+    }
+
+    /**
+     * 服务器恢复可用 / 页面重新可见时自动补同步。
+     * 这是"离线期间的操作不会丢"的最后一道保险：即使每次操作时同步都失败，
+     * 只要网络回来就会把带 _dirty 标记的记录重新推上去。
+     */
+    bindSyncTriggers() {
+        window.addEventListener('online', () => {
+            this.retryCount = 0;
+            this.aggiornamento();
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && Date.now() - this.lastSyncAt > 60000) {
+                this.aggiornamento();
+            }
+        });
+    }
+
+    /**
+     * 同步失败后的退避重试，最长 5 分钟一次
+     */
+    scheduleRetry() {
+        if (this.retryTimer) return;
+        const delay = Math.min(30000 * Math.pow(2, this.retryCount), 300000);
+        this.retryCount = Math.min(this.retryCount + 1, 8);
+        this.retryTimer = setTimeout(() => {
+            this.retryTimer = null;
+            this.aggiornamento();
+        }, delay);
     }
 
     /**
@@ -2977,221 +3250,472 @@ class Todopage {
         }
     }
 
-    dedupeList(items, keyBuilder) {
-        const keys = new Set();
-        const result = [];
-        for (let i = items.length - 1; i >= 0; i--) {
-            const item = items[i];
-            const key = keyBuilder(item);
-            if (key === undefined || key === null || key === '') {
-                continue;
-            }
-            if (keys.has(key)) {
-                continue;
-            }
-            keys.add(key);
-            result.push(item);
-        }
-        return result.reverse();
+    /**
+     * 同步入口。方法名保留，因为初始化定时器和"更新上传"按钮都在调用它。
+     * 流程是先推本地未上传的改动，再拉服务器的新版本，两个方向都不覆盖对方。
+     */
+    aggiornamento() {
+        if (this.syncPromise) return this.syncPromise;
+        this.syncPromise = this.doSync().finally(() => {
+            this.syncPromise = null;
+        });
+        return this.syncPromise;
     }
 
-    buildTodoSyncPlan(upload) {
-        const plan = {
-            addtasks: this.dedupeList(upload.addtasks || [], (item) => item?.id),
-            updatetasks: this.dedupeList(upload.updatetasks || [], (item) => {
-                if (typeof item === 'object' && item !== null) return String(item.id);
-                return String(item);
-            }),
-            deltasks: this.dedupeList(upload.deltasks || [], (id) => String(id)),
-            addrepeat: this.dedupeList(upload.addrepeat || [], (item) => item?.id),
-            updaterepeat: this.dedupeList(upload.updaterepeat || [], (item) => item?.id),
-            addmovimento: this.dedupeList(upload.addmovimento || [], (item) => {
-                if (typeof item === 'string') {
-                    return item;
-                }
-                return api.getMovimentoQueueKey(item);
-            })
-        };
+    async doSync() {
+        this.clientid = this.clientid || TodoSync.clientId();
+        let pushed = 0;
+        let merged = 0;
+        let conflicts = 0;
 
-        const deleteSet = new Set(plan.deltasks.map(id => String(id)));
-        plan.addtasks = plan.addtasks.filter(item => !deleteSet.has(String(item?.id)));
-        plan.updatetasks = plan.updatetasks.filter(item => {
-            const id = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
-            return !deleteSet.has(id);
-        });
-        plan.addrepeat = plan.addrepeat.filter(item => !deleteSet.has(String(item?.taskid)));
-        plan.updaterepeat = plan.updaterepeat.filter(item => !deleteSet.has(String(item?.taskid)));
-        plan.addmovimento = plan.addmovimento.filter(item => {
-            if (typeof item === 'string') {
-                return true;
-            }
-            return !deleteSet.has(String(item?.taskid));
-        });
-
-        const addTaskMap = new Map();
-        plan.addtasks.forEach(item => addTaskMap.set(String(item.id), item));
-        const liveTaskMap = new Map((this.tasks || []).map(task => [String(task.id), task]));
-
-        plan.updatetasks = plan.updatetasks.filter(item => {
-            const key = typeof item === 'object' && item !== null ? String(item?.id) : String(item);
-            if (!addTaskMap.has(key)) {
-                return true;
-            }
-            const liveTask = liveTaskMap.get(key);
-            if (liveTask) {
-                addTaskMap.set(key, { ...addTaskMap.get(key), ...liveTask });
-            }
-            return false;
-        });
-        plan.addtasks = Array.from(addTaskMap.values());
-
-        const addRepeatMap = new Map();
-        plan.addrepeat.forEach(item => addRepeatMap.set(String(item.id), item));
-        plan.updaterepeat = plan.updaterepeat.filter(item => {
-            const key = String(item.id);
-            if (!addRepeatMap.has(key)) {
-                return true;
-            }
-            addRepeatMap.set(key, { ...addRepeatMap.get(key), ...item });
-            return false;
-        });
-        plan.addrepeat = Array.from(addRepeatMap.values());
-        return plan;
-    }
-
-    async aggiornamento() {
         try {
-            const upload = api.getTodoUpload();
-            const plan = this.buildTodoSyncPlan(upload);
-            // 注意：这里只把 plan 用于本次同步，不立即写回 localStorage。
-            // 各个 api.todo_xxx 方法内部会在成功后自己把对应条目从队列里移除，
-            // 失败时会确保条目留在队列里，保证离线数据不丢失。
-
-            const runQueue = async (action, list, runner, targetBuilder) => {
-                for (const item of list) {
-                    let result;
-                    try {
-                        result = await runner(item);
-                    } catch (error) {
-                        result = { success: false, error };
-                    }
-                    const target = targetBuilder(item);
-                    if (result?.success === true) {
-                        this.showlogs({ action, status: 'success', target });
-                    } else if (result?.skipped) {
-                        this.showlogs({
-                            action,
-                            status: 'skipped',
-                            target,
-                            reason: this.normalizeSyncError(result?.error || '已跳过')
-                        });
-                    } else {
-                        this.showlogs({
-                            action,
-                            status: 'failed',
-                            target,
-                            reason: this.normalizeSyncError(result?.error || '服务器返回失败')
-                        });
-                    }
+            // ---- 推送阶段：本地带 _dirty 标记的记录 ----
+            for (const record of await db.getDirtyTasks()) {
+                const result = await this.pushTask(record);
+                if (result.status === 'offline') {
+                    this.scheduleRetry();
+                    await this.refreshOfflineView();
+                    return false;
                 }
-            };
-
-            await runQueue(
-                'addtasks',
-                plan.addtasks,
-                (task) => api.todo_addtask(task),
-                (task) => `task:${task?.id ?? 'unknown'}`
-            );
-            await runQueue(
-                'addrepeat',
-                plan.addrepeat,
-                (repeat) => api.todo_addrepeat(repeat),
-                (repeat) => `repeat:${repeat?.id ?? 'unknown'}`
-            );
-
-            await runQueue(
-                'updatetasks',
-                plan.updatetasks,
-                (item) => {
-                    if (typeof item === 'object' && item !== null) {
-                        return api.todo_updatetask(item.id, item);
-                    }
-                    // 旧格式：纯 id，从内存中补全任务数据
-                    const liveTask = (this.tasks || []).find(t => String(t.id) === String(item));
-                    return api.todo_updatetask(item, liveTask || null);
-                },
-                (item) => `task:${typeof item === 'object' && item !== null ? item?.id : item}`
-            );
-
-            await runQueue(
-                'updaterepeat',
-                plan.updaterepeat,
-                (repeat) => api.todo_updaterepeat(repeat),
-                (repeat) => `repeat:${repeat?.id ?? 'unknown'}`
-            );
-            await runQueue(
-                'addmovimento',
-                plan.addmovimento,
-                (movimento) => api.todo_addmovimento(movimento, false),
-                (movimento) => {
-                    if (typeof movimento === 'string') {
-                        return movimento;
-                    }
-                    return `mov:${movimento?.taskid ?? 'unknown'}_${movimento?.date ?? ''}`;
-                }
-            );
-            await runQueue(
-                'deltasks',
-                plan.deltasks,
-                (id) => api.todo_deltask(id),
-                (id) => `task:${id}`
-            );
-
-            // 上传完成后，再从服务器拉取最新数据同步本地
-            // 这里单独 try-catch，避免网络失败时破坏已经入队的离线数据
-            try {
-                this.users = await this.loadUsers();
-                const res = await api.todo_gettasks();
-                const tasks = await res.json();
-                const resrepeats = await api.todo_getrepeats();
-                const repeats = await resrepeats.json();
-                const localetasks = await db.getTodoTasks();
-                const localrepeats = await db.getTodoRepeats();
-                await this.updatePoints();
-                if (JSON.stringify(tasks) === JSON.stringify(localetasks) && JSON.stringify(repeats) === JSON.stringify(localrepeats)) {
-                    return true;
-                }
-                await db.addTodoTasks(tasks);
-                await db.addTodoRepeats(repeats);
-                this.currentUser = this.loadCurrentUser();
-                this.tasks = await this.loadTasks();
-                this.renderTasks();
-                this.updateTaskCounts();
-                showmsg('数据已经同步到服务器！');
-            } catch (fetchErr) {
-                // 服务器不在线或拉取失败，本地已上传的数据不受影响
-                // 未上传成功的数据仍在队列里，下次会重试
-                console.warn('同步后拉取服务器数据失败，下次重试:', fetchErr);
-                this.showlogs({
-                    action: 'fetch',
-                    status: 'failed',
-                    target: 'server',
-                    reason: this.normalizeSyncError(fetchErr)
-                });
+                if (result.status === 'pushed') pushed++;
+                else if (result.status === 'merged') merged++;
+                conflicts += result.conflicts || 0;
             }
-            return true;
-        } catch (err) {
+            for (const record of await db.getDirtyRepeats()) {
+                const result = await this.pushRepeat(record);
+                if (result.status === 'offline') {
+                    this.scheduleRetry();
+                    await this.refreshOfflineView();
+                    return false;
+                }
+                if (result.status === 'pushed') pushed++;
+                else if (result.status === 'merged') merged++;
+                conflicts += result.conflicts || 0;
+            }
+
+            // 积分事件和冲突归档都先落在 IndexedDB，这里统一补传
+            await this.flushPending();
+
+            // ---- 拉取阶段：只动本地没有未上传改动的记录 ----
+            let since = TodoSync.int(await db.getMeta('lastRev', 0), 0);
+            let data = await api.todoSyncGet(since);
+            if (TodoSync.int(data.rev, 0) < since) {
+                // 服务器水位线倒退（比如从备份恢复过），增量拉取会永远拉不到东西，
+                // 退回全量重新对账
+                this.showlogs({
+                    action: 'sync',
+                    status: 'info',
+                    target: 'server',
+                    reason: '服务器修订号回退，改为全量同步'
+                });
+                since = 0;
+                data = await api.todoSyncGet(0);
+            }
+            const pullResult = await this.applyPull(data, since === 0);
+            conflicts += pullResult.conflicts;
+            await db.setMeta('lastRev', TodoSync.int(data.rev, since));
+
+            this.lastSyncAt = Date.now();
+            this.retryCount = 0;
+            if (this.retryTimer) {
+                clearTimeout(this.retryTimer);
+                this.retryTimer = null;
+            }
+            await this.refreshFromLocal();
+            await this.refreshOfflineView();
+
+            if (conflicts > 0) {
+                showmsg('同步完成，' + conflicts + ' 处冲突按本地优先处理并已归档');
+            } else if (pushed > 0 || merged > 0) {
+                showmsg('数据已经同步到服务器！');
+            }
+            return pushed > 0 || merged > 0;
+        } catch (error) {
+            // 服务器不在线：本地改动全部留在 IndexedDB 里，_dirty 标记还在，
+            // 恢复后会自动重试。不会出现旧版那种"上传失败却已经从队列出队"的情况。
             this.showlogs({
                 action: 'sync',
                 status: 'failed',
-                target: 'global',
-                reason: this.normalizeSyncError(err)
+                target: 'server',
+                reason: this.normalizeSyncError(error)
             });
-            showmsg('同步失败: ' + this.normalizeSyncError(err));
+            this.scheduleRetry();
+            await this.refreshOfflineView();
             return false;
         }
     }
 
+    /**
+     * 推送一条本地任务。服务器用 compare-and-set 判断基线是否过期：
+     *   基线一致 -> 落盘
+     *   基线过期 -> 回 conflict + 服务器当前版本
+     * 收到冲突后做三方合并（本地优先），把被盖掉的那版归档，再拿新基线重试。
+     * 只有服务器明确收下、或合并结果与服务器一致时，才会清掉 _dirty。
+     */
+    async pushTask(record) {
+        const local = TodoSync.normalizeTask(record);
+        let base = record._base ? TodoSync.normalizeTask(record._base) : null;
+        const op = record._op === 'delete' ? 'delete' : 'upsert';
+        let baserev = TodoSync.int(record._rev, 0);
+        let conflictCount = 0;
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            let response;
+            try {
+                response = await api.todoSyncPut({
+                    entity: 'task',
+                    op,
+                    id: local.id,
+                    baserev,
+                    clientid: this.clientid,
+                    data: local
+                });
+            } catch (error) {
+                return { status: 'offline', error };
+            }
+            if (response && response.ok === true) {
+                await db.markPushed(db.DB_STORE_TASKS, local.id, response.rev, local);
+                this.showlogs({
+                    action: op === 'delete' ? 'todo_deltask' : 'todo_sync_put',
+                    status: 'success',
+                    target: 'task:' + local.id
+                });
+                return { status: 'pushed', conflicts: conflictCount };
+            }
+            if (!response || response.conflict !== true) {
+                this.showlogs({
+                    action: 'todo_sync_put',
+                    status: 'failed',
+                    target: 'task:' + local.id,
+                    reason: this.normalizeSyncError((response && response.error) || '服务器拒绝写入')
+                });
+                return { status: 'failed', conflicts: conflictCount };
+            }
+
+            const server = response.current ? TodoSync.normalizeTask(response.current) : null;
+            const merge = TodoSync.merge(TodoSync.TASK_FIELDS, local, base, server);
+            if (merge.conflicts.length > 0) {
+                conflictCount += merge.conflicts.length;
+                await this.archiveConflict('task', local.id, response.rev, merge.conflicts, server, local);
+            }
+            Object.assign(local, merge.merged);
+
+            if (server && TodoSync.fieldsEqual(TodoSync.TASK_FIELDS, local, server)) {
+                // 合并结果和服务器一致，没什么可推的，直接采纳服务器的修订号
+                await db.adoptServer(db.DB_STORE_TASKS, server, response.rev);
+                return { status: 'merged', conflicts: conflictCount };
+            }
+            baserev = TodoSync.int(response.rev, 0);
+            base = server;
+        }
+
+        this.showlogs({
+            action: 'todo_sync_put',
+            status: 'failed',
+            target: 'task:' + local.id,
+            reason: '冲突重试次数用尽，改动仍保留在本地待下次同步'
+        });
+        return { status: 'failed', conflicts: conflictCount };
+    }
+
+    async pushRepeat(record) {
+        const local = TodoSync.normalizeRepeat(record);
+        let base = record._base ? TodoSync.normalizeRepeat(record._base) : null;
+        const op = record._op === 'delete' ? 'delete' : 'upsert';
+        let baserev = TodoSync.int(record._rev, 0);
+        let conflictCount = 0;
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            let response;
+            try {
+                response = await api.todoSyncPut({
+                    entity: 'repeat',
+                    op,
+                    id: local.id,
+                    baserev,
+                    clientid: this.clientid,
+                    data: local
+                });
+            } catch (error) {
+                return { status: 'offline', error };
+            }
+            if (response && response.ok === true) {
+                await db.markPushed(db.DB_STORE_REPEATS, local.id, response.rev, local);
+                this.showlogs({
+                    action: 'todo_sync_put',
+                    status: 'success',
+                    target: 'repeat:' + local.id
+                });
+                return { status: 'pushed', conflicts: conflictCount };
+            }
+            if (!response || response.conflict !== true) {
+                this.showlogs({
+                    action: 'todo_sync_put',
+                    status: 'failed',
+                    target: 'repeat:' + local.id,
+                    reason: this.normalizeSyncError((response && response.error) || '服务器拒绝写入')
+                });
+                return { status: 'failed', conflicts: conflictCount };
+            }
+
+            const server = response.current ? TodoSync.normalizeRepeat(response.current) : null;
+            const merge = TodoSync.merge(TodoSync.REPEAT_FIELDS, local, base, server);
+            if (merge.conflicts.length > 0) {
+                conflictCount += merge.conflicts.length;
+                await this.archiveConflict('repeat', local.id, response.rev, merge.conflicts, server, local);
+            }
+            Object.assign(local, merge.merged);
+
+            if (server && TodoSync.fieldsEqual(TodoSync.REPEAT_FIELDS, local, server)) {
+                await db.adoptServer(db.DB_STORE_REPEATS, server, response.rev);
+                return { status: 'merged', conflicts: conflictCount };
+            }
+            baserev = TodoSync.int(response.rev, 0);
+            base = server;
+        }
+
+        this.showlogs({
+            action: 'todo_sync_put',
+            status: 'failed',
+            target: 'repeat:' + local.id,
+            reason: '冲突重试次数用尽，改动仍保留在本地待下次同步'
+        });
+        return { status: 'failed', conflicts: conflictCount };
+    }
+
+    /**
+     * 冲突归档。按"本地优先"解决之后，把被覆盖掉的那一版送到服务器存进
+     * TODO_CONFLICTS，并在同步日志里留一条记录。
+     * 这是"不静默丢失"的兜底：输掉的那次修改仍然可以查回来。
+     */
+    async archiveConflict(entity, recordid, serverrev, conflicts, server, local) {
+        // 每条冲突都带 winner：时间戳更晚的一方胜出，输的那版归档。
+        // serverdata / clientdata 都保存完整快照，所以不论哪边输了都能查回。
+        const summary = conflicts
+            .map(item => item.field + '=' + (item.winner === 'server' ? '采用服务器版本' : '采用本机版本'))
+            .join('; ');
+        const serverWon = conflicts.some(item => item.winner === 'server');
+        this.showlogs({
+            action: 'conflict',
+            status: 'archived',
+            target: entity + ':' + recordid,
+            reason: '按最后修改时间裁决：' + summary +
+                (serverWon ? '（本机版本已归档）' : '（服务器版本已归档）')
+        });
+        try {
+            await db.addPending({
+                key: 'conflict:' + entity + ':' + recordid + ':' + serverrev + ':' + Date.now(),
+                type: 'conflict',
+                payload: {
+                    entity: entity,
+                    recordid: TodoSync.int(recordid),
+                    serverrev: TodoSync.int(serverrev, 0),
+                    userid: local ? TodoSync.int(local.userid, 0) : 0,
+                    serverdata: server ? JSON.stringify(server).slice(0, 1500) : '',
+                    clientdata: JSON.stringify(local).slice(0, 1500)
+                }
+            });
+        } catch (error) {
+            console.error('归档冲突失败:', error);
+        }
+    }
+
+    /**
+     * 补传排队中的积分事件和冲突归档。这些没有对应的本地记录，
+     * 所以先落在 IndexedDB 的 pending store 里，离线也不会丢。
+     */
+    async flushPending() {
+        for (const item of await db.getPending()) {
+            try {
+                let response = null;
+                if (item.type === 'movimento') {
+                    response = await api.todoMovimentoPut(item.payload, this.clientid);
+                } else if (item.type === 'conflict') {
+                    response = await api.todoSyncLog(item.payload, this.clientid);
+                } else {
+                    await db.removePending(item.key);
+                    continue;
+                }
+                if (response && response.ok === true) {
+                    await db.removePending(item.key);
+                } else {
+                    item.attempts = TodoSync.int(item.attempts, 0) + 1;
+                    await db.addPending(item);
+                    this.showlogs({
+                        action: item.type,
+                        status: 'failed',
+                        target: item.key,
+                        reason: this.normalizeSyncError((response && response.error) || '服务器未接受')
+                    });
+                }
+            } catch (error) {
+                return; // 离线：剩下的留到下一轮
+            }
+        }
+    }
+
+    /**
+     * 应用服务器拉回来的数据。
+     * 铁律：本地带 _dirty 标记的记录一律不覆盖，那些改动归推送阶段处理。
+     * 只有本地没有未上传改动的记录才采纳服务器版本。
+     */
+    async applyPull(data, fullPull) {
+        let conflicts = 0;
+        const specs = [
+            {
+                store: db.DB_STORE_TASKS,
+                entity: 'task',
+                fields: TodoSync.TASK_FIELDS,
+                normalize: TodoSync.normalizeTask,
+                rows: data.tasks || [],
+                list: () => db.getTodoTasks(),
+                get: (id) => db.getTask(id)
+            },
+            {
+                store: db.DB_STORE_REPEATS,
+                entity: 'repeat',
+                fields: TodoSync.REPEAT_FIELDS,
+                normalize: TodoSync.normalizeRepeat,
+                rows: data.repeats || [],
+                list: () => db.getTodoRepeats(),
+                get: (id) => db.getTodoRepeat(id)
+            }
+        ];
+
+        for (const spec of specs) {
+            const seen = new Set();
+            for (const raw of spec.rows) {
+                const server = spec.normalize(raw);
+                const rev = TodoSync.int(raw.rev, 0);
+                seen.add(String(server.id));
+
+                const stored = await spec.get(server.id);
+                if (!stored) {
+                    await db.adoptServer(spec.store, server, rev);
+                    continue;
+                }
+                if (Number(stored._dirty) === 1) {
+                    continue; // 有未上传的本地改动，交给推送阶段做三方合并
+                }
+
+                const base = stored._base ? spec.normalize(stored._base) : null;
+                const local = spec.normalize(stored);
+                if (!base && !TodoSync.fieldsEqual(spec.fields, local, server)) {
+                    // 升级前留下的记录：本地和服务器不一致，又说不清谁更新。
+                    // 以服务器为准，但把本地那一版归档，不做静默丢弃。
+                    const diff = TodoSync.fieldDiff(spec.fields, local, server)
+                        .map(item => Object.assign({ winner: 'server' }, item));
+                    if (diff.length > 0) {
+                        conflicts += diff.length;
+                        await this.archiveConflict(spec.entity, server.id, rev, diff, server, local);
+                    }
+                }
+                await db.adoptServer(spec.store, server, rev);
+            }
+
+            if (fullPull) {
+                // 全量拉取时，服务器上已经没有的记录说明是在别处被彻底删掉的，
+                // 本地一并清掉。（正常删除在服务器上是 tombstone，会随增量一起回来，
+                // 不会走到这里。）
+                for (const stored of await spec.list()) {
+                    if (Number(stored._dirty) === 1) continue;
+                    if (!seen.has(String(TodoSync.int(stored.id)))) {
+                        await db.removeRecord(spec.store, stored.id);
+                    }
+                }
+            }
+        }
+        return { conflicts };
+    }
+
+    /**
+     * 同步后用本地数据刷新界面
+     */
+    async refreshFromLocal() {
+        try {
+            const response = await api.todo_getuser();
+            this.users = await response.json();
+            localStorage.setItem('todoUsers', JSON.stringify(this.users));
+        } catch (error) {
+            // 离线时沿用本地缓存的用户列表
+            console.warn('获取用户列表失败，使用本地缓存:', error);
+        }
+        try {
+            await this.updatePoints();
+        } catch (error) {
+            console.warn('获取积分失败，保持本地值:', error);
+        }
+        this.currentUser = this.loadCurrentUser();
+        this.tasks = await this.loadTasks();
+        this.updateUserDisplay();
+        await this.renderTasks();
+        this.updateTaskCounts();
+    }
+
+    /**
+     * 把 IndexedDB 里的待上传状态渲染成旧的 todoupload 结构，供"离线数据"
+     * 面板显示。这个结构现在只是显示数据，不再是上传队列本身——
+     * 队列就是记录上的 _dirty 标记，和记录同一次事务落盘，不会分叉。
+     */
+    async refreshOfflineView() {
+        const view = {
+            addtasks: [],
+            updatetasks: [],
+            deltasks: [],
+            addrepeat: [],
+            updaterepeat: [],
+            addmovimento: [],
+            logs: this.getLogs()
+        };
+        try {
+            for (const record of await db.getDirtyTasks()) {
+                if (record._op === 'delete') {
+                    view.deltasks.push(String(record.id));
+                } else if (TodoSync.int(record._rev, 0) === 0) {
+                    view.addtasks.push(TodoSync.normalizeTask(record));
+                } else {
+                    view.updatetasks.push(TodoSync.normalizeTask(record));
+                }
+            }
+            for (const record of await db.getDirtyRepeats()) {
+                const item = TodoSync.normalizeRepeat(record);
+                if (TodoSync.int(record._rev, 0) === 0) view.addrepeat.push(item);
+                else view.updaterepeat.push(item);
+            }
+            for (const item of await db.getPending()) {
+                if (item.type === 'movimento') view.addmovimento.push(item.payload);
+            }
+        } catch (error) {
+            console.error('重建离线视图失败:', error);
+        }
+        localStorage.setItem('todoupload', JSON.stringify(view));
+        return view;
+    }
+
+    async countPending() {
+        const tasks = await db.getDirtyTasks();
+        const repeats = await db.getDirtyRepeats();
+        const pending = await db.getPending();
+        return tasks.length + repeats.length + pending.length;
+    }
+
+    /**
+     * 把一个积分事件放进待上传队列。先落库再返回，所以即使此刻离线、
+     * 或者用户马上关掉页面，这次完成也不会丢。
+     */
+    async queueMovimento(task, completed = null) {
+        const event = api.createMovimentoPayload(task, completed);
+        try {
+            await db.addPending({
+                key: 'mov:' + this.clientid + ':' + event.id,
+                type: 'movimento',
+                payload: event
+            });
+        } catch (error) {
+            console.error('积分事件入队失败:', error);
+        }
+        return event;
+    }
     /**
      * 显示添加任务模态框
      */
@@ -3326,9 +3850,10 @@ class Todopage {
                 const id = new Date().getTime();
                 task.id = id;
                 task.completed = true;
-                api.todo_addmovimento(task);
                 this.addPoints(task.point);
                 userpoints.innerHTML = this.currentUser.POINTS;
+                // 兑换也是一条积分事件：先落库再上传，离线时不会丢
+                this.queueMovimento(task, true).then(() => this.aggiornamento());
             });
             rewardItems.appendChild(item);
         });
@@ -3356,7 +3881,7 @@ class Todopage {
     /**
      * 更新任务信息
      */
-    updateTask() {
+    async updateTask() {
         if (!this.editingTaskId) return;
 
         const title = document.getElementById('edit-task-title').value.trim();
@@ -3400,40 +3925,33 @@ class Todopage {
         }
 
         this.tasks[taskIndex] = updatedTask;
-        db.addTodoTasks([updatedTask]);
+        // 本地先落库并打上待上传标记。上传失败也不会丢：
+        // 标记在记录上，服务器恢复后会自动重推。
+        await db.saveTask(updatedTask, { dirty: true, op: 'upsert' });
 
-        // 编辑任务时入队完整对象，而不仅是 id
-        const upload = api.getTodoUpload();
-        upload.updatetasks = upload.updatetasks || [];
-        const idx = upload.updatetasks.findIndex(item =>
-            (typeof item === 'object' && item !== null ? String(item?.id) : String(item)) === String(updatedTask.id)
-        );
-        if (idx >= 0) {
-            upload.updatetasks[idx] = { ...updatedTask };
-        } else {
-            upload.updatetasks.push({ ...updatedTask });
-        }
-        api.saveTodoUpload(upload);
-
-        // 尝试在线同步（失败时已入队，下次会重试）
-        api.todo_updatetask(this.editingTaskId, updatedTask);
-
-        this.renderTasks();
+        await this.renderTasks();
         this.hideEditTaskModal();
+        this.aggiornamento();
     }
 
     /**
      * 删除当前正在编辑的任务
      */
-    deleteCurrentTask() {
+    async deleteCurrentTask() {
         if (!this.editingTaskId) return;
 
         if (confirm('确定要删除这个任务吗？')) {
+            const id = TodoSync.int(this.editingTaskId);
+            const existing = await db.getTask(id);
             this.tasks = this.tasks.filter(t => t.id != this.editingTaskId);
-            db.delTodoTask(this.editingTaskId);
-            api.todo_deltask(this.editingTaskId);
-            this.renderTasks();
+            if (existing) {
+                // 逻辑删除 + 待上传标记。服务器那边也是写 tombstone，
+                // 所以离线期间的删除不会被服务器上的旧版本"复活"。
+                await db.saveTask(Object.assign({}, existing, { del: 1 }), { dirty: true, op: 'delete' });
+            }
+            await this.renderTasks();
             this.hideEditTaskModal();
+            this.aggiornamento();
         }
     }
 
@@ -3506,96 +4024,66 @@ class Todopage {
         }
 
         this.tasks.unshift(task);
-        await db.addTodoTasks([task]);
-        api.todo_addtask(task);
-        this.renderTasks();
+        await db.saveTask(task, { dirty: true, op: 'upsert' });
+        await this.renderTasks();
         this.updateTaskCounts();
         this.hideAddTaskModal();
-        
+
         showmsg('任务添加成功！');
+        this.aggiornamento();
     }
 
     async toggleTask(taskId) {
         const task = this.tasks.find(t => t.id == taskId);
-        if (task) {
-            const currentDateStr = this.formatLocalDate(this.currentDate);
+        if (!task) return;
+
+        const currentDateStr = this.formatLocalDate(this.currentDate);
+
+        if (task.type === 'repeat') {
+            // 重复任务的完成状态按"任务 + 日期"单独记一条，id 由任务 id 和日期
+            // 推导出来，任何设备算出来都一样，所以多设备不会各存一份。
             const repeatid = this.creatrepeartid(taskId, currentDateStr);
+            const stored = await db.getTodoRepeat(repeatid);
+            const repeattask = Object.assign(
+                { id: repeatid, taskid: TodoSync.int(taskId), date: currentDateStr, completed: false },
+                TodoSync.normalizeRepeat(stored || {})
+            );
+            const isCompleted = !TodoSync.bool(repeattask.completed);
+            repeattask.id = TodoSync.int(repeatid);
+            repeattask.taskid = TodoSync.int(taskId);
+            repeattask.date = currentDateStr;
+            repeattask.completed = isCompleted;
+            repeattask.lastmodifica = Date.now();
+            await db.saveRepeat(repeattask, { dirty: true, op: 'upsert' });
 
-            if (task.type === 'repeat') {
-                const repeat = await db.getTodoRepeat(repeatid);
-                let repeattask;
-                if (repeat) {
-                    repeattask = repeat;
-                } else {
-                    repeattask = {
-                        id: repeatid,
-                        taskid: taskId,
-                        date: currentDateStr,
-                        completed: false,
-                        lastmodifica: '',
-                    };
-                }
-                const isCompleted = !repeattask.completed;
-                repeattask.lastmodifica = Date.now();
-                repeattask.completed = isCompleted;
-                db.addTodoRepeat(repeattask);
-
-                if (repeat) {
-                    api.todo_updaterepeat(repeattask);
-                } else {
-                    api.todo_addrepeat(repeattask);
-                }
-
-                if (isCompleted) {
-                    this.addPoints(task.point);
-                    showmsg(`任务完成！+${task.point}积分`);
-                } else {
-                    this.addPoints(-task.point);
-                    showmsg(`任务取消完成，-${task.point}积分`);
-                }
-
-                const taskCopy = { ...task };
-                taskCopy.completed = isCompleted;
-                api.todo_addmovimento(taskCopy);
-
-                // 重复任务完成状态由 addrepeat/updaterepeat 队列负责，
-                // 不再额外调用 todo_updatetask，避免 updatetasks 出现孤立 id
+            if (isCompleted) {
+                this.addPoints(task.point);
+                showmsg(`任务完成！+${task.point}积分`);
             } else {
-                // 一次性任务
-                task.completed = !task.completed;
+                this.addPoints(-task.point);
+                showmsg(`任务取消完成，-${task.point}积分`);
+            }
+            // 积分事件先落库再上传，离线或立刻关掉页面都不会丢
+            await this.queueMovimento(task, isCompleted);
+        } else {
+            // 一次性任务
+            task.completed = !TodoSync.bool(task.completed);
 
-                if (task.completed) {
-                    this.addPoints(task.point);
-                    showmsg(`任务完成！+${task.point}积分`);
-                } else {
-                    this.addPoints(-task.point);
-                    showmsg(`任务取消完成，-${task.point}积分`);
-                }
-
-                db.addTodoTasks([task]);
-                api.todo_addmovimento(task);
-
-                // 将完整任务对象写入 updatetasks 队列
-                // 离线时 api.todo_updatetask 调用失败，但队列有数据，下次打开可重试
-                const upload = api.getTodoUpload();
-                upload.updatetasks = upload.updatetasks || [];
-                const idx = upload.updatetasks.findIndex(item =>
-                    (typeof item === 'object' && item !== null ? String(item?.id) : String(item)) === String(task.id)
-                );
-                if (idx >= 0) {
-                    upload.updatetasks[idx] = { ...task };
-                } else {
-                    upload.updatetasks.push({ ...task });
-                }
-                api.saveTodoUpload(upload);
-
-                // 尝试在线同步（失败时已入队，下次 aggiornamento 会重试）
-                api.todo_updatetask(task.id, task);
+            if (task.completed) {
+                this.addPoints(task.point);
+                showmsg(`任务完成！+${task.point}积分`);
+            } else {
+                this.addPoints(-task.point);
+                showmsg(`任务取消完成，-${task.point}积分`);
             }
 
-            await this.renderTasks();
-            this.updateTaskCounts();
+            await db.saveTask(task, { dirty: true, op: 'upsert' });
+            await this.queueMovimento(task, task.completed);
         }
+
+        await this.renderTasks();
+        this.updateTaskCounts();
+        this.aggiornamento();
     }
 
     /**
@@ -3648,8 +4136,9 @@ class Todopage {
                     const taskCopy = { ...task };
                     const id = this.creatrepeartid(task.id, currentDateStr);
                     const repeat = await db.getTodoRepeat(id);
-                    if (repeat) {
-                        taskCopy.completed = repeat.completed;
+                    // 带 del 标记的 repeat 是被删除的 tombstone，按"未完成"处理
+                    if (repeat && !TodoSync.bool(repeat.del)) {
+                        taskCopy.completed = TodoSync.bool(repeat.completed);
                     } else {
                         taskCopy.completed = false;
                     }
@@ -4021,7 +4510,14 @@ class Todopage {
         }
     }
 
-    showdatioffline() {
+    async showdatioffline() {
+        // 面板展示的是"当前还没上传的改动"，从 IndexedDB 的 _dirty 标记实时重建，
+        // 不再依赖单独维护的 localStorage 队列
+        try {
+            await this.refreshOfflineView();
+        } catch (error) {
+            console.error('刷新离线视图失败:', error);
+        }
         try {
             const modal = document.getElementById('offline-modal');
             const content = modal?.querySelector('.modal-content');
@@ -4145,49 +4641,51 @@ class Todopage {
         offlinemodo.classList.remove('show');
     }
 
+    /**
+     * "清除更新"：用户显式确认后丢弃本地未上传的改动，改为完全采用服务器版本。
+     * 这是唯一会主动放弃本地改动的入口（而且有二次确认），
+     * 常规同步路径不会丢任何已保存的操作。
+     */
     async clearUpload() {
-        const datiupload = api.getTodoUpload();
-        const pendingKeys = ['addtasks', 'updatetasks', 'deltasks', 'addrepeat', 'updaterepeat', 'addmovimento'];
-        let check = false;
-        for (const key of pendingKeys) {
-            if (Array.isArray(datiupload[key]) && datiupload[key].length > 0) {
-                check = true;
-                break;
-            }
-        }
-        if (check) {
-            if (confirm('有离线数据未上传，确定清除上传数据吗？')) {
-                api.saveTodoUpload({
-                    addtasks: [],
-                    updatetasks: [],
-                    deltasks: [],
-                    addrepeat: [],
-                    updaterepeat: [],
-                    addmovimento: [],
-                    logs: []
-                });
-            } else {
+        const pendingCount = await this.countPending();
+        if (pendingCount > 0) {
+            if (!confirm('有 ' + pendingCount + ' 条离线数据未上传，确定清除上传数据吗？')) {
                 return false;
             }
+            // 先把待上传标记清掉，否则全量拉取时这些记录会因为"本地有改动"被跳过
+            for (const record of await db.getDirtyTasks()) {
+                await db.saveTask(record, { dirty: false, op: 'upsert' });
+            }
+            for (const record of await db.getDirtyRepeats()) {
+                await db.saveRepeat(record, { dirty: false, op: 'upsert' });
+            }
+            await db.clearPending();
         }
-        const res = await api.todo_gettasks();
-        const tasks = await res.json();
-        const resrepeats = await api.todo_getrepeats();
-        const repeats = await resrepeats.json();
-        if (tasks && repeats) {
-            await db.clearTodo();
-            await db.addTodoTasks(tasks);
-            await db.addTodoRepeats(repeats);
-            this.init();
+        try {
+            // 全量拉取 + applyPull(fullPull=true) 会把服务器上已经不存在的本地记录清掉，
+            // 等价于原来的"清空后重写"，但不会丢服务器上已有的数据
+            const data = await api.todoSyncGet(0);
+            await this.applyPull(data, true);
+            await db.setMeta('lastRev', TodoSync.int(data.rev, 0));
+            await this.refreshFromLocal();
+            await this.refreshOfflineView();
             showmsg('数据已清除并更新完成');
-        } else {
+        } catch (error) {
             showmsg('服务器不在线，请重试');
         }
         this.showdatioffline();
     }
 
+    getLogs() {
+        try {
+            const logs = JSON.parse(localStorage.getItem('todoSyncLogs') || '[]');
+            return Array.isArray(logs) ? logs : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
     showlogs(info) {
-        const upload = api.getTodoUpload();
         const log = typeof info === 'string'
             ? {
                 time: new Date().toLocaleString('zh-CN'),
@@ -4203,12 +4701,11 @@ class Todopage {
                 target: info.target || '',
                 reason: info.reason || ''
             };
-        upload.logs = Array.isArray(upload.logs) ? upload.logs : [];
-        upload.logs.unshift(log);
-        if (upload.logs.length > 200) {
-            upload.logs = upload.logs.slice(0, 200);
-        }
-        api.saveTodoUpload(upload);
+        const logs = this.getLogs();
+        logs.unshift(log);
+        // 日志单独存一个键：App 初始化时会把 todoupload.logs 重置掉，
+        // 放在那里的话每次开页面同步记录都清空，出问题没法排查
+        localStorage.setItem('todoSyncLogs', JSON.stringify(logs.slice(0, 200)));
     }
 }
 class WolApp {
