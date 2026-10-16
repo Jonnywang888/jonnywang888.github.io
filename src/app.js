@@ -5033,17 +5033,16 @@ class WolApp {
         const isconfig = this._isconfigured(id);
         if (!isconfig) return false;
         const d = this._getDevice(id);
-        let {baseUrl, fritzUrl, username, password, deviceUrl,sid} = d;
-        if (sid === '') {
-            try {
-                sid = await this._getSid(baseUrl, fritzUrl, username, password, id);
-                d.sid = sid; // 保存 SID 以供后续使用
-            } catch {
-                this._log('认证失败，无法获取在线状态', 'error', id);
-                d.stato = 'off';
-                return false;
-            }
-        };
+        let {baseUrl, fritzUrl, username, password, deviceUrl} = d;
+        let sid = d.sid || ''
+        try {
+            sid = await this._getSid(baseUrl, fritzUrl, username, password, id);
+            d.sid = sid; // 保存 SID 以供后续使用
+        } catch {
+            this._log('认证失败，无法获取在线状态', 'error', id);
+            d.stato = 'off';
+            return false;
+        }
         const uid = deviceUrl.split('/').pop();
         const apiurl = deviceUrl.replace('/' + uid, '') 
         const r = await this._fetchUrl(baseUrl, apiurl, 'ONLINE', sid, id);
