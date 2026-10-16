@@ -4992,6 +4992,7 @@ class WolApp {
             return;
         }
         let {baseUrl, fritzUrl, username, password, deviceUrl, sid} = d;
+        let sid = d.sid || '';
         this.busyIds.add(id);
         this._updateCardBusy(id, true);
         try {
