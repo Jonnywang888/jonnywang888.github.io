@@ -4991,7 +4991,7 @@ class WolApp {
             this._log('请先配置设备参数', 'error', id);
             return;
         }
-        const {baseUrl, fritzUrl, username, password, deviceUrl, sid} = d;
+        let {baseUrl, fritzUrl, username, password, deviceUrl, sid} = d;
         this.busyIds.add(id);
         this._updateCardBusy(id, true);
         try {
@@ -5002,7 +5002,7 @@ class WolApp {
             this._log('── 发送 WOL 指令 ──', '', id);
             const r = await this._fetchUrl(baseUrl, deviceUrl, 'WOL', sid, id);
             if (r.trim() == '{}') {
-                this._log('响应内容: ' + (r.trim() || '(空)'), 'success', id);
+                // this._log('响应内容: ' + (r.trim() || '(空)'), 'success', id);
                 this._log('✓ 开机指令发送成功！', 'success', id);
                 setTimeout(() => {
                     this._isonline(id);
