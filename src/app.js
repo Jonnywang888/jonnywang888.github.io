@@ -5046,7 +5046,7 @@ class WolApp {
         };
         const uid = deviceUrl.split('/').pop();
         const apiurl = deviceUrl.replace('/' + uid, '') 
-        const r = await this._fetchUrl(baseUrl, apiurl, 'OLINE', sid, id);
+        const r = await this._fetchUrl(baseUrl, apiurl, 'ONLINE', sid, id);
         const res = JSON.parse(r);
         for (const dev of res) {
             if (dev.UID === uid) {
