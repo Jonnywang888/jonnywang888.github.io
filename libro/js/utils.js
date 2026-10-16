@@ -98,7 +98,8 @@ function translateWord(word) {
 
 // ── WORD DETAIL ──
 function fetchWordDetail(word) {
-  var url = 'https://trustmarket.ddnsgeek.com/app/utile.asp?action=getword&word=' + encodeURIComponent(word);
+  // var url = 'https://trustmarket.ddnsgeek.com/app/utile.asp?action=getword&word=' + encodeURIComponent(word);
+  var url = 'https://cloud.trustmarket.ccwu.cc/?action=getword&word=' + encodeURIComponent(word);
   return fetch(url)
     .then(function(r) { return r.ok ? r.json() : null; })
     .catch(function() { return null; });
