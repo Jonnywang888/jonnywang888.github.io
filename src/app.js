@@ -4995,10 +4995,10 @@ class WolApp {
         this.busyIds.add(id);
         this._updateCardBusy(id, true);
         try {
-            if (sid === '') {
-                this._log('── 开始认证 ──', '', id);
-                sid = await this._getSid(baseUrl, fritzUrl, username, password, id);
-            }
+            // if (sid === '') {
+            this._log('── 开始认证 ──', '', id);
+            sid = await this._getSid(baseUrl, fritzUrl, username, password, id);
+            // }
             this._log('── 发送 WOL 指令 ──', '', id);
             const r = await this._fetchUrl(baseUrl, deviceUrl, 'WOL', sid, id);
             if (r.trim() == '{}') {
