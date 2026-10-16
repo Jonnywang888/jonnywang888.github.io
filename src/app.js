@@ -4991,7 +4991,7 @@ class WolApp {
             this._log('请先配置设备参数', 'error', id);
             return;
         }
-        let {baseUrl, fritzUrl, username, password, deviceUrl, sid} = d;
+        let {baseUrl, fritzUrl, username, password, deviceUrl} = d;
         let sid = d.sid || '';
         this.busyIds.add(id);
         this._updateCardBusy(id, true);
