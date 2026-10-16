@@ -3228,7 +3228,7 @@ class Todopage {
      */
     updateDateTime() {
         const options = { 
-            year: 'numeric', 
+            // year: 'numeric', 
             month: 'long', 
             day: 'numeric', 
             weekday: 'long' 
