@@ -4774,8 +4774,8 @@ class WolApp {
         this.devices = [...WolApp.DEFAULT_DEVICES];
         }
         for (const device of this.devices) {
-        if (!device.stato) device.stato = 'off';
-        if (!device.sid) device.sid = '';
+            device.stato = 'off';
+            device.sid = '';
         }
     }
 
