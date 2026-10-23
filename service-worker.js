@@ -1,6 +1,11 @@
-const CACHE_VERSION = 'pwa-cache-v1.50';
+const CACHE_VERSION = 'pwa-cache-v1.51';
 const OFFLINE_CACHE = `offline-${CACHE_VERSION}`;
 const NETWORK_TIMEOUT_MS = 1500;
+
+// The Readest PWA under /readest/ owns these caches. The root app must not
+// delete them when its own service worker updates.
+const READEST_CACHES = new Set(['client-pages', 'fonts-cache', 'offline-cache', 'pages']);
+const isReadestCache = (key) => key.startsWith('serwist-') || READEST_CACHES.has(key);
 
 const STATIC_FILES = [
     '/',
@@ -52,7 +57,7 @@ self.addEventListener('activate', (event) => {
         caches.keys()
             .then((keys) => Promise.all(
                 keys
-                    .filter((key) => key !== OFFLINE_CACHE)
+                    .filter((key) => key !== OFFLINE_CACHE && !isReadestCache(key))
                     .map((key) => caches.delete(key))
             ))
             .then(() => self.clients.claim())
@@ -83,6 +88,9 @@ self.addEventListener('fetch', (event) => {
 
     // API 请求：直接走网络，不缓存
     if (url.pathname.startsWith('/server/')) return;
+
+    // Readest PWA under /readest/ is owned by its own nested service worker.
+    if (url.pathname === '/readest' || url.pathname.startsWith('/readest/')) return;
 
     // 导航请求（页面加载）：超时兜底 → 缓存
     if (request.mode === 'navigate') {
