@@ -2607,5 +2607,6 @@
   "This book’s words were saved by a newer version of the app and cannot be read here.": "此书的生词由更新版本的应用保存，当前版本无法读取。",
   "This book’s words could not be saved to disk.": "此书生词无法写入磁盘。",
   "This book’s word file could not be read.": "此书的生词文件无法读取。",
-  "Add your DeepSeek API key in Settings to process words.": "请在设置中填入 DeepSeek API 密钥后再处理单词。"
+  "Add your DeepSeek API key in Settings to process words.": "请在设置中填入 DeepSeek API 密钥后再处理单词。",
+  "Show all": "显示全部"
 }
