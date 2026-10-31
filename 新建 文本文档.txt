@@ -1,0 +1,6 @@
+git status              	# 查看本地状态
+git add .               	# 添加本地修改
+git commit -m "更新说明" 		# 提交本地修改
+git push origin main   		# 推送到服务器
+
+git pull origin main    	# 拉取服务器最新内容

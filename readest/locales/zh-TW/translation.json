@@ -2250,5 +2250,9 @@
   "This book’s word file could not be read.": "此書的生詞檔案無法讀取。",
   "Add your DeepSeek API key in Settings to process words.": "請在設定中填入 DeepSeek API 金鑰後再處理單詞。",
   "Show all": "顯示全部",
-  "Nothing in this direction is due yet.": "這個方向目前還沒有到期的單詞。"
+  "Nothing in this direction is due yet.": "這個方向目前還沒有到期的單詞。",
+  "All chapters": "全部章節",
+  "Uncategorized": "未分類",
+  "due / total": "待複習 / 總數",
+  "Nothing in this chapter is due yet.": "這個章節目前還沒有到期的單詞。"
 }
